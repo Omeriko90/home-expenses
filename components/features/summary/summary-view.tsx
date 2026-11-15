@@ -10,14 +10,7 @@ import { StatCard, ChangeIndicator } from "@/components/shared/stat-card";
 import { EmptyState } from "@/components/shared/empty-state";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { CategorySpendAccordion } from "./category-spend-accordion";
 
 export function SummaryView({
   year,
@@ -101,47 +94,12 @@ export function SummaryView({
         <EmptyState title={t.common.noData} />
       ) : (
         <Card className="overflow-hidden">
-          <Table containerClassName="max-h-[55vh] overflow-y-auto">
-            <TableHeader className="sticky top-0 z-10 bg-surface shadow-divider">
-              <TableRow>
-                <TableHead>{t.common.category}</TableHead>
-                <TableHead className="text-end">{year}</TableHead>
-                <TableHead className="text-end">{year - 1}</TableHead>
-                <TableHead className="w-36 text-end">{t.summary.change}</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {spend.map((r) => (
-                <TableRow key={r.categoryId}>
-                  <TableCell>
-                    <div className="flex flex-col gap-1">
-                      <span className="font-medium">{r.name}</span>
-                      <div className="h-1.5 w-full max-w-48 overflow-hidden rounded-full bg-surface-muted">
-                        <div
-                          className="h-full bg-expense"
-                          style={{ width: `${(r.current / maxSpend) * 100}%` }}
-                        />
-                      </div>
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-end tnum font-medium">
-                    {formatMoney(r.current)}
-                  </TableCell>
-                  <TableCell className="text-end tnum text-muted-foreground">
-                    {formatMoney(r.previous)}
-                  </TableCell>
-                  <TableCell className="text-end">
-                    <ChangeIndicator
-                      amount={r.change}
-                      pct={r.changePct}
-                      mode={mode}
-                      invert
-                    />
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+          <CategorySpendAccordion
+            spend={spend}
+            year={year}
+            mode={mode}
+            maxSpend={maxSpend}
+          />
           <div className="flex items-center justify-between border-t border-border bg-surface-muted/50 px-4 py-3 text-sm font-semibold tnum">
             <span className="font-sans">{t.common.total}</span>
             <div className="flex gap-6">

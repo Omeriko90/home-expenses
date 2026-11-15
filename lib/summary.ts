@@ -118,6 +118,32 @@ export async function getCategorySpend(
     .sort((a, b) => b.current - a.current);
 }
 
+export type CategoryMonthlySpend = {
+  /** 12 entries, index 0 = January; 0 when the month has no transactions. */
+  current: number[];
+  previous: number[];
+};
+
+/** Per-month expense totals for one category, `year` vs `year-1`. */
+export async function getCategoryMonthlySpend(
+  categoryId: string,
+  year: number,
+): Promise<CategoryMonthlySpend> {
+  const rows = await prisma.transaction.groupBy({
+    by: ["year", "month"],
+    where: { categoryId, year: { in: [year, year - 1] } },
+    _sum: { amount: true },
+  });
+
+  const current = Array<number>(12).fill(0);
+  const previous = Array<number>(12).fill(0);
+  for (const r of rows) {
+    const target = r.year === year ? current : previous;
+    target[r.month - 1] = Number(r._sum.amount ?? 0);
+  }
+  return { current, previous };
+}
+
 /** Total of current investment value across all portfolios for a year. */
 export async function getInvestmentTotal(year: number): Promise<number> {
   const summaries = await getPortfolioSummaries(year);
