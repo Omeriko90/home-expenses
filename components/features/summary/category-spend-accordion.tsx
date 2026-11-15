@@ -22,8 +22,9 @@ import {
 } from "@/components/ui/table";
 
 // Shared grid template so the sticky header and every trigger row align.
+// The last narrow column holds the expand/collapse chevron.
 const ROW_GRID =
-  "grid grid-cols-[minmax(0,1fr)_6rem_6rem_8rem] items-center gap-2";
+  "grid grid-cols-[minmax(0,1fr)_6rem_6rem_8rem_1.25rem] items-center gap-2";
 
 export function CategorySpendAccordion({
   spend,
@@ -69,14 +70,15 @@ export function CategorySpendAccordion({
         className={cn(
           ROW_GRID,
           "sticky top-0 z-10 bg-surface shadow-divider",
-          // Match TableHead typography; extra 1.5rem at the end covers the chevron.
-          "h-11 px-3 pe-9 text-xs font-semibold uppercase tracking-wide text-muted-foreground",
+          // Match TableHead typography.
+          "h-11 px-4 text-xs font-semibold uppercase tracking-wide text-muted-foreground",
         )}
       >
         <span>{t.common.category}</span>
         <span className="text-end">{year}</span>
         <span className="text-end">{year - 1}</span>
         <span className="text-end">{t.summary.change}</span>
+        <span />
       </div>
 
       <Accordion
@@ -88,7 +90,7 @@ export function CategorySpendAccordion({
           const monthly = loaded[key];
           return (
             <AccordionItem key={r.categoryId} value={r.categoryId}>
-              <AccordionTrigger className={cn(ROW_GRID, "px-3 py-2.5 pe-3")}>
+              <AccordionTrigger className={cn(ROW_GRID, "px-4 py-3")}>
                 <div className="flex flex-col gap-1">
                   <span className="font-medium">{r.name}</span>
                   <div className="h-1.5 w-full max-w-48 overflow-hidden rounded-full bg-surface-muted">
@@ -113,7 +115,7 @@ export function CategorySpendAccordion({
                   />
                 </span>
               </AccordionTrigger>
-              <AccordionContent className="border-t border-border bg-surface-muted/30">
+              <AccordionContent className="border-t border-border bg-surface-muted/30 py-2">
                 {monthly ? (
                   <MonthlyTable year={year} row={r} monthly={monthly} />
                 ) : failed[key] ? (
@@ -146,14 +148,14 @@ function MonthlyTable({
     <Table>
       <TableHeader>
         <TableRow className="hover:bg-transparent">
-          <TableHead className="h-9" />
+          <TableHead className="h-9 ps-4" />
           {t.months.map((m) => (
             <TableHead key={m} className="h-9 text-end">
               {m}
             </TableHead>
           ))}
           <TableHead className="h-9 text-end">{t.common.total}</TableHead>
-          <TableHead className="h-9 text-end">{t.summary.monthlyAvg}</TableHead>
+          <TableHead className="h-9 pe-4 text-end">{t.summary.monthlyAvg}</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -177,16 +179,16 @@ function YearRow({
 }) {
   return (
     <TableRow className={cn("hover:bg-transparent", muted && "text-muted-foreground")}>
-      <TableCell className="py-2 font-medium tnum">{year}</TableCell>
+      <TableCell className="py-2.5 ps-4 font-medium tnum">{year}</TableCell>
       {values.map((v, i) => (
-        <TableCell key={i} className="py-2 text-end tnum whitespace-nowrap">
+        <TableCell key={i} className="py-2.5 text-end tnum whitespace-nowrap">
           {v === 0 ? <span className="text-faint">—</span> : formatMoney(v)}
         </TableCell>
       ))}
-      <TableCell className="py-2 text-end tnum font-semibold whitespace-nowrap">
+      <TableCell className="py-2.5 text-end tnum font-semibold whitespace-nowrap">
         {formatMoney(total)}
       </TableCell>
-      <TableCell className="py-2 text-end tnum whitespace-nowrap">
+      <TableCell className="py-2.5 pe-4 text-end tnum whitespace-nowrap">
         {formatMoney(total / 12)}
       </TableCell>
     </TableRow>

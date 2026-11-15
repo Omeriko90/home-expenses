@@ -159,7 +159,7 @@ const he = {
       investmentChange: "שינוי בהשקעות",
       goalsReached: "יעדים שהושגו",
       ofTotal: "מתוך {n}",
-      monthlyAvg: "ממוצע חודשי",
+      monthlyAvg: "ממוצע",
     },
     nav: {
       dashboard: "סיכום",
@@ -352,7 +352,7 @@ const en: Dictionary = {
       investmentChange: "Investment change",
       goalsReached: "Goals reached",
       ofTotal: "of {n}",
-      monthlyAvg: "Monthly avg",
+      monthlyAvg: "Avg",
     },
     nav: {
       dashboard: "Summary",
