@@ -11,7 +11,6 @@ import {
   deleteHolding,
   upsertDeposits,
 } from "@/app/actions/investments";
-import { PageHeader } from "@/components/shared/page-header";
 import { EmptyState } from "@/components/shared/empty-state";
 import { YearSelect } from "@/components/shared/year-select";
 import { StatCard, ChangeIndicator } from "@/components/shared/stat-card";
@@ -22,6 +21,12 @@ import { MoneyInput } from "@/components/shared/money-input";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
+import {
+  Tabs,
+  TabsList,
+  TabsTrigger,
+  TabsContent,
+} from "@/components/ui/tabs";
 import {
   Table,
   TableBody,
@@ -50,21 +55,50 @@ export function InvestmentsView({
   portfolios: PortfolioSummary[];
 }) {
   const { t } = useI18n();
+  const [tab, setTab] = React.useState<"MAIN" | "KIDS">("MAIN");
+
+  const main = portfolios.filter((p) => p.group === "MAIN");
+  const kids = portfolios.filter((p) => p.group === "KIDS");
+
+  if (portfolios.length === 0) {
+    return (
+      <div className="flex flex-col gap-6">
+        <div className="flex items-center justify-end">
+          <YearSelect year={year} years={years} />
+        </div>
+        <EmptyState icon={<TrendingUp />} title={t.investments.empty} />
+      </div>
+    );
+  }
 
   return (
-    <div className="flex flex-col gap-6">
-      <PageHeader
-        title={t.investments.title}
-        actions={<YearSelect year={year} years={years} />}
-      />
-      {portfolios.length === 0 ? (
-        <EmptyState icon={<TrendingUp />} title={t.investments.empty} />
-      ) : (
-        portfolios.map((p) => (
-          <PortfolioSection key={p.id} portfolio={p} year={year} />
-        ))
-      )}
-    </div>
+    <Tabs value={tab} onValueChange={(v) => setTab(v as typeof tab)}>
+      <div className="flex items-center justify-between gap-2">
+        <TabsList>
+          <TabsTrigger value="MAIN">{t.investments.main}</TabsTrigger>
+          <TabsTrigger value="KIDS">{t.investments.kids}</TabsTrigger>
+        </TabsList>
+        <YearSelect year={year} years={years} />
+      </div>
+      <TabsContent value="MAIN" className="flex flex-col gap-6">
+        {main.length === 0 ? (
+          <EmptyState icon={<TrendingUp />} title={t.investments.empty} />
+        ) : (
+          main.map((p) => (
+            <PortfolioSection key={p.id} portfolio={p} year={year} />
+          ))
+        )}
+      </TabsContent>
+      <TabsContent value="KIDS" className="flex flex-col gap-6">
+        {kids.length === 0 ? (
+          <EmptyState icon={<TrendingUp />} title={t.investments.empty} />
+        ) : (
+          kids.map((p) => (
+            <PortfolioSection key={p.id} portfolio={p} year={year} />
+          ))
+        )}
+      </TabsContent>
+    </Tabs>
   );
 }
 
@@ -84,8 +118,6 @@ function PortfolioSection({
   const [depositsOpen, setDepositsOpen] = React.useState(false);
   const [pending, startTransition] = React.useTransition();
 
-  const label = p.group === "KIDS" ? t.investments.kids : t.investments.main;
-
   function handleDelete() {
     if (!toDelete) return;
     startTransition(async () => {
@@ -98,7 +130,7 @@ function PortfolioSection({
   return (
     <div className="flex flex-col gap-3">
       <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold">{label}</h2>
+        <h2 className="text-lg font-semibold">{p.name}</h2>
         <div className="flex gap-2">
           <Button
             variant="outline"
