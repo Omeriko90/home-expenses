@@ -1,0 +1,201 @@
+// Home Expenses & Investments — data model
+// See /Users/omerdomb/.claude/plans/i-want-to-create-goofy-newt.md
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum CategoryType {
+  EXPENSE
+  INVESTMENT
+}
+
+enum TxKind {
+  FIXED
+  VARIABLE
+}
+
+enum PortfolioGroup {
+  MAIN
+  KIDS
+}
+
+enum MappingMatch {
+  EXACT
+  CONTAINS
+}
+
+enum GoalType {
+  NUMERIC
+  CHECKLIST
+}
+
+enum GoalLinkKind {
+  NONE
+  CATEGORY
+  INVESTMENT_TOTAL
+}
+
+// All data is household-shared; User exists for login + attribution.
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  name         String
+  passwordHash String
+  locale       String   @default("he") // "he" | "en"
+  createdAt    DateTime @default(now())
+
+  transactions Transaction[]
+}
+
+// Shared category model — `type` distinguishes expense vs investment categories.
+model Category {
+  id          String       @id @default(cuid())
+  name        String       @unique
+  nameEn      String?
+  description String?
+  type        CategoryType @default(EXPENSE)
+  color       String?
+  archived    Boolean      @default(false)
+  sortOrder   Int          @default(0)
+
+  transactions    Transaction[]
+  budgets         Budget[]
+  businessMapping BusinessMapping[]
+  linkedGoals     Goal[]            @relation("GoalLinkedCategory")
+
+  @@index([type])
+}
+
+model Transaction {
+  id              String   @id @default(cuid())
+  date            DateTime
+  businessName    String
+  amount          Decimal  @db.Decimal(12, 2)
+  kind            TxKind   @default(VARIABLE)
+  rawBusinessName String? // original, pre-normalization
+  rawFileCategory String? // card-issuer category from the imported file (reference)
+  year            Int // denormalized for fast summary queries
+  month           Int // 1-12
+  note            String?
+
+  categoryId String
+  category   Category @relation(fields: [categoryId], references: [id])
+
+  createdByUserId String?
+  createdBy       User?   @relation(fields: [createdByUserId], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@index([year, month])
+  @@index([categoryId, year])
+}
+
+// Learned business -> category mappings (the import "learner").
+model BusinessMapping {
+  id        String       @id @default(cuid())
+  pattern   String       @unique // normalized business string
+  matchType MappingMatch @default(EXACT)
+  hitCount  Int          @default(1)
+  updatedAt DateTime     @updatedAt
+
+  categoryId String
+  category   Category @relation(fields: [categoryId], references: [id])
+}
+
+model Budget {
+  id            String  @id @default(cuid())
+  year          Int
+  monthlyAmount Decimal @db.Decimal(12, 2) // yearly computed = monthlyAmount * 12
+
+  categoryId String
+  category   Category @relation(fields: [categoryId], references: [id])
+
+  @@unique([categoryId, year])
+}
+
+model Portfolio {
+  id        String         @id @default(cuid())
+  name      String
+  group     PortfolioGroup @default(MAIN)
+  sortOrder Int            @default(0)
+  archived  Boolean        @default(false)
+
+  holdings       Holding[]
+  years          PortfolioYear[]
+
+  @@unique([name, group])
+}
+
+model Holding {
+  id         String @id @default(cuid())
+  channel    String // אפיק
+  instrument String // מכשיר
+  house      String // בית השקעות
+  sortOrder  Int    @default(0)
+
+  portfolioId String
+  portfolio   Portfolio @relation(fields: [portfolioId], references: [id], onDelete: Cascade)
+
+  snapshots HoldingSnapshot[]
+}
+
+model PortfolioYear {
+  id       String  @id @default(cuid())
+  year     Int
+  deposits Decimal @db.Decimal(14, 2)
+
+  portfolioId String
+  portfolio   Portfolio @relation(fields: [portfolioId], references: [id], onDelete: Cascade)
+
+  @@unique([portfolioId, year])
+}
+
+model HoldingSnapshot {
+  id    String  @id @default(cuid())
+  year  Int
+  value Decimal @db.Decimal(14, 2)
+
+  holdingId String
+  holding   Holding @relation(fields: [holdingId], references: [id], onDelete: Cascade)
+
+  @@unique([holdingId, year])
+}
+
+model Goal {
+  id    String   @id @default(cuid())
+  title String
+  year  Int
+  type  GoalType @default(NUMERIC)
+  note  String?
+
+  // NUMERIC
+  targetAmount  Decimal?     @db.Decimal(14, 2)
+  currentAmount Decimal?     @db.Decimal(14, 2)
+  linkKind      GoalLinkKind @default(NONE)
+
+  linkCategoryId String?
+  linkCategory   Category? @relation("GoalLinkedCategory", fields: [linkCategoryId], references: [id])
+
+  // CHECKLIST
+  milestones GoalMilestone[]
+
+  createdAt DateTime @default(now())
+
+  @@index([year])
+}
+
+model GoalMilestone {
+  id        String  @id @default(cuid())
+  title     String
+  done      Boolean @default(false)
+  sortOrder Int     @default(0)
+
+  goalId String
+  goal   Goal   @relation(fields: [goalId], references: [id], onDelete: Cascade)
+}
