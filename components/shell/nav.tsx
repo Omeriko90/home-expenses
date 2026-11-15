@@ -9,6 +9,7 @@ import {
   Wallet,
   Target,
   TrendingUp,
+  Settings,
 } from "lucide-react";
 import { useI18n } from "@/lib/i18n/context";
 import { cn } from "@/lib/utils";
@@ -20,6 +21,7 @@ const items = [
   { href: "/budgets", key: "budgets", icon: Wallet },
   { href: "/goals", key: "goals", icon: Target },
   { href: "/investments", key: "investments", icon: TrendingUp },
+  { href: "/settings", key: "settings", icon: Settings },
 ] as const;
 
 export function Nav({ onNavigate }: { onNavigate?: () => void }) {
