@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { useI18n } from "@/lib/i18n/context";
-import { formatMoney, cn } from "@/lib/utils";
+import { formatMoney, yoyPercent, cn } from "@/lib/utils";
 import type { CategorySpendRow, CategoryMonthlySpend } from "@/lib/summary";
 import { fetchCategoryMonthlySpend } from "@/app/actions/summary";
 import { ChangeIndicator } from "@/components/shared/stat-card";
@@ -31,11 +31,13 @@ export function CategorySpendAccordion({
   year,
   mode,
   maxSpend,
+  totals,
 }: {
   spend: CategorySpendRow[];
   year: number;
   mode: "money" | "percent";
   maxSpend: number;
+  totals: { current: number; previous: number };
 }) {
   const { t } = useI18n();
   // Fetched monthly data, keyed by `${categoryId}:${year}` — survives
@@ -65,6 +67,7 @@ export function CategorySpendAccordion({
   }
 
   return (
+    <>
     <div className="min-h-0 flex-1 overflow-y-auto">
       <div
         className={cn(
@@ -130,6 +133,38 @@ export function CategorySpendAccordion({
           );
         })}
       </Accordion>
+    </div>
+    <TotalsRow totals={totals} mode={mode} />
+    </>
+  );
+}
+
+function TotalsRow({
+  totals,
+  mode,
+}: {
+  totals: { current: number; previous: number };
+  mode: "money" | "percent";
+}) {
+  const { t } = useI18n();
+  const change = totals.current - totals.previous;
+  const pct = yoyPercent(totals.current, totals.previous);
+  return (
+    <div
+      className={cn(
+        ROW_GRID,
+        "shrink-0 border-t border-border bg-surface-muted/50 px-4 py-3 text-sm font-semibold",
+      )}
+    >
+      <span>{t.common.total}</span>
+      <span className="text-end tnum">{formatMoney(totals.current)}</span>
+      <span className="text-end tnum text-muted-foreground">
+        {formatMoney(totals.previous)}
+      </span>
+      <span className="text-end">
+        <ChangeIndicator amount={change} pct={pct} mode={mode} invert />
+      </span>
+      <span />
     </div>
   );
 }

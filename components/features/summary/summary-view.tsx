@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { useI18n } from "@/lib/i18n/context";
-import { formatMoney, formatPercent, yoyPercent, cn } from "@/lib/utils";
+import { formatMoney, formatPercent, yoyPercent } from "@/lib/utils";
 import type { CategorySpendRow } from "@/lib/summary";
 import { PageHeader } from "@/components/shared/page-header";
 import { YearSelect } from "@/components/shared/year-select";
@@ -101,24 +101,8 @@ export function SummaryView({
             year={year}
             mode={mode}
             maxSpend={maxSpend}
+            totals={totals}
           />
-          <div className="flex shrink-0 items-center justify-between border-t border-border bg-surface-muted/50 px-4 py-3 text-sm font-semibold tnum">
-            <span className="font-sans">{t.common.total}</span>
-            <div className="flex gap-6">
-              <span>{formatMoney(totals.current)}</span>
-              <span
-                className={cn(
-                  expChange > 0 ? "text-danger" : "text-success",
-                )}
-              >
-                {mode === "money"
-                  ? formatMoney(expChange, { sign: true })
-                  : expPct === null
-                    ? "—"
-                    : formatPercent(expPct, { sign: true })}
-              </span>
-            </div>
-          </div>
         </Card>
       )}
     </div>
