@@ -30,6 +30,9 @@ export function RegisterForm() {
           <Field label={t.auth.name} htmlFor="name">
             <Input id="name" name="name" required autoComplete="name" />
           </Field>
+          <Field label={t.auth.householdName} htmlFor="householdName">
+            <Input id="householdName" name="householdName" autoComplete="off" />
+          </Field>
           <Field label={t.auth.email} htmlFor="email">
             <Input id="email" name="email" type="email" required autoComplete="email" />
           </Field>
@@ -53,6 +56,9 @@ export function RegisterForm() {
           <Button type="submit" disabled={pending} className="w-full">
             {pending ? t.common.loading : t.auth.signUp}
           </Button>
+          <p className="text-center text-xs text-muted-foreground">
+            {t.auth.registerCreatesHousehold}
+          </p>
         </form>
         <p className="mt-4 text-center text-sm text-muted-foreground">
           {t.auth.haveAccount}{" "}
