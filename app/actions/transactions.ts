@@ -31,6 +31,7 @@ export async function createTransaction(input: TransactionInput) {
       year: date.getUTCFullYear(),
       month: date.getUTCMonth() + 1,
       createdByUserId: user.id,
+      householdId: user.householdId,
     },
   });
   revalidatePath("/transactions");
@@ -38,11 +39,11 @@ export async function createTransaction(input: TransactionInput) {
 }
 
 export async function updateTransaction(id: string, input: TransactionInput) {
-  await requireUser();
+  const { householdId } = await requireUser();
   const data = schema.parse(input);
   const date = new Date(data.date);
   await prisma.transaction.update({
-    where: { id },
+    where: { id, householdId },
     data: {
       date,
       businessName: data.businessName,
@@ -59,8 +60,8 @@ export async function updateTransaction(id: string, input: TransactionInput) {
 }
 
 export async function deleteTransaction(id: string) {
-  await requireUser();
-  await prisma.transaction.delete({ where: { id } });
+  const { householdId } = await requireUser();
+  await prisma.transaction.delete({ where: { id, householdId } });
   revalidatePath("/transactions");
   return { ok: true as const };
 }

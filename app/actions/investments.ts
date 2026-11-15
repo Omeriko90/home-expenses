@@ -16,12 +16,19 @@ const holdingSchema = z.object({
 });
 
 export async function upsertHolding(input: z.infer<typeof holdingSchema>) {
-  await requireUser();
+  const { householdId } = await requireUser();
   const d = holdingSchema.parse(input);
+  // Holdings are scoped through their portfolio.
+  const portfolio = await prisma.portfolio.findFirst({
+    where: { id: d.portfolioId, householdId },
+    select: { id: true },
+  });
+  if (!portfolio) return { error: "notFound" as const };
+
   let holdingId = d.holdingId ?? null;
   if (holdingId) {
     await prisma.holding.update({
-      where: { id: holdingId },
+      where: { id: holdingId, portfolio: { householdId } },
       data: { channel: d.channel, instrument: d.instrument, house: d.house },
     });
   } else {
@@ -45,8 +52,10 @@ export async function upsertHolding(input: z.infer<typeof holdingSchema>) {
 }
 
 export async function deleteHolding(holdingId: string) {
-  await requireUser();
-  await prisma.holding.delete({ where: { id: holdingId } });
+  const { householdId } = await requireUser();
+  await prisma.holding.delete({
+    where: { id: holdingId, portfolio: { householdId } },
+  });
   revalidatePath("/investments");
   return { ok: true as const };
 }
@@ -56,7 +65,12 @@ export async function upsertDeposits(
   year: number,
   deposits: number,
 ) {
-  await requireUser();
+  const { householdId } = await requireUser();
+  const portfolio = await prisma.portfolio.findFirst({
+    where: { id: portfolioId, householdId },
+    select: { id: true },
+  });
+  if (!portfolio) return { error: "notFound" as const };
   await prisma.portfolioYear.upsert({
     where: { portfolioId_year: { portfolioId, year } },
     update: { deposits },
@@ -67,8 +81,8 @@ export async function upsertDeposits(
 }
 
 export async function createPortfolio(name: string, group: "MAIN" | "KIDS") {
-  await requireUser();
-  await prisma.portfolio.create({ data: { name, group } });
+  const { householdId } = await requireUser();
+  await prisma.portfolio.create({ data: { name, group, householdId } });
   revalidatePath("/investments");
   return { ok: true as const };
 }

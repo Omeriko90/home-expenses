@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/db";
 import { getDictionary } from "@/lib/i18n/server";
 import { getYears, resolveYear } from "@/lib/years";
+import { requireUser } from "@/lib/session";
 import { BudgetEditor } from "@/components/features/budgets/budget-editor";
 
 export default async function BudgetsPage({
@@ -10,15 +11,16 @@ export default async function BudgetsPage({
 }) {
   const sp = await searchParams;
   await getDictionary();
-  const years = await getYears();
+  const { householdId } = await requireUser();
+  const years = await getYears(householdId);
   const year = resolveYear(years, sp.year);
 
   const [categories, budgets] = await Promise.all([
     prisma.category.findMany({
-      where: { type: "EXPENSE", archived: false },
+      where: { type: "EXPENSE", archived: false, householdId },
       orderBy: { name: "asc" },
     }),
-    prisma.budget.findMany({ where: { year } }),
+    prisma.budget.findMany({ where: { year, category: { householdId } } }),
   ]);
 
   const budgetByCat = new Map(

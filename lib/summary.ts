@@ -22,9 +22,10 @@ export type PortfolioSummary = {
 
 export async function getPortfolioSummaries(
   year: number,
+  householdId: string,
 ): Promise<PortfolioSummary[]> {
   const portfolios = await prisma.portfolio.findMany({
-    where: { archived: false },
+    where: { archived: false, householdId },
     orderBy: [{ group: "asc" }, { sortOrder: "asc" }],
     include: {
       holdings: { include: { snapshots: true }, orderBy: { sortOrder: "asc" } },
@@ -79,21 +80,22 @@ export type CategorySpendRow = {
 /** Per-category expense totals for `year` vs `year-1`. */
 export async function getCategorySpend(
   year: number,
+  householdId: string,
 ): Promise<CategorySpendRow[]> {
   const categories = await prisma.category.findMany({
-    where: { type: "EXPENSE" },
+    where: { type: "EXPENSE", householdId },
     select: { id: true, name: true },
   });
 
   const [cur, prev] = await Promise.all([
     prisma.transaction.groupBy({
       by: ["categoryId"],
-      where: { year },
+      where: { year, householdId },
       _sum: { amount: true },
     }),
     prisma.transaction.groupBy({
       by: ["categoryId"],
-      where: { year: year - 1 },
+      where: { year: year - 1, householdId },
       _sum: { amount: true },
     }),
   ]);
@@ -119,17 +121,21 @@ export async function getCategorySpend(
 }
 
 /** Total of current investment value across all portfolios for a year. */
-export async function getInvestmentTotal(year: number): Promise<number> {
-  const summaries = await getPortfolioSummaries(year);
+export async function getInvestmentTotal(
+  year: number,
+  householdId: string,
+): Promise<number> {
+  const summaries = await getPortfolioSummaries(year, householdId);
   return summaries.reduce((s, p) => s + p.value, 0);
 }
 
 /** How many of the year's goals are reached, out of the total. */
 export async function getGoalStats(
   year: number,
+  householdId: string,
 ): Promise<{ reached: number; total: number }> {
   const goals = await prisma.goal.findMany({
-    where: { year },
+    where: { year, householdId },
     include: { milestones: true },
   });
 
@@ -146,11 +152,12 @@ export async function getGoalStats(
     if (g.linkKind === "CATEGORY" && g.linkCategoryId) {
       const agg = await prisma.transaction.aggregate({
         _sum: { amount: true },
-        where: { categoryId: g.linkCategoryId, year },
+        where: { categoryId: g.linkCategoryId, year, householdId },
       });
       current = Number(agg._sum.amount ?? 0);
     } else if (g.linkKind === "INVESTMENT_TOTAL") {
-      if (investmentTotal === null) investmentTotal = await getInvestmentTotal(year);
+      if (investmentTotal === null)
+        investmentTotal = await getInvestmentTotal(year, householdId);
       current = investmentTotal;
     }
     const target = g.targetAmount ? Number(g.targetAmount) : 0;
