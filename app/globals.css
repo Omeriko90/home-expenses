@@ -1,0 +1,34 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+/* All design tokens (colors, radius, shadows) live in tailwind.config.ts. */
+@config "../tailwind.config.ts";
+
+@layer base {
+  * {
+    border-color: #e9e3eb; /* border.default — fallback for bare `border` */
+  }
+  body {
+    font-feature-settings: "cv11", "ss01";
+  }
+  /* Interactive affordances: pointer when clickable, not-allowed when disabled. */
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]),
+  label[for] {
+    cursor: pointer;
+  }
+  button:disabled,
+  [aria-disabled="true"] {
+    cursor: not-allowed;
+  }
+  /* Money / figures: aligned tabular digits. */
+  .tnum {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum";
+  }
+  /* Thin, elegant scrollbars. */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: #cec5d3 transparent;
+  }
+}
