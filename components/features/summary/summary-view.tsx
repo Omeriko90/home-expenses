@@ -40,10 +40,7 @@ export function SummaryView({
     // Fill <main>'s height: the category list scrolls internally so the
     // totals row at the bottom of the card is always visible.
     <div className="flex h-full min-h-0 flex-col gap-6">
-      <PageHeader
-        title={t.summary.title}
-        actions={<YearSelect year={year} years={years} />}
-      />
+      <PageHeader title={t.summary.title} />
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         <StatCard
@@ -84,12 +81,15 @@ export function SummaryView({
 
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-semibold">{t.summary.spendByCategory}</h2>
-        <Tabs value={mode} onValueChange={(v) => setMode(v as typeof mode)}>
-          <TabsList>
-            <TabsTrigger value="money">{t.summary.shekel}</TabsTrigger>
-            <TabsTrigger value="percent">{t.summary.percent}</TabsTrigger>
-          </TabsList>
-        </Tabs>
+        <div className="flex items-center gap-2">
+          <YearSelect year={year} years={years} />
+          <Tabs value={mode} onValueChange={(v) => setMode(v as typeof mode)}>
+            <TabsList>
+              <TabsTrigger value="money">{t.summary.shekel}</TabsTrigger>
+              <TabsTrigger value="percent">{t.summary.percent}</TabsTrigger>
+            </TabsList>
+          </Tabs>
+        </div>
       </div>
 
       {spend.length === 0 ? (
