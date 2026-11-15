@@ -37,7 +37,9 @@ export function SummaryView({
   const maxSpend = Math.max(...spend.map((r) => r.current), 1);
 
   return (
-    <div className="flex flex-col gap-6">
+    // Fill <main>'s height: the category list scrolls internally so the
+    // totals row at the bottom of the card is always visible.
+    <div className="flex h-full min-h-0 flex-col gap-6">
       <PageHeader
         title={t.summary.title}
         actions={<YearSelect year={year} years={years} />}
@@ -93,14 +95,14 @@ export function SummaryView({
       {spend.length === 0 ? (
         <EmptyState title={t.common.noData} />
       ) : (
-        <Card className="overflow-hidden">
+        <Card className="flex min-h-0 flex-1 flex-col overflow-hidden">
           <CategorySpendAccordion
             spend={spend}
             year={year}
             mode={mode}
             maxSpend={maxSpend}
           />
-          <div className="flex items-center justify-between border-t border-border bg-surface-muted/50 px-4 py-3 text-sm font-semibold tnum">
+          <div className="flex shrink-0 items-center justify-between border-t border-border bg-surface-muted/50 px-4 py-3 text-sm font-semibold tnum">
             <span className="font-sans">{t.common.total}</span>
             <div className="flex gap-6">
               <span>{formatMoney(totals.current)}</span>

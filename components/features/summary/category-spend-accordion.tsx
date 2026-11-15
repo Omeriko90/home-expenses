@@ -65,7 +65,7 @@ export function CategorySpendAccordion({
   }
 
   return (
-    <div className="max-h-[55vh] overflow-y-auto">
+    <div className="min-h-0 flex-1 overflow-y-auto">
       <div
         className={cn(
           ROW_GRID,
