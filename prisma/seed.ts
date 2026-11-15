@@ -11,6 +11,9 @@ import { PrismaClient, CategoryType, TxKind } from "@prisma/client";
 const prisma = new PrismaClient();
 const FILE = process.argv[2] ?? "expenses_and_investments.xlsx";
 
+// Target household — resolved in main() (first household, created if missing).
+let HH = "";
+
 const YEAR_SHEETS = ["2022", "2023", "2024", "2025", "2026"];
 const MONTHS = [
   "ינואר", "פברואר", "מרץ", "אפריל", "מאי", "יוני",
@@ -80,11 +83,18 @@ async function ensureCategory(
       : CategoryType.EXPENSE);
 
   // Try to find an existing category whose normalized name matches.
-  const existing = await prisma.category.findFirst({ where: { name: aliased } });
+  const existing = await prisma.category.findFirst({
+    where: { name: aliased, householdId: HH },
+  });
   const cat =
     existing ??
     (await prisma.category.create({
-      data: { name: aliased, type, description: opts.description ?? null },
+      data: {
+        name: aliased,
+        type,
+        description: opts.description ?? null,
+        householdId: HH,
+      },
     }));
 
   catCache.set(key, cat.id);
@@ -194,12 +204,13 @@ async function seedTransactions(wb: XLSX.WorkBook) {
     }
 
     // Replace this year's transactions for idempotency, then bulk-insert.
-    await prisma.transaction.deleteMany({ where: { year } });
+    await prisma.transaction.deleteMany({ where: { year, householdId: HH } });
     if (rows.length) {
       await prisma.transaction.createMany({
         data: rows.map((row) => ({
           ...row,
           year,
+          householdId: HH,
           date: new Date(Date.UTC(year, row.month - 1, 1)),
         })),
       });
@@ -220,6 +231,7 @@ async function seedTransactions(wb: XLSX.WorkBook) {
 async function seedBusinessMappings() {
   // Seed the import learner from history: most-frequent category per business.
   const txs = await prisma.transaction.findMany({
+    where: { householdId: HH },
     select: { businessName: true, categoryId: true },
   });
   const tally = new Map<string, Map<string, number>>();
@@ -236,9 +248,9 @@ async function seedBusinessMappings() {
     let bestN = 0;
     for (const [catId, n] of inner) if (n > bestN) ((best = catId), (bestN = n));
     await prisma.businessMapping.upsert({
-      where: { pattern },
+      where: { householdId_pattern: { householdId: HH, pattern } },
       update: { categoryId: best, hitCount: bestN },
-      create: { pattern, categoryId: best, hitCount: bestN },
+      create: { pattern, categoryId: best, hitCount: bestN, householdId: HH },
     });
     count++;
   }
@@ -268,7 +280,7 @@ async function seedGoals(wb: XLSX.WorkBook) {
 
         // Dedup by (title, year).
         const existing = await prisma.goal.findFirst({
-          where: { title: desc, year },
+          where: { title: desc, year, householdId: HH },
         });
         if (existing) continue;
 
@@ -280,6 +292,7 @@ async function seedGoals(wb: XLSX.WorkBook) {
               type: "NUMERIC",
               targetAmount: expected,
               currentAmount: actual ?? 0,
+              householdId: HH,
             },
           });
         } else {
@@ -289,6 +302,7 @@ async function seedGoals(wb: XLSX.WorkBook) {
               year,
               type: "CHECKLIST",
               milestones: { create: [{ title: desc, done }] },
+              householdId: HH,
             },
           });
         }
@@ -314,10 +328,10 @@ async function seedInvestments(wb: XLSX.WorkBook) {
 
     const portfolio =
       (await prisma.portfolio.findFirst({
-        where: { name: src.name, group: src.group },
+        where: { name: src.name, group: src.group, householdId: HH },
       })) ??
       (await prisma.portfolio.create({
-        data: { name: src.name, group: src.group },
+        data: { name: src.name, group: src.group, householdId: HH },
       }));
 
     // Locate header rows: c0 === "תיק" and c3 === "אפיק".
@@ -408,6 +422,12 @@ async function main() {
   const abs = path.resolve(FILE);
   console.log(`Reading ${abs}`);
   const wb = XLSX.readFile(abs);
+
+  const household =
+    (await prisma.household.findFirst({ orderBy: { createdAt: "asc" } })) ??
+    (await prisma.household.create({ data: { name: "הבית שלנו" } }));
+  HH = household.id;
+  console.log(`Target household: ${household.name} (${HH})`);
 
   console.log("Seeding categories…");
   await seedCategories(wb);

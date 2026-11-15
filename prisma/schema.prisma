@@ -10,6 +10,11 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum Role {
+  ADMIN
+  MEMBER
+}
+
 enum CategoryType {
   EXPENSE
   INVESTMENT
@@ -41,22 +46,61 @@ enum GoalLinkKind {
   INVESTMENT_TOTAL
 }
 
-// All data is household-shared; User exists for login + attribution.
+// A household is the tenancy boundary — all finance data belongs to one.
+model Household {
+  id        String   @id @default(cuid())
+  name      String
+  createdAt DateTime @default(now())
+
+  users            User[]
+  invitations      Invitation[]
+  categories       Category[]
+  transactions     Transaction[]
+  portfolios       Portfolio[]
+  goals            Goal[]
+  businessMappings BusinessMapping[]
+}
+
 model User {
   id           String   @id @default(cuid())
   email        String   @unique
   name         String
   passwordHash String
   locale       String   @default("he") // "he" | "en"
+  role         Role     @default(MEMBER)
   createdAt    DateTime @default(now())
 
-  transactions Transaction[]
+  householdId String
+  household   Household @relation(fields: [householdId], references: [id])
+
+  transactions    Transaction[]
+  sentInvitations Invitation[]  @relation("InvitationInviter")
+}
+
+// Pending invite to join a household. The opaque `token` is the only thing
+// that travels in the invite link; email/household/role resolve server-side.
+model Invitation {
+  id         String    @id @default(cuid())
+  email      String
+  token      String    @unique
+  role       Role      @default(MEMBER)
+  expiresAt  DateTime
+  acceptedAt DateTime?
+  createdAt  DateTime  @default(now())
+
+  householdId String
+  household   Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
+
+  invitedById String?
+  invitedBy   User?   @relation("InvitationInviter", fields: [invitedById], references: [id], onDelete: SetNull)
+
+  @@unique([householdId, email])
 }
 
 // Shared category model — `type` distinguishes expense vs investment categories.
 model Category {
   id          String       @id @default(cuid())
-  name        String       @unique
+  name        String
   nameEn      String?
   description String?
   type        CategoryType @default(EXPENSE)
@@ -64,12 +108,16 @@ model Category {
   archived    Boolean      @default(false)
   sortOrder   Int          @default(0)
 
+  householdId String
+  household   Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
+
   transactions    Transaction[]
   budgets         Budget[]
   businessMapping BusinessMapping[]
   linkedGoals     Goal[]            @relation("GoalLinkedCategory")
 
-  @@index([type])
+  @@unique([householdId, name])
+  @@index([householdId, type])
 }
 
 model Transaction {
@@ -90,22 +138,30 @@ model Transaction {
   createdByUserId String?
   createdBy       User?   @relation(fields: [createdByUserId], references: [id])
 
+  householdId String
+  household   Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
+
   createdAt DateTime @default(now())
 
-  @@index([year, month])
+  @@index([householdId, year, month])
   @@index([categoryId, year])
 }
 
 // Learned business -> category mappings (the import "learner").
 model BusinessMapping {
   id        String       @id @default(cuid())
-  pattern   String       @unique // normalized business string
+  pattern   String // normalized business string
   matchType MappingMatch @default(EXACT)
   hitCount  Int          @default(1)
   updatedAt DateTime     @updatedAt
 
+  householdId String
+  household   Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
+
   categoryId String
   category   Category @relation(fields: [categoryId], references: [id])
+
+  @@unique([householdId, pattern])
 }
 
 model Budget {
@@ -126,10 +182,13 @@ model Portfolio {
   sortOrder Int            @default(0)
   archived  Boolean        @default(false)
 
+  householdId String
+  household   Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
+
   holdings       Holding[]
   years          PortfolioYear[]
 
-  @@unique([name, group])
+  @@unique([householdId, name, group])
 }
 
 model Holding {
@@ -185,9 +244,12 @@ model Goal {
   // CHECKLIST
   milestones GoalMilestone[]
 
+  householdId String
+  household   Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
+
   createdAt DateTime @default(now())
 
-  @@index([year])
+  @@index([householdId, year])
 }
 
 model GoalMilestone {
