@@ -199,20 +199,22 @@ export async function getMonthlyCategorySpend(
     }
   }
 
-  return {
-    categories: categories
-      .map((c) => ({
-        categoryId: c.id,
-        name: c.name,
-        color: c.color,
-        total: totals.get(c.id) ?? 0,
-      }))
-      .filter((c) => c.total !== 0)
-      .sort((a, b) => b.total - a.total),
-    byMonth,
-    totalsCurrent,
-    totalsPrevious,
-  };
+  const kept = categories
+    .map((c) => ({
+      categoryId: c.id,
+      name: c.name,
+      color: c.color,
+      total: totals.get(c.id) ?? 0,
+    }))
+    .filter((c) => c.total !== 0)
+    .sort((a, b) => b.total - a.total);
+
+  // Months without transactions chart as 0 rather than a broken line.
+  for (const m of byMonth) {
+    for (const c of kept) m[c.categoryId] ??= 0;
+  }
+
+  return { categories: kept, byMonth, totalsCurrent, totalsPrevious };
 }
 
 export type YearlyInvestmentTotal = { year: number; total: number };
