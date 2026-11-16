@@ -101,6 +101,9 @@ const he = {
       deleteConfirm: "למחוק את האחזקה?",
       empty: "אין נתוני השקעות לשנה זו",
       setDeposits: "עדכון הפקדות",
+      chartByChannel: "שווי לפי אפיק",
+      chartByPortfolio: "שווי לפי תיק",
+      chartGrowth: "צמיחת ההשקעות לאורך השנים",
     },
     goals: {
       title: "יעדים",
@@ -160,6 +163,9 @@ const he = {
       goalsReached: "יעדים שהושגו",
       ofTotal: "מתוך {n}",
       monthlyAvg: "ממוצע",
+      chartSpendPie: "התפלגות הוצאות לפי קטגוריה",
+      chartMonthlyByCategory: "הוצאה חודשית לפי קטגוריה",
+      chartMonthlyTotals: "סך הוצאות חודשי — שנה מול שנה",
     },
     nav: {
       dashboard: "סיכום",
@@ -350,6 +356,9 @@ const en: Dictionary = {
       deleteConfirm: "Delete this holding?",
       empty: "No investment data for this year",
       setDeposits: "Update deposits",
+      chartByChannel: "Value by channel",
+      chartByPortfolio: "Value by portfolio",
+      chartGrowth: "Investment growth over the years",
     },
     goals: {
       title: "Goals",
@@ -409,6 +418,9 @@ const en: Dictionary = {
       goalsReached: "Goals reached",
       ofTotal: "of {n}",
       monthlyAvg: "Avg",
+      chartSpendPie: "Spend share by category",
+      chartMonthlyByCategory: "Monthly spend by category",
+      chartMonthlyTotals: "Monthly total spend — year over year",
     },
     nav: {
       dashboard: "Summary",

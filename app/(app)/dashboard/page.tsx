@@ -1,6 +1,7 @@
 import { getYears, resolveYear } from "@/lib/years";
 import {
   getCategorySpend,
+  getMonthlyCategorySpend,
   getPortfolioSummaries,
   getGoalStats,
 } from "@/lib/summary";
@@ -17,8 +18,9 @@ export default async function DashboardPage({
   const years = await getYears(householdId);
   const year = resolveYear(years, sp.year);
 
-  const [spend, portfolios, goalStats] = await Promise.all([
+  const [spend, monthly, portfolios, goalStats] = await Promise.all([
     getCategorySpend(year, householdId),
+    getMonthlyCategorySpend(year, householdId),
     getPortfolioSummaries(year, householdId),
     getGoalStats(year, householdId),
   ]);
@@ -34,6 +36,7 @@ export default async function DashboardPage({
       year={year}
       years={years}
       spend={spend}
+      monthly={monthly}
       totals={{ current: totalCurrent, previous: totalPrevious }}
       investments={{ value: invValue, prev: invPrev }}
       goals={goalStats}

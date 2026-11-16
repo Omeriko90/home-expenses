@@ -22,6 +22,16 @@ export function formatMoney(
   return n < 0 ? `-${formatted}` : formatted;
 }
 
+/** Compact ₪ format for chart axis ticks (e.g. ‎₪12K). */
+export function formatMoneyCompact(value: number): string {
+  return new Intl.NumberFormat("he-IL", {
+    style: "currency",
+    currency: "ILS",
+    notation: "compact",
+    maximumFractionDigits: 1,
+  }).format(value);
+}
+
 /** Format a ratio (e.g. 0.23) as a percentage string. */
 export function formatPercent(value: number, opts: { sign?: boolean } = {}): string {
   const pct = value * 100;

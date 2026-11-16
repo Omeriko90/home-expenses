@@ -5,13 +5,14 @@ import { Pencil, Plus, Trash2, TrendingUp } from "lucide-react";
 import { toast } from "sonner";
 import { useI18n } from "@/lib/i18n/context";
 import { formatMoney, formatPercent } from "@/lib/utils";
-import type { PortfolioSummary } from "@/lib/summary";
+import type { PortfolioSummary, YearlyInvestmentTotal } from "@/lib/summary";
 import {
   upsertHolding,
   deleteHolding,
   upsertDeposits,
 } from "@/app/actions/investments";
 import { EmptyState } from "@/components/shared/empty-state";
+import { InvestmentCharts } from "./investment-charts";
 import { YearSelect } from "@/components/shared/year-select";
 import { StatCard, ChangeIndicator } from "@/components/shared/stat-card";
 import { IconButton } from "@/components/shared/icon-button";
@@ -49,10 +50,12 @@ export function InvestmentsView({
   year,
   years,
   portfolios,
+  yearlyTotals,
 }: {
   year: number;
   years: number[];
   portfolios: PortfolioSummary[];
+  yearlyTotals: YearlyInvestmentTotal[];
 }) {
   const { t } = useI18n();
   const [tab, setTab] = React.useState<"MAIN" | "KIDS">("MAIN");
@@ -84,18 +87,24 @@ export function InvestmentsView({
         {main.length === 0 ? (
           <EmptyState icon={<TrendingUp />} title={t.investments.empty} />
         ) : (
-          main.map((p) => (
-            <PortfolioSection key={p.id} portfolio={p} year={year} />
-          ))
+          <>
+            <InvestmentCharts portfolios={main} yearlyTotals={yearlyTotals} />
+            {main.map((p) => (
+              <PortfolioSection key={p.id} portfolio={p} year={year} />
+            ))}
+          </>
         )}
       </TabsContent>
       <TabsContent value="KIDS" className="flex flex-col gap-6">
         {kids.length === 0 ? (
           <EmptyState icon={<TrendingUp />} title={t.investments.empty} />
         ) : (
-          kids.map((p) => (
-            <PortfolioSection key={p.id} portfolio={p} year={year} />
-          ))
+          <>
+            <InvestmentCharts portfolios={kids} yearlyTotals={yearlyTotals} />
+            {kids.map((p) => (
+              <PortfolioSection key={p.id} portfolio={p} year={year} />
+            ))}
+          </>
         )}
       </TabsContent>
     </Tabs>

@@ -71,6 +71,7 @@ export async function getPortfolioSummaries(
 export type CategorySpendRow = {
   categoryId: string;
   name: string;
+  color: string | null;
   current: number;
   previous: number;
   change: number;
@@ -84,7 +85,7 @@ export async function getCategorySpend(
 ): Promise<CategorySpendRow[]> {
   const categories = await prisma.category.findMany({
     where: { type: "EXPENSE", householdId },
-    select: { id: true, name: true },
+    select: { id: true, name: true, color: true },
   });
 
   const [cur, prev] = await Promise.all([
@@ -110,6 +111,7 @@ export async function getCategorySpend(
       return {
         categoryId: c.id,
         name: c.name,
+        color: c.color,
         current,
         previous,
         change: current - previous,
@@ -144,6 +146,90 @@ export async function getCategoryMonthlySpend(
     target[r.month - 1] = Number(r._sum.amount ?? 0);
   }
   return { current, previous };
+}
+
+export type MonthlyCategorySpend = {
+  /** Expense categories with spend in `year`, sorted by total descending. */
+  categories: {
+    categoryId: string;
+    name: string;
+    color: string | null;
+    total: number;
+  }[];
+  /** 12 entries, index 0 = January; byMonth[m][categoryId] = spend in `year`. */
+  byMonth: Record<string, number>[];
+  /** Total household spend per month, 12 entries each. */
+  totalsCurrent: number[];
+  totalsPrevious: number[];
+};
+
+/** Per-month expense totals for all categories, `year` vs `year-1`. */
+export async function getMonthlyCategorySpend(
+  year: number,
+  householdId: string,
+): Promise<MonthlyCategorySpend> {
+  const [categories, rows] = await Promise.all([
+    prisma.category.findMany({
+      where: { type: "EXPENSE", householdId },
+      select: { id: true, name: true, color: true },
+    }),
+    prisma.transaction.groupBy({
+      by: ["categoryId", "year", "month"],
+      where: { householdId, year: { in: [year, year - 1] } },
+      _sum: { amount: true },
+    }),
+  ]);
+
+  const expenseIds = new Map(categories.map((c) => [c.id, c]));
+  const byMonth: Record<string, number>[] = Array.from({ length: 12 }, () => ({}));
+  const totalsCurrent = Array<number>(12).fill(0);
+  const totalsPrevious = Array<number>(12).fill(0);
+  const totals = new Map<string, number>();
+
+  for (const r of rows) {
+    if (!expenseIds.has(r.categoryId)) continue;
+    const amount = Number(r._sum.amount ?? 0);
+    const m = r.month - 1;
+    if (r.year === year) {
+      byMonth[m][r.categoryId] = (byMonth[m][r.categoryId] ?? 0) + amount;
+      totalsCurrent[m] += amount;
+      totals.set(r.categoryId, (totals.get(r.categoryId) ?? 0) + amount);
+    } else {
+      totalsPrevious[m] += amount;
+    }
+  }
+
+  return {
+    categories: categories
+      .map((c) => ({
+        categoryId: c.id,
+        name: c.name,
+        color: c.color,
+        total: totals.get(c.id) ?? 0,
+      }))
+      .filter((c) => c.total !== 0)
+      .sort((a, b) => b.total - a.total),
+    byMonth,
+    totalsCurrent,
+    totalsPrevious,
+  };
+}
+
+export type YearlyInvestmentTotal = { year: number; total: number };
+
+/** Total investment value per year across all active portfolios. */
+export async function getYearlyInvestmentTotals(
+  householdId: string,
+): Promise<YearlyInvestmentTotal[]> {
+  const rows = await prisma.holdingSnapshot.groupBy({
+    by: ["year"],
+    where: { holding: { portfolio: { householdId, archived: false } } },
+    _sum: { value: true },
+    orderBy: { year: "asc" },
+  });
+  return rows
+    .map((r) => ({ year: r.year, total: Number(r._sum.value ?? 0) }))
+    .filter((r) => r.total !== 0);
 }
 
 /** Total of current investment value across all portfolios for a year. */
