@@ -69,7 +69,7 @@ export function InvestmentsView({
   portfolios: PortfolioSummary[];
   yearlyTotals: YearlyInvestmentTotal[];
 }) {
-  const { t, locale } = useI18n();
+  const { t } = useI18n();
   const [tab, setTab] = React.useState<"MAIN" | "KIDS">("MAIN");
   const [typeFilter, setTypeFilter] = React.useState<string | null>(null);
 
@@ -79,17 +79,10 @@ export function InvestmentsView({
   const usedTypes = [
     ...new Set(portfolios.flatMap((p) => p.holdings.map((h) => h.type))),
   ].filter(Boolean);
-  // Presets store the canonical Hebrew value in any locale; the English UI
-  // shows a translated label alongside it.
   const typeOptions: AutocompleteOption[] = [
-    ...usedTypes.map((v) => ({ value: v, label: v })),
-    ...INVESTMENT_TYPE_PRESETS.filter(
-      (p) => !usedTypes.includes(p.value),
-    ).map((p) => ({
-      value: p.value,
-      label: locale === "he" ? p.value : `${p.en} (${p.value})`,
-    })),
-  ];
+    ...usedTypes,
+    ...INVESTMENT_TYPE_PRESETS.filter((p) => !usedTypes.includes(p)),
+  ].map((v) => ({ value: v, label: v }));
 
   if (portfolios.length === 0) {
     return (
