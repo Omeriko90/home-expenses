@@ -17,6 +17,7 @@ export type PortfolioSummary = {
     instrument: string;
     house: string;
     value: number;
+    prevValue: number;
   }[];
 };
 
@@ -47,6 +48,7 @@ export async function getPortfolioSummaries(
         instrument: h.instrument,
         house: h.house,
         value: cur ? Number(cur.value) : 0,
+        prevValue: prev ? Number(prev.value) : 0,
       };
     });
     const deposits = Number(
@@ -217,21 +219,39 @@ export async function getMonthlyCategorySpend(
   return { categories: kept, byMonth, totalsCurrent, totalsPrevious };
 }
 
-export type YearlyInvestmentTotal = { year: number; total: number };
+export type YearlyInvestmentTotal = {
+  year: number;
+  instrument: string;
+  total: number;
+};
 
-/** Total investment value per year across all active portfolios. */
+/** Investment value per year and instrument across all active portfolios. */
 export async function getYearlyInvestmentTotals(
   householdId: string,
 ): Promise<YearlyInvestmentTotal[]> {
-  const rows = await prisma.holdingSnapshot.groupBy({
-    by: ["year"],
+  const snapshots = await prisma.holdingSnapshot.findMany({
     where: { holding: { portfolio: { householdId, archived: false } } },
-    _sum: { value: true },
-    orderBy: { year: "asc" },
+    select: {
+      year: true,
+      value: true,
+      holding: { select: { instrument: true } },
+    },
   });
-  return rows
-    .map((r) => ({ year: r.year, total: Number(r._sum.value ?? 0) }))
-    .filter((r) => r.total !== 0);
+
+  const totals = new Map<string, YearlyInvestmentTotal>();
+  for (const s of snapshots) {
+    const key = `${s.year}:${s.holding.instrument}`;
+    const row = totals.get(key) ?? {
+      year: s.year,
+      instrument: s.holding.instrument,
+      total: 0,
+    };
+    row.total += Number(s.value);
+    totals.set(key, row);
+  }
+  return [...totals.values()]
+    .filter((r) => r.total !== 0)
+    .sort((a, b) => a.year - b.year);
 }
 
 /** Total of current investment value across all portfolios for a year. */

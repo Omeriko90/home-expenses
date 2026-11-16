@@ -11,7 +11,6 @@ import {
 } from "recharts";
 import { useI18n } from "@/lib/i18n/context";
 import { formatMoneyCompact } from "@/lib/utils";
-import type { YearlyInvestmentTotal } from "@/lib/summary";
 import { ChartTooltip } from "./chart-tooltip";
 import { INVESTMENT_COLOR, GRID_COLOR } from "./chart-palette";
 
@@ -19,7 +18,7 @@ import { INVESTMENT_COLOR, GRID_COLOR } from "./chart-palette";
 export function InvestmentGrowthLineChart({
   totals,
 }: {
-  totals: YearlyInvestmentTotal[];
+  totals: { year: number; total: number }[];
 }) {
   const { t } = useI18n();
   return (

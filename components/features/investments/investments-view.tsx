@@ -4,7 +4,7 @@ import * as React from "react";
 import { Pencil, Plus, Trash2, TrendingUp } from "lucide-react";
 import { toast } from "sonner";
 import { useI18n } from "@/lib/i18n/context";
-import { formatMoney, formatPercent } from "@/lib/utils";
+import { formatMoney, formatPercent, yoyPercent } from "@/lib/utils";
 import type { PortfolioSummary, YearlyInvestmentTotal } from "@/lib/summary";
 import {
   upsertHolding,
@@ -12,6 +12,14 @@ import {
   upsertDeposits,
 } from "@/app/actions/investments";
 import { EmptyState } from "@/components/shared/empty-state";
+import { Autocomplete } from "@/components/shared/autocomplete";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { InvestmentCharts } from "./investment-charts";
 import { YearSelect } from "@/components/shared/year-select";
 import { StatCard, ChangeIndicator } from "@/components/shared/stat-card";
@@ -59,9 +67,20 @@ export function InvestmentsView({
 }) {
   const { t } = useI18n();
   const [tab, setTab] = React.useState<"MAIN" | "KIDS">("MAIN");
+  const [instrument, setInstrument] = React.useState<string | null>(null);
 
   const main = portfolios.filter((p) => p.group === "MAIN");
   const kids = portfolios.filter((p) => p.group === "KIDS");
+
+  const usedInstruments = [
+    ...new Set(portfolios.flatMap((p) => p.holdings.map((h) => h.instrument))),
+  ].filter(Boolean);
+  const instrumentOptions = [
+    ...usedInstruments,
+    ...t.investments.instrumentPresets.filter(
+      (p) => !usedInstruments.includes(p),
+    ),
+  ];
 
   if (portfolios.length === 0) {
     return (
@@ -81,32 +100,58 @@ export function InvestmentsView({
           <TabsTrigger value="MAIN">{t.investments.main}</TabsTrigger>
           <TabsTrigger value="KIDS">{t.investments.kids}</TabsTrigger>
         </TabsList>
-        <YearSelect year={year} years={years} />
+        <div className="flex items-center gap-2">
+          <Select
+            value={instrument ?? "all"}
+            onValueChange={(v) => setInstrument(v === "all" ? null : v)}
+          >
+            <SelectTrigger className="w-44">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">{t.investments.allInstruments}</SelectItem>
+              {usedInstruments.map((i) => (
+                <SelectItem key={i} value={i}>
+                  {i}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <YearSelect year={year} years={years} />
+        </div>
       </div>
-      <TabsContent value="MAIN" className="flex flex-col gap-6">
-        {main.length === 0 ? (
-          <EmptyState icon={<TrendingUp />} title={t.investments.empty} />
-        ) : (
-          <>
-            <InvestmentCharts portfolios={main} yearlyTotals={yearlyTotals} />
-            {main.map((p) => (
-              <PortfolioSection key={p.id} portfolio={p} year={year} />
-            ))}
-          </>
-        )}
-      </TabsContent>
-      <TabsContent value="KIDS" className="flex flex-col gap-6">
-        {kids.length === 0 ? (
-          <EmptyState icon={<TrendingUp />} title={t.investments.empty} />
-        ) : (
-          <>
-            <InvestmentCharts portfolios={kids} yearlyTotals={yearlyTotals} />
-            {kids.map((p) => (
-              <PortfolioSection key={p.id} portfolio={p} year={year} />
-            ))}
-          </>
-        )}
-      </TabsContent>
+      {(["MAIN", "KIDS"] as const).map((group) => {
+        const groupPortfolios = group === "MAIN" ? main : kids;
+        const shown = instrument
+          ? groupPortfolios.filter((p) =>
+              p.holdings.some((h) => h.instrument === instrument),
+            )
+          : groupPortfolios;
+        return (
+          <TabsContent key={group} value={group} className="flex flex-col gap-6">
+            {shown.length === 0 ? (
+              <EmptyState icon={<TrendingUp />} title={t.investments.empty} />
+            ) : (
+              <>
+                <InvestmentCharts
+                  portfolios={groupPortfolios}
+                  yearlyTotals={yearlyTotals}
+                  instrument={instrument}
+                />
+                {shown.map((p) => (
+                  <PortfolioSection
+                    key={p.id}
+                    portfolio={p}
+                    year={year}
+                    instrument={instrument}
+                    instrumentOptions={instrumentOptions}
+                  />
+                ))}
+              </>
+            )}
+          </TabsContent>
+        );
+      })}
     </Tabs>
   );
 }
@@ -114,11 +159,30 @@ export function InvestmentsView({
 function PortfolioSection({
   portfolio: p,
   year,
+  instrument,
+  instrumentOptions,
 }: {
   portfolio: PortfolioSummary;
   year: number;
+  instrument: string | null;
+  instrumentOptions: string[];
 }) {
   const { t } = useI18n();
+
+  // With an instrument filter, stats are recomputed from the matching
+  // holdings; deposits are portfolio-level, so they only show unfiltered.
+  const holdings = instrument
+    ? p.holdings.filter((h) => h.instrument === instrument)
+    : p.holdings;
+  const value = instrument
+    ? holdings.reduce((s, h) => s + h.value, 0)
+    : p.value;
+  const prevValue = instrument
+    ? holdings.reduce((s, h) => s + h.prevValue, 0)
+    : p.prevValue;
+  const change = value - prevValue;
+  const changePct = instrument ? yoyPercent(value, prevValue) : p.changePct;
+  const returnPct = instrument ? yoyPercent(value, prevValue) : p.returnPct;
   const [holdingForm, setHoldingForm] = React.useState<{
     open: boolean;
     editing: Holding | null;
@@ -160,25 +224,28 @@ function PortfolioSection({
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
           label={t.investments.currentValue}
-          value={formatMoney(p.value)}
+          value={formatMoney(value)}
           accent="investment"
         />
-        <StatCard label={t.investments.deposits} value={formatMoney(p.deposits)} />
+        <StatCard
+          label={t.investments.deposits}
+          value={instrument ? "—" : formatMoney(p.deposits)}
+        />
         <StatCard
           label={t.investments.changeYoy}
-          value={formatMoney(p.change, { sign: true })}
+          value={formatMoney(change, { sign: true })}
           accent="investment"
-          sub={<ChangeIndicator amount={p.change} pct={p.changePct} mode="percent" />}
+          sub={<ChangeIndicator amount={change} pct={changePct} mode="percent" />}
         />
         <StatCard
           label={t.investments.return}
-          value={p.returnPct === null ? "—" : formatPercent(p.returnPct, { sign: true })}
+          value={returnPct === null ? "—" : formatPercent(returnPct, { sign: true })}
           accent="investment"
         />
       </div>
 
       <Card className="overflow-hidden">
-        {p.holdings.length === 0 ? (
+        {holdings.length === 0 ? (
           <CardContent className="py-8">
             <p className="text-center text-sm text-muted-foreground">
               {t.investments.empty}
@@ -196,7 +263,7 @@ function PortfolioSection({
               </TableRow>
             </TableHeader>
             <TableBody>
-              {p.holdings.map((h) => (
+              {holdings.map((h) => (
                 <TableRow key={h.id}>
                   <TableCell className="font-medium">{h.instrument}</TableCell>
                   <TableCell className="text-muted-foreground">{h.house}</TableCell>
@@ -235,6 +302,7 @@ function PortfolioSection({
         editing={holdingForm.editing}
         portfolioId={p.id}
         year={year}
+        instrumentOptions={instrumentOptions}
       />
       <DepositsForm
         open={depositsOpen}
@@ -261,12 +329,14 @@ function HoldingForm({
   editing,
   portfolioId,
   year,
+  instrumentOptions,
 }: {
   open: boolean;
   onOpenChange: (o: boolean) => void;
   editing: Holding | null;
   portfolioId: string;
   year: number;
+  instrumentOptions: string[];
 }) {
   const { t } = useI18n();
   const [pending, startTransition] = React.useTransition();
@@ -314,11 +384,12 @@ function HoldingForm({
         </DialogHeader>
         <form onSubmit={submit} className="flex flex-col gap-4">
           <Field label={t.investments.instrument} htmlFor="h-inst" required>
-            <Input
+            <Autocomplete
               id="h-inst"
-              value={instrument}
-              onChange={(e) => setInstrument(e.target.value)}
-              required
+              options={instrumentOptions.map((v) => ({ value: v, label: v }))}
+              value={instrument || null}
+              onChange={setInstrument}
+              customValueLabel={t.common.addCustom}
             />
           </Field>
           <div className="grid grid-cols-2 gap-4">
