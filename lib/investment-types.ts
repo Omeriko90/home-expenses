@@ -12,5 +12,4 @@ export const INVESTMENT_TYPE_PRESETS: string[] = [
   "תיק מסחר עצמאי",
   "קרן כספית",
   "פיקדון",
-  "401k",
 ];
