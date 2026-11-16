@@ -90,7 +90,9 @@ export function TransactionsView({
   }
 
   return (
-    <div className="flex flex-col gap-6">
+    // Fill <main>'s height: the table scrolls internally so the count/total
+    // footer at the bottom of the card is always visible.
+    <div className="flex h-full min-h-0 flex-col gap-6">
       {/* Month/year picker at the start; action buttons at the end. */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <MonthYearPicker year={year} month={month} />
@@ -170,9 +172,9 @@ export function TransactionsView({
           }
         />
       ) : (
-        <Card className="overflow-hidden">
-          <Table>
-            <TableHeader>
+        <Card className="flex min-h-0 flex-1 flex-col overflow-hidden">
+          <Table containerClassName="min-h-0 flex-1 overflow-y-auto">
+            <TableHeader className="sticky top-0 z-10 bg-surface shadow-divider">
               <TableRow>
                 <TableHead className="w-28">{t.transactions.date}</TableHead>
                 <TableHead>{t.transactions.business}</TableHead>
@@ -222,7 +224,7 @@ export function TransactionsView({
               ))}
             </TableBody>
           </Table>
-          <div className="flex items-center justify-between border-t border-border bg-surface-muted/50 px-4 py-3 text-sm font-semibold">
+          <div className="flex shrink-0 items-center justify-between border-t border-border bg-surface-muted/50 px-4 py-3 text-sm font-semibold">
             <span>
               {filtered.length} {t.transactions.count}
             </span>
