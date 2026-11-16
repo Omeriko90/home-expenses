@@ -10,36 +10,39 @@ import { InvestmentGrowthLineChart } from "@/components/shared/charts/investment
 export function InvestmentCharts({
   portfolios,
   yearlyTotals,
-  instrument,
+  type,
 }: {
   portfolios: PortfolioSummary[];
   yearlyTotals: YearlyInvestmentTotal[];
-  /** Restrict all charts to this instrument; null shows everything. */
-  instrument: string | null;
+  /** Restrict all charts to this holding type; null shows everything. */
+  type: string | null;
 }) {
   const { t } = useI18n();
 
+  const byType = new Map<string, number>();
   const byChannel = new Map<string, number>();
   const byPortfolio = new Map<string, number>();
   for (const p of portfolios) {
     for (const h of p.holdings) {
       if (h.value === 0) continue;
-      if (instrument && h.instrument !== instrument) continue;
+      if (type && h.type !== type) continue;
+      byType.set(h.type || "—", (byType.get(h.type || "—") ?? 0) + h.value);
       const channel = h.channel || "—";
       byChannel.set(channel, (byChannel.get(channel) ?? 0) + h.value);
       byPortfolio.set(p.name, (byPortfolio.get(p.name) ?? 0) + h.value);
     }
   }
-  const channelData = [...byChannel.entries()]
-    .map(([name, value]) => ({ name, value }))
-    .sort((a, b) => b.value - a.value);
-  const portfolioData = [...byPortfolio.entries()]
-    .map(([name, value]) => ({ name, value }))
-    .sort((a, b) => b.value - a.value);
+  const toSlices = (m: Map<string, number>) =>
+    [...m.entries()]
+      .map(([name, value]) => ({ name, value }))
+      .sort((a, b) => b.value - a.value);
+  const typeData = toSlices(byType);
+  const channelData = toSlices(byChannel);
+  const portfolioData = toSlices(byPortfolio);
 
   const growthByYear = new Map<number, number>();
   for (const r of yearlyTotals) {
-    if (instrument && r.instrument !== instrument) continue;
+    if (type && r.type !== type) continue;
     growthByYear.set(r.year, (growthByYear.get(r.year) ?? 0) + r.total);
   }
   const growthData = [...growthByYear.entries()]
@@ -47,11 +50,16 @@ export function InvestmentCharts({
     .filter((r) => r.total !== 0)
     .sort((a, b) => a.year - b.year);
 
-  if (channelData.length === 0 && growthData.length === 0) return null;
+  if (typeData.length === 0 && growthData.length === 0) return null;
 
   return (
     <div className="grid gap-3 lg:grid-cols-2">
-      {channelData.length > 0 && (
+      {typeData.length > 1 && (
+        <ChartCard title={t.investments.chartByType}>
+          <SharePieChart data={typeData} />
+        </ChartCard>
+      )}
+      {channelData.length > 1 && (
         <ChartCard title={t.investments.chartByChannel}>
           <SharePieChart data={channelData} />
         </ChartCard>

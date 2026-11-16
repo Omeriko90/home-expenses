@@ -194,8 +194,9 @@ model Portfolio {
 model Holding {
   id         String @id @default(cuid())
   channel    String // אפיק
-  instrument String // מכשיר
+  instrument String // מכשיר (name)
   house      String // בית השקעות
+  type       String @default("") // סוג (קרן השתלמות, פנסיה, 401k...)
   sortOrder  Int    @default(0)
 
   portfolioId String

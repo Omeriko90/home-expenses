@@ -16,6 +16,7 @@ export type PortfolioSummary = {
     channel: string;
     instrument: string;
     house: string;
+    type: string;
     value: number;
     prevValue: number;
   }[];
@@ -47,6 +48,7 @@ export async function getPortfolioSummaries(
         channel: h.channel,
         instrument: h.instrument,
         house: h.house,
+        type: h.type,
         value: cur ? Number(cur.value) : 0,
         prevValue: prev ? Number(prev.value) : 0,
       };
@@ -221,11 +223,11 @@ export async function getMonthlyCategorySpend(
 
 export type YearlyInvestmentTotal = {
   year: number;
-  instrument: string;
+  type: string;
   total: number;
 };
 
-/** Investment value per year and instrument across all active portfolios. */
+/** Investment value per year and holding type across all active portfolios. */
 export async function getYearlyInvestmentTotals(
   householdId: string,
 ): Promise<YearlyInvestmentTotal[]> {
@@ -234,16 +236,16 @@ export async function getYearlyInvestmentTotals(
     select: {
       year: true,
       value: true,
-      holding: { select: { instrument: true } },
+      holding: { select: { type: true } },
     },
   });
 
   const totals = new Map<string, YearlyInvestmentTotal>();
   for (const s of snapshots) {
-    const key = `${s.year}:${s.holding.instrument}`;
+    const key = `${s.year}:${s.holding.type}`;
     const row = totals.get(key) ?? {
       year: s.year,
-      instrument: s.holding.instrument,
+      type: s.holding.type,
       total: 0,
     };
     row.total += Number(s.value);
