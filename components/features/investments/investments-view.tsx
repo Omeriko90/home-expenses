@@ -12,7 +12,11 @@ import {
   upsertDeposits,
 } from "@/app/actions/investments";
 import { EmptyState } from "@/components/shared/empty-state";
-import { Autocomplete } from "@/components/shared/autocomplete";
+import {
+  Autocomplete,
+  type AutocompleteOption,
+} from "@/components/shared/autocomplete";
+import { INVESTMENT_TYPE_PRESETS } from "@/lib/investment-types";
 import {
   Select,
   SelectContent,
@@ -65,7 +69,7 @@ export function InvestmentsView({
   portfolios: PortfolioSummary[];
   yearlyTotals: YearlyInvestmentTotal[];
 }) {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const [tab, setTab] = React.useState<"MAIN" | "KIDS">("MAIN");
   const [typeFilter, setTypeFilter] = React.useState<string | null>(null);
 
@@ -75,9 +79,16 @@ export function InvestmentsView({
   const usedTypes = [
     ...new Set(portfolios.flatMap((p) => p.holdings.map((h) => h.type))),
   ].filter(Boolean);
-  const typeOptions = [
-    ...usedTypes,
-    ...t.investments.typePresets.filter((p) => !usedTypes.includes(p)),
+  // Presets store the canonical Hebrew value in any locale; the English UI
+  // shows a translated label alongside it.
+  const typeOptions: AutocompleteOption[] = [
+    ...usedTypes.map((v) => ({ value: v, label: v })),
+    ...INVESTMENT_TYPE_PRESETS.filter(
+      (p) => !usedTypes.includes(p.value),
+    ).map((p) => ({
+      value: p.value,
+      label: locale === "he" ? p.value : `${p.en} (${p.value})`,
+    })),
   ];
 
   if (portfolios.length === 0) {
@@ -163,7 +174,7 @@ function PortfolioSection({
   portfolio: PortfolioSummary;
   year: number;
   typeFilter: string | null;
-  typeOptions: string[];
+  typeOptions: AutocompleteOption[];
 }) {
   const { t } = useI18n();
 
@@ -338,7 +349,7 @@ function HoldingForm({
   editing: Holding | null;
   portfolioId: string;
   year: number;
-  typeOptions: string[];
+  typeOptions: AutocompleteOption[];
 }) {
   const { t } = useI18n();
   const [pending, startTransition] = React.useTransition();
@@ -399,7 +410,7 @@ function HoldingForm({
           <Field label={t.common.type} htmlFor="h-type">
             <Autocomplete
               id="h-type"
-              options={typeOptions.map((v) => ({ value: v, label: v }))}
+              options={typeOptions}
               value={type || null}
               onChange={setType}
               customValueLabel={t.common.addCustom}
