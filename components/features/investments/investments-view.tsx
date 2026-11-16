@@ -254,7 +254,7 @@ function PortfolioSection({
             </p>
           </CardContent>
         ) : (
-          <Table>
+          <Table className="[&_td:first-child]:ps-[17px] [&_td:last-child]:pe-[17px] [&_th:first-child]:ps-[17px] [&_th:last-child]:pe-[17px]">
             <TableHeader>
               <TableRow>
                 <TableHead>{t.investments.instrument}</TableHead>
