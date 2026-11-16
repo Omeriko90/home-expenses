@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Check, ChevronsUpDown } from "lucide-react";
+import { Check, ChevronsUpDown, Plus } from "lucide-react";
 import {
   Command,
   CommandEmpty,
@@ -51,11 +51,17 @@ export function Autocomplete({
   const [open, setOpen] = React.useState(false);
   const [search, setSearch] = React.useState("");
   const selected = options.find((o) => o.value === value);
-  const trimmed = search.trim();
+  // Collapse inner whitespace and compare case-insensitively so "study Fund"
+  // offers the existing "Study fund" instead of a near-duplicate.
+  const trimmed = search.trim().replace(/\s+/g, " ");
+  const lower = trimmed.toLowerCase();
   const showCustom =
     !!customValueLabel &&
     trimmed !== "" &&
-    !options.some((o) => o.value === trimmed || o.label === trimmed);
+    !options.some(
+      (o) =>
+        o.value.toLowerCase() === lower || o.label.toLowerCase() === lower,
+    );
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -130,7 +136,7 @@ export function Autocomplete({
                     setOpen(false);
                   }}
                 >
-                  <Check className="size-4 opacity-0" />
+                  <Plus className="size-4 text-primary" />
                   <span className="flex-1">
                     {customValueLabel!.replace("{v}", trimmed)}
                   </span>

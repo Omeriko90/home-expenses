@@ -26,6 +26,20 @@ export async function upsertHolding(input: z.infer<typeof holdingSchema>) {
   });
   if (!portfolio) return { error: "notFound" as const };
 
+  // Reuse an existing type's exact spelling when the typed value only
+  // differs by case/whitespace, so free text can't create duplicates.
+  let type = d.type.trim().replace(/\s+/g, " ");
+  if (type) {
+    const existing = await prisma.holding.findFirst({
+      where: {
+        portfolio: { householdId },
+        type: { equals: type, mode: "insensitive" },
+      },
+      select: { type: true },
+    });
+    if (existing) type = existing.type;
+  }
+
   let holdingId = d.holdingId ?? null;
   if (holdingId) {
     await prisma.holding.update({
@@ -34,7 +48,7 @@ export async function upsertHolding(input: z.infer<typeof holdingSchema>) {
         channel: d.channel,
         instrument: d.instrument,
         house: d.house,
-        type: d.type,
+        type,
       },
     });
   } else {
@@ -44,7 +58,7 @@ export async function upsertHolding(input: z.infer<typeof holdingSchema>) {
         channel: d.channel,
         instrument: d.instrument,
         house: d.house,
-        type: d.type,
+        type,
       },
     });
     holdingId = h.id;
