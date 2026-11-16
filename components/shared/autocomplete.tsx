@@ -30,6 +30,9 @@ export function Autocomplete({
   placeholder = "בחר…",
   searchPlaceholder = "חיפוש…",
   emptyText = "לא נמצאו תוצאות",
+  /** When set, typing a value not in the options offers it as a new entry,
+   * labeled with this template ("{v}" is replaced by the typed text). */
+  customValueLabel,
   className,
   disabled,
   id,
@@ -40,12 +43,19 @@ export function Autocomplete({
   placeholder?: string;
   searchPlaceholder?: string;
   emptyText?: string;
+  customValueLabel?: string;
   className?: string;
   disabled?: boolean;
   id?: string;
 }) {
   const [open, setOpen] = React.useState(false);
+  const [search, setSearch] = React.useState("");
   const selected = options.find((o) => o.value === value);
+  const trimmed = search.trim();
+  const showCustom =
+    !!customValueLabel &&
+    trimmed !== "" &&
+    !options.some((o) => o.value === trimmed || o.label === trimmed);
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -59,12 +69,12 @@ export function Autocomplete({
           className={cn(
             "flex h-10 w-full items-center justify-between gap-2 rounded-md border border-input bg-surface px-3 py-2 text-sm shadow-sm",
             "focus:outline-none focus:ring-2 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-50",
-            !selected && "text-muted-foreground",
+            !selected && !value && "text-muted-foreground",
             className,
           )}
         >
           <span className="line-clamp-1 text-start">
-            {selected ? selected.label : placeholder}
+            {selected ? selected.label : value || placeholder}
           </span>
           <ChevronsUpDown className="size-4 shrink-0 opacity-50" />
         </button>
@@ -79,9 +89,13 @@ export function Autocomplete({
             return text.includes(search.toLowerCase()) ? 1 : 0;
           }}
         >
-          <CommandInput placeholder={searchPlaceholder} />
+          <CommandInput
+            placeholder={searchPlaceholder}
+            value={search}
+            onValueChange={setSearch}
+          />
           <CommandList>
-            <CommandEmpty>{emptyText}</CommandEmpty>
+            {!showCustom && <CommandEmpty>{emptyText}</CommandEmpty>}
             <CommandGroup>
               {options.map((opt) => (
                 <CommandItem
@@ -107,6 +121,21 @@ export function Autocomplete({
                   )}
                 </CommandItem>
               ))}
+              {showCustom && (
+                <CommandItem
+                  value={trimmed}
+                  onSelect={() => {
+                    onChange(trimmed);
+                    setSearch("");
+                    setOpen(false);
+                  }}
+                >
+                  <Check className="size-4 opacity-0" />
+                  <span className="flex-1">
+                    {customValueLabel!.replace("{v}", trimmed)}
+                  </span>
+                </CommandItem>
+              )}
             </CommandGroup>
           </CommandList>
         </Command>
