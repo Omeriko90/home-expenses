@@ -1,8 +1,9 @@
 "use client";
 
 import * as React from "react";
+import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Menu, User } from "lucide-react";
+import { Menu, Settings, User } from "lucide-react";
 import { Nav } from "./nav";
 import { LocaleToggle } from "./locale-toggle";
 import { LogoutButton } from "./logout-button";
@@ -18,6 +19,7 @@ import {
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
@@ -30,6 +32,7 @@ const PAGE_KEYS = [
   "budgets",
   "goals",
   "investments",
+  "settings",
 ] as const;
 
 export function Topbar({ userName }: { userName: string }) {
@@ -77,6 +80,12 @@ export function Topbar({ userName }: { userName: string }) {
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>{userName}</DropdownMenuLabel>
             <DropdownMenuSeparator />
+            <DropdownMenuItem asChild>
+              <Link href="/settings" className="flex items-center gap-2">
+                <Settings className="size-4" />
+                {t.nav.settings}
+              </Link>
+            </DropdownMenuItem>
             <LogoutButton />
           </DropdownMenuContent>
         </DropdownMenu>

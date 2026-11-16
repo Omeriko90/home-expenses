@@ -4,6 +4,7 @@ import {
   getPortfolioSummaries,
   getGoalStats,
 } from "@/lib/summary";
+import { requireUser } from "@/lib/session";
 import { SummaryView } from "@/components/features/summary/summary-view";
 
 export default async function DashboardPage({
@@ -12,13 +13,14 @@ export default async function DashboardPage({
   searchParams: Promise<{ year?: string }>;
 }) {
   const sp = await searchParams;
-  const years = await getYears();
+  const { householdId } = await requireUser();
+  const years = await getYears(householdId);
   const year = resolveYear(years, sp.year);
 
   const [spend, portfolios, goalStats] = await Promise.all([
-    getCategorySpend(year),
-    getPortfolioSummaries(year),
-    getGoalStats(year),
+    getCategorySpend(year, householdId),
+    getPortfolioSummaries(year, householdId),
+    getGoalStats(year, householdId),
   ]);
 
   const totalCurrent = spend.reduce((s, r) => s + r.current, 0);

@@ -20,7 +20,7 @@ const goalSchema = z.object({
 export type GoalInput = z.infer<typeof goalSchema>;
 
 export async function createGoal(input: GoalInput) {
-  await requireUser();
+  const { householdId } = await requireUser();
   const d = goalSchema.parse(input);
   await prisma.goal.create({
     data: {
@@ -35,6 +35,7 @@ export async function createGoal(input: GoalInput) {
           : null,
       linkKind: d.type === "NUMERIC" ? d.linkKind : "NONE",
       linkCategoryId: d.linkKind === "CATEGORY" ? (d.linkCategoryId ?? null) : null,
+      householdId,
       milestones:
         d.type === "CHECKLIST" && d.milestones
           ? {
@@ -50,10 +51,10 @@ export async function createGoal(input: GoalInput) {
 }
 
 export async function updateGoal(id: string, input: GoalInput) {
-  await requireUser();
+  const { householdId } = await requireUser();
   const d = goalSchema.parse(input);
   await prisma.goal.update({
-    where: { id },
+    where: { id, householdId },
     data: {
       title: d.title,
       year: d.year,
@@ -72,21 +73,29 @@ export async function updateGoal(id: string, input: GoalInput) {
 }
 
 export async function deleteGoal(id: string) {
-  await requireUser();
-  await prisma.goal.delete({ where: { id } });
+  const { householdId } = await requireUser();
+  await prisma.goal.delete({ where: { id, householdId } });
   revalidatePath("/goals");
   return { ok: true as const };
 }
 
 export async function toggleMilestone(id: string, done: boolean) {
-  await requireUser();
-  await prisma.goalMilestone.update({ where: { id }, data: { done } });
+  const { householdId } = await requireUser();
+  await prisma.goalMilestone.update({
+    where: { id, goal: { householdId } },
+    data: { done },
+  });
   revalidatePath("/goals");
   return { ok: true as const };
 }
 
 export async function addMilestone(goalId: string, title: string) {
-  await requireUser();
+  const { householdId } = await requireUser();
+  const goal = await prisma.goal.findFirst({
+    where: { id: goalId, householdId },
+    select: { id: true },
+  });
+  if (!goal) return { error: "notFound" as const };
   const count = await prisma.goalMilestone.count({ where: { goalId } });
   await prisma.goalMilestone.create({
     data: { goalId, title, sortOrder: count },
@@ -96,8 +105,10 @@ export async function addMilestone(goalId: string, title: string) {
 }
 
 export async function deleteMilestone(id: string) {
-  await requireUser();
-  await prisma.goalMilestone.delete({ where: { id } });
+  const { householdId } = await requireUser();
+  await prisma.goalMilestone.delete({
+    where: { id, goal: { householdId } },
+  });
   revalidatePath("/goals");
   return { ok: true as const };
 }

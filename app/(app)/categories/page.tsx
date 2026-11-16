@@ -1,8 +1,11 @@
 import { prisma } from "@/lib/db";
+import { requireUser } from "@/lib/session";
 import { CategoryManager } from "@/components/features/categories/category-manager";
 
 export default async function CategoriesPage() {
+  const { householdId } = await requireUser();
   const categories = await prisma.category.findMany({
+    where: { householdId },
     orderBy: [{ archived: "asc" }, { name: "asc" }],
     include: { _count: { select: { transactions: true } } },
   });

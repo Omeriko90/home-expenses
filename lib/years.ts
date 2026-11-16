@@ -1,10 +1,18 @@
 import { prisma } from "@/lib/db";
 
 /** Distinct years present in the data, plus the current year, newest first. */
-export async function getYears(): Promise<number[]> {
+export async function getYears(householdId: string): Promise<number[]> {
   const [tx, bud] = await Promise.all([
-    prisma.transaction.findMany({ distinct: ["year"], select: { year: true } }),
-    prisma.budget.findMany({ distinct: ["year"], select: { year: true } }),
+    prisma.transaction.findMany({
+      where: { householdId },
+      distinct: ["year"],
+      select: { year: true },
+    }),
+    prisma.budget.findMany({
+      where: { category: { householdId } },
+      distinct: ["year"],
+      select: { year: true },
+    }),
   ]);
   const set = new Set<number>([
     ...tx.map((t) => t.year),

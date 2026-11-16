@@ -12,8 +12,14 @@ const schema = z.object({
 });
 
 export async function upsertBudget(input: z.infer<typeof schema>) {
-  await requireUser();
+  const { householdId } = await requireUser();
   const { categoryId, year, monthlyAmount } = schema.parse(input);
+  // Budget is scoped through its category — verify it belongs to the household.
+  const category = await prisma.category.findFirst({
+    where: { id: categoryId, householdId },
+    select: { id: true },
+  });
+  if (!category) return { error: "notFound" as const };
   await prisma.budget.upsert({
     where: { categoryId_year: { categoryId, year } },
     update: { monthlyAmount },
@@ -24,8 +30,10 @@ export async function upsertBudget(input: z.infer<typeof schema>) {
 }
 
 export async function copyBudgetsFromPreviousYear(year: number) {
-  await requireUser();
-  const prev = await prisma.budget.findMany({ where: { year: year - 1 } });
+  const { householdId } = await requireUser();
+  const prev = await prisma.budget.findMany({
+    where: { year: year - 1, category: { householdId } },
+  });
   for (const b of prev) {
     await prisma.budget.upsert({
       where: { categoryId_year: { categoryId: b.categoryId, year } },

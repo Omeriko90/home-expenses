@@ -20,7 +20,7 @@ export type ParseResult = {
 };
 
 export async function parseImport(formData: FormData): Promise<ParseResult> {
-  await requireUser();
+  const { householdId } = await requireUser();
   const file = formData.get("file");
   if (!(file instanceof File)) throw new Error("No file");
   const buffer = Buffer.from(await file.arrayBuffer());
@@ -28,11 +28,12 @@ export async function parseImport(formData: FormData): Promise<ParseResult> {
 
   const [categories, mappings] = await Promise.all([
     prisma.category.findMany({
-      where: { archived: false },
+      where: { archived: false, householdId },
       select: { id: true, name: true, type: true },
       orderBy: { name: "asc" },
     }),
     prisma.businessMapping.findMany({
+      where: { householdId },
       select: { pattern: true, categoryId: true },
     }),
   ]);
@@ -75,6 +76,7 @@ export async function commitImport(rows: CommitRow[]) {
         year: date.getUTCFullYear(),
         month: date.getUTCMonth() + 1,
         createdByUserId: user.id,
+        householdId: user.householdId,
       };
     }),
   });
@@ -91,9 +93,11 @@ export async function commitImport(rows: CommitRow[]) {
   }
   for (const [pattern, categoryId] of byPattern) {
     await prisma.businessMapping.upsert({
-      where: { pattern },
+      where: {
+        householdId_pattern: { householdId: user.householdId, pattern },
+      },
       update: { categoryId, hitCount: { increment: 1 } },
-      create: { pattern, categoryId },
+      create: { pattern, categoryId, householdId: user.householdId },
     });
   }
 

@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/db";
 import { resolveYearLoose, resolveMonth } from "@/lib/years";
+import { requireUser } from "@/lib/session";
 import { TransactionsView } from "@/components/features/transactions/transactions-view";
 
 export default async function TransactionsPage({
@@ -8,12 +9,13 @@ export default async function TransactionsPage({
   searchParams: Promise<{ year?: string; month?: string }>;
 }) {
   const sp = await searchParams;
+  const { householdId } = await requireUser();
   const year = resolveYearLoose(sp.year);
 
   // Only the selected month is loaded — never the whole year.
   const monthsWithData = (
     await prisma.transaction.findMany({
-      where: { year },
+      where: { year, householdId },
       distinct: ["month"],
       select: { month: true },
     })
@@ -21,9 +23,9 @@ export default async function TransactionsPage({
   const month = resolveMonth(monthsWithData, year, sp.month);
 
   const [categories, transactions] = await Promise.all([
-    prisma.category.findMany({ orderBy: { name: "asc" } }),
+    prisma.category.findMany({ where: { householdId }, orderBy: { name: "asc" } }),
     prisma.transaction.findMany({
-      where: { year, month },
+      where: { year, month, householdId },
       orderBy: { date: "desc" },
       include: { category: { select: { name: true } } },
     }),
