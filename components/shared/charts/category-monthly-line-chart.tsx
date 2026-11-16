@@ -34,7 +34,13 @@ export function CategoryMonthlyLineChart({
       ),
   );
 
-  const data = monthly.byMonth.map((m, i) => ({ month: t.months[i], ...m }));
+  // Refund months can net negative; the chart shows spend, so floor at 0.
+  const data = monthly.byMonth.map((m, i) => ({
+    month: t.months[i],
+    ...Object.fromEntries(
+      Object.entries(m).map(([id, v]) => [id, Math.max(0, v)]),
+    ),
+  }));
   const collapsible = monthly.categories.length > MAX_LEGEND_ITEMS;
   const shown = expanded
     ? monthly.categories
