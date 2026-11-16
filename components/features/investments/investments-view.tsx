@@ -67,19 +67,17 @@ export function InvestmentsView({
 }) {
   const { t } = useI18n();
   const [tab, setTab] = React.useState<"MAIN" | "KIDS">("MAIN");
-  const [instrument, setInstrument] = React.useState<string | null>(null);
+  const [typeFilter, setTypeFilter] = React.useState<string | null>(null);
 
   const main = portfolios.filter((p) => p.group === "MAIN");
   const kids = portfolios.filter((p) => p.group === "KIDS");
 
-  const usedInstruments = [
-    ...new Set(portfolios.flatMap((p) => p.holdings.map((h) => h.instrument))),
+  const usedTypes = [
+    ...new Set(portfolios.flatMap((p) => p.holdings.map((h) => h.type))),
   ].filter(Boolean);
-  const instrumentOptions = [
-    ...usedInstruments,
-    ...t.investments.instrumentPresets.filter(
-      (p) => !usedInstruments.includes(p),
-    ),
+  const typeOptions = [
+    ...usedTypes,
+    ...t.investments.typePresets.filter((p) => !usedTypes.includes(p)),
   ];
 
   if (portfolios.length === 0) {
@@ -102,17 +100,17 @@ export function InvestmentsView({
         </TabsList>
         <div className="flex items-center gap-2">
           <Select
-            value={instrument ?? "all"}
-            onValueChange={(v) => setInstrument(v === "all" ? null : v)}
+            value={typeFilter ?? "all"}
+            onValueChange={(v) => setTypeFilter(v === "all" ? null : v)}
           >
             <SelectTrigger className="w-44">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">{t.investments.allInstruments}</SelectItem>
-              {usedInstruments.map((i) => (
-                <SelectItem key={i} value={i}>
-                  {i}
+              <SelectItem value="all">{t.investments.allTypes}</SelectItem>
+              {usedTypes.map((v) => (
+                <SelectItem key={v} value={v}>
+                  {v}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -122,9 +120,9 @@ export function InvestmentsView({
       </div>
       {(["MAIN", "KIDS"] as const).map((group) => {
         const groupPortfolios = group === "MAIN" ? main : kids;
-        const shown = instrument
+        const shown = typeFilter
           ? groupPortfolios.filter((p) =>
-              p.holdings.some((h) => h.instrument === instrument),
+              p.holdings.some((h) => h.type === typeFilter),
             )
           : groupPortfolios;
         return (
@@ -136,15 +134,15 @@ export function InvestmentsView({
                 <InvestmentCharts
                   portfolios={groupPortfolios}
                   yearlyTotals={yearlyTotals}
-                  instrument={instrument}
+                  type={typeFilter}
                 />
                 {shown.map((p) => (
                   <PortfolioSection
                     key={p.id}
                     portfolio={p}
                     year={year}
-                    instrument={instrument}
-                    instrumentOptions={instrumentOptions}
+                    typeFilter={typeFilter}
+                    typeOptions={typeOptions}
                   />
                 ))}
               </>
@@ -159,30 +157,30 @@ export function InvestmentsView({
 function PortfolioSection({
   portfolio: p,
   year,
-  instrument,
-  instrumentOptions,
+  typeFilter,
+  typeOptions,
 }: {
   portfolio: PortfolioSummary;
   year: number;
-  instrument: string | null;
-  instrumentOptions: string[];
+  typeFilter: string | null;
+  typeOptions: string[];
 }) {
   const { t } = useI18n();
 
-  // With an instrument filter, stats are recomputed from the matching
-  // holdings; deposits are portfolio-level, so they only show unfiltered.
-  const holdings = instrument
-    ? p.holdings.filter((h) => h.instrument === instrument)
+  // With a type filter, stats are recomputed from the matching holdings;
+  // deposits are portfolio-level, so they only show unfiltered.
+  const holdings = typeFilter
+    ? p.holdings.filter((h) => h.type === typeFilter)
     : p.holdings;
-  const value = instrument
+  const value = typeFilter
     ? holdings.reduce((s, h) => s + h.value, 0)
     : p.value;
-  const prevValue = instrument
+  const prevValue = typeFilter
     ? holdings.reduce((s, h) => s + h.prevValue, 0)
     : p.prevValue;
   const change = value - prevValue;
-  const changePct = instrument ? yoyPercent(value, prevValue) : p.changePct;
-  const returnPct = instrument ? yoyPercent(value, prevValue) : p.returnPct;
+  const changePct = typeFilter ? yoyPercent(value, prevValue) : p.changePct;
+  const returnPct = typeFilter ? yoyPercent(value, prevValue) : p.returnPct;
   const [holdingForm, setHoldingForm] = React.useState<{
     open: boolean;
     editing: Holding | null;
@@ -229,7 +227,7 @@ function PortfolioSection({
         />
         <StatCard
           label={t.investments.deposits}
-          value={instrument ? "—" : formatMoney(p.deposits)}
+          value={typeFilter ? "—" : formatMoney(p.deposits)}
         />
         <StatCard
           label={t.investments.changeYoy}
@@ -256,6 +254,7 @@ function PortfolioSection({
             <TableHeader>
               <TableRow>
                 <TableHead>{t.investments.instrument}</TableHead>
+                <TableHead>{t.common.type}</TableHead>
                 <TableHead>{t.investments.house}</TableHead>
                 <TableHead>{t.investments.channel}</TableHead>
                 <TableHead className="text-end">{t.investments.value}</TableHead>
@@ -266,6 +265,9 @@ function PortfolioSection({
               {holdings.map((h) => (
                 <TableRow key={h.id}>
                   <TableCell className="font-medium">{h.instrument}</TableCell>
+                  <TableCell className="text-muted-foreground">
+                    {h.type || "—"}
+                  </TableCell>
                   <TableCell className="text-muted-foreground">{h.house}</TableCell>
                   <TableCell className="text-muted-foreground">{h.channel}</TableCell>
                   <TableCell className="text-end tnum">
@@ -302,7 +304,7 @@ function PortfolioSection({
         editing={holdingForm.editing}
         portfolioId={p.id}
         year={year}
-        instrumentOptions={instrumentOptions}
+        typeOptions={typeOptions}
       />
       <DepositsForm
         open={depositsOpen}
@@ -329,20 +331,21 @@ function HoldingForm({
   editing,
   portfolioId,
   year,
-  instrumentOptions,
+  typeOptions,
 }: {
   open: boolean;
   onOpenChange: (o: boolean) => void;
   editing: Holding | null;
   portfolioId: string;
   year: number;
-  instrumentOptions: string[];
+  typeOptions: string[];
 }) {
   const { t } = useI18n();
   const [pending, startTransition] = React.useTransition();
   const [instrument, setInstrument] = React.useState("");
   const [house, setHouse] = React.useState("");
   const [channel, setChannel] = React.useState("");
+  const [type, setType] = React.useState("");
   const [value, setValue] = React.useState<number | "">("");
 
   React.useEffect(() => {
@@ -350,6 +353,7 @@ function HoldingForm({
     setInstrument(editing?.instrument ?? "");
     setHouse(editing?.house ?? "");
     setChannel(editing?.channel ?? "");
+    setType(editing?.type ?? "");
     setValue(editing?.value ?? "");
   }, [open, editing]);
 
@@ -366,6 +370,7 @@ function HoldingForm({
         instrument: instrument.trim(),
         house: house.trim(),
         channel: channel.trim(),
+        type: type.trim(),
         year,
         value: Number(value),
       });
@@ -384,11 +389,19 @@ function HoldingForm({
         </DialogHeader>
         <form onSubmit={submit} className="flex flex-col gap-4">
           <Field label={t.investments.instrument} htmlFor="h-inst" required>
-            <Autocomplete
+            <Input
               id="h-inst"
-              options={instrumentOptions.map((v) => ({ value: v, label: v }))}
-              value={instrument || null}
-              onChange={setInstrument}
+              value={instrument}
+              onChange={(e) => setInstrument(e.target.value)}
+              required
+            />
+          </Field>
+          <Field label={t.common.type} htmlFor="h-type">
+            <Autocomplete
+              id="h-type"
+              options={typeOptions.map((v) => ({ value: v, label: v }))}
+              value={type || null}
+              onChange={setType}
               customValueLabel={t.common.addCustom}
             />
           </Field>

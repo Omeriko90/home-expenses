@@ -107,8 +107,9 @@ const he = {
       chartByChannel: "שווי לפי אפיק",
       chartByPortfolio: "שווי לפי תיק",
       chartGrowth: "צמיחת ההשקעות לאורך השנים",
-      allInstruments: "כל המכשירים",
-      instrumentPresets: [
+      allTypes: "כל הסוגים",
+      chartByType: "שווי לפי סוג",
+      typePresets: [
         "קרן השתלמות",
         "קופת גמל",
         "קופת גמל להשקעה",
@@ -378,8 +379,9 @@ const en: Dictionary = {
       chartByChannel: "Value by channel",
       chartByPortfolio: "Value by portfolio",
       chartGrowth: "Investment growth over the years",
-      allInstruments: "All instruments",
-      instrumentPresets: [
+      allTypes: "All types",
+      chartByType: "Value by type",
+      typePresets: [
         "Study fund",
         "Provident fund",
         "Investment provident fund",

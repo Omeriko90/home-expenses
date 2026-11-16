@@ -11,6 +11,7 @@ const holdingSchema = z.object({
   channel: z.string().max(80),
   instrument: z.string().min(1).max(120),
   house: z.string().max(120),
+  type: z.string().max(120),
   year: z.number().int(),
   value: z.number().min(0),
 });
@@ -29,7 +30,12 @@ export async function upsertHolding(input: z.infer<typeof holdingSchema>) {
   if (holdingId) {
     await prisma.holding.update({
       where: { id: holdingId, portfolio: { householdId } },
-      data: { channel: d.channel, instrument: d.instrument, house: d.house },
+      data: {
+        channel: d.channel,
+        instrument: d.instrument,
+        house: d.house,
+        type: d.type,
+      },
     });
   } else {
     const h = await prisma.holding.create({
@@ -38,6 +44,7 @@ export async function upsertHolding(input: z.infer<typeof holdingSchema>) {
         channel: d.channel,
         instrument: d.instrument,
         house: d.house,
+        type: d.type,
       },
     });
     holdingId = h.id;
