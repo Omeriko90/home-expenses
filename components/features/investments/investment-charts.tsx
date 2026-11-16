@@ -54,12 +54,12 @@ export function InvestmentCharts({
 
   return (
     <div className="grid gap-3 lg:grid-cols-2">
-      {typeData.length > 1 && (
+      {typeData.length > 0 && (
         <ChartCard title={t.investments.chartByType}>
           <SharePieChart data={typeData} />
         </ChartCard>
       )}
-      {channelData.length > 1 && (
+      {channelData.length > 0 && (
         <ChartCard title={t.investments.chartByChannel}>
           <SharePieChart data={channelData} />
         </ChartCard>
