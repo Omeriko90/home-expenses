@@ -67,6 +67,14 @@ export async function commitImport(input: CommitRow[]) {
   const rows = z.array(commitRowSchema).parse(input);
   if (rows.length === 0) return { created: 0 };
 
+  // The category FK is not household-scoped at the DB level — verify every
+  // referenced category belongs to the household before writing.
+  const categoryIds = [...new Set(rows.map((r) => r.categoryId))];
+  const owned = await prisma.category.count({
+    where: { id: { in: categoryIds }, householdId: user.householdId },
+  });
+  if (owned !== categoryIds.length) throw new Error("Category not found");
+
   await prisma.transaction.createMany({
     data: rows.map((r) => {
       const date = new Date(r.date);

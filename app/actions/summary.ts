@@ -17,7 +17,7 @@ export async function fetchCategoryMonthlySpend(
   categoryId: string,
   year: number,
 ): Promise<CategoryMonthlySpend> {
-  await requireUser();
+  const { householdId } = await requireUser();
   const input = schema.parse({ categoryId, year });
-  return getCategoryMonthlySpend(input.categoryId, input.year);
+  return getCategoryMonthlySpend(input.categoryId, input.year, householdId);
 }
