@@ -148,7 +148,6 @@ export function InvestmentsView({
                     year={year}
                     typeFilter={typeFilter}
                     typeOptions={typeOptions}
-                    showCards={shown.length > 1}
                   />
                 ))}
               </>
@@ -227,30 +226,19 @@ function PortfolioSection({
   year,
   typeFilter,
   typeOptions,
-  showCards,
 }: {
   portfolio: PortfolioSummary;
   year: number;
   typeFilter: string | null;
   typeOptions: AutocompleteOption[];
-  showCards: boolean;
 }) {
   const { t } = useI18n();
 
-  // With a type filter, stats are recomputed from the matching holdings;
-  // deposits are portfolio-level, so they only show unfiltered.
+  // The stat cards live in GroupSummaryCards above the charts; this section
+  // is just the holdings table, filtered to the selected type.
   const holdings = typeFilter
     ? p.holdings.filter((h) => h.type === typeFilter)
     : p.holdings;
-  const value = typeFilter
-    ? holdings.reduce((s, h) => s + h.value, 0)
-    : p.value;
-  const prevValue = typeFilter
-    ? holdings.reduce((s, h) => s + h.prevValue, 0)
-    : p.prevValue;
-  const change = value - prevValue;
-  const changePct = typeFilter ? yoyPercent(value, prevValue) : p.changePct;
-  const returnPct = typeFilter ? yoyPercent(value, prevValue) : p.returnPct;
   const [holdingForm, setHoldingForm] = React.useState<{
     open: boolean;
     editing: Holding | null;
@@ -288,31 +276,6 @@ function PortfolioSection({
           </Button>
         </div>
       </div>
-
-      {showCards && (
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          <StatCard
-            label={t.investments.currentValue}
-            value={formatMoney(value)}
-            accent="investment"
-          />
-          <StatCard
-            label={t.investments.deposits}
-            value={typeFilter ? "—" : formatMoney(p.deposits)}
-          />
-          <StatCard
-            label={t.investments.changeYoy}
-            value={formatMoney(change, { sign: true })}
-            accent="investment"
-            sub={<ChangeIndicator amount={change} pct={changePct} mode="percent" />}
-          />
-          <StatCard
-            label={t.investments.return}
-            value={returnPct === null ? "—" : formatPercent(returnPct, { sign: true })}
-            accent="investment"
-          />
-        </div>
-      )}
 
       <Card className="overflow-hidden">
         {holdings.length === 0 ? (
