@@ -188,7 +188,7 @@ export function PeoplePanel({
           )}
         </CardHeader>
         <CardContent>
-          <Table>
+          <Table containerClassName="max-h-[min(550px,100dvh)] overflow-y-auto [&_thead]:sticky [&_thead]:top-0 [&_thead]:z-10 [&_thead]:bg-surface">
             <TableHeader>
               <TableRow>
                 <TableHead>{t.auth.name}</TableHead>
@@ -237,7 +237,7 @@ export function PeoplePanel({
           {invitations.length === 0 ? (
             <EmptyState title={t.settings.noPendingInvites} />
           ) : (
-            <Table>
+            <Table containerClassName="max-h-[min(550px,100dvh)] overflow-y-auto [&_thead]:sticky [&_thead]:top-0 [&_thead]:z-10 [&_thead]:bg-surface">
               <TableHeader>
                 <TableRow>
                   <TableHead>{t.auth.email}</TableHead>

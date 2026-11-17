@@ -285,7 +285,12 @@ function PortfolioSection({
             </p>
           </CardContent>
         ) : (
-          <Table className="[&_td:first-child]:ps-[17px] [&_td:last-child]:pe-[17px] [&_th:first-child]:ps-[17px] [&_th:last-child]:pe-[17px]">
+          // The page scrolls (charts above), so long tables cap at 550px
+          // and scroll internally with a sticky header.
+          <Table
+            containerClassName="max-h-[min(550px,100dvh)] overflow-y-auto [&_thead]:sticky [&_thead]:top-0 [&_thead]:z-10 [&_thead]:bg-surface"
+            className="[&_td:first-child]:ps-[17px] [&_td:last-child]:pe-[17px] [&_th:first-child]:ps-[17px] [&_th:last-child]:pe-[17px]"
+          >
             <TableHeader>
               <TableRow>
                 <TableHead>{t.investments.instrument}</TableHead>
