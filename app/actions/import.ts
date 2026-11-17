@@ -1,8 +1,10 @@
 "use server";
 
+import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { requireUser } from "@/lib/session";
+import { idSchema } from "@/lib/validate";
 import {
   parseFile,
   type ColumnMapping,
@@ -48,18 +50,21 @@ export async function parseImport(formData: FormData): Promise<ParseResult> {
   };
 }
 
-export type CommitRow = {
-  date: string; // ISO
-  businessName: string;
-  rawBusinessName: string;
-  amount: number;
-  categoryId: string;
-  kind: "FIXED" | "VARIABLE";
-  rawFileCategory: string | null;
-};
+const commitRowSchema = z.object({
+  date: z.string().min(1), // ISO
+  businessName: z.string().min(1).max(200),
+  rawBusinessName: z.string().max(200),
+  amount: z.number(),
+  categoryId: idSchema,
+  kind: z.enum(["FIXED", "VARIABLE"]),
+  rawFileCategory: z.string().max(200).nullable(),
+});
 
-export async function commitImport(rows: CommitRow[]) {
+export type CommitRow = z.infer<typeof commitRowSchema>;
+
+export async function commitImport(input: CommitRow[]) {
   const user = await requireUser();
+  const rows = z.array(commitRowSchema).parse(input);
   if (rows.length === 0) return { created: 0 };
 
   await prisma.transaction.createMany({

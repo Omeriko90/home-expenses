@@ -1,12 +1,12 @@
 "use server";
 
-import { createHash, randomBytes } from "crypto";
 import { z } from "zod";
 import bcrypt from "bcryptjs";
 import { AuthError } from "next-auth";
 import { prisma } from "@/lib/db";
 import { signIn, signOut } from "@/auth";
 import { sendPasswordResetEmail } from "@/lib/email";
+import { generateToken, hashToken } from "@/lib/tokens";
 import { isRateLimited, recordAttempt, clearAttempts } from "@/lib/rate-limit";
 
 const BCRYPT_COST = 12;
@@ -34,6 +34,13 @@ export async function registerUser(
     return { error: "invalid" };
   }
   const { name, email, password, householdName } = parsed.data;
+
+  // Throttle mass account/household creation.
+  const regKey = `register:${email.toLowerCase()}`;
+  if (isRateLimited(regKey, 5, 60 * 60 * 1000)) {
+    return { error: "rateLimited" };
+  }
+  recordAttempt(regKey);
 
   const existing = await prisma.user.findUnique({
     where: { email: email.toLowerCase() },
@@ -100,10 +107,6 @@ const RESET_MAX_REQUESTS = 3;
 const RESET_WINDOW_MS = 60 * 60 * 1000;
 const RESET_TOKEN_TTL_MS = 60 * 60 * 1000;
 
-function hashToken(token: string): string {
-  return createHash("sha256").update(token).digest("hex");
-}
-
 export async function requestPasswordReset(
   _prev: AuthState,
   formData: FormData,
@@ -122,7 +125,7 @@ export async function requestPasswordReset(
 
   const user = await prisma.user.findUnique({ where: { email } });
   if (user) {
-    const token = randomBytes(32).toString("base64url");
+    const token = generateToken();
     await prisma.passwordResetToken.create({
       data: {
         userId: user.id,
@@ -171,7 +174,7 @@ export async function resetPassword(
   await prisma.$transaction([
     prisma.user.update({
       where: { id: record.userId },
-      data: { passwordHash },
+      data: { passwordHash, passwordChangedAt: new Date() },
     }),
     prisma.passwordResetToken.update({
       where: { id: record.id },

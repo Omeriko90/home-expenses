@@ -4,6 +4,7 @@ import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { requireUser } from "@/lib/session";
+import { yearSchema } from "@/lib/validate";
 
 const schema = z.object({
   categoryId: z.string().min(1),
@@ -31,6 +32,7 @@ export async function upsertBudget(input: z.infer<typeof schema>) {
 
 export async function copyBudgetsFromPreviousYear(year: number) {
   const { householdId } = await requireUser();
+  yearSchema.parse(year);
   const prev = await prisma.budget.findMany({
     where: { year: year - 1, category: { householdId } },
   });

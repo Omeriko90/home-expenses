@@ -4,6 +4,7 @@ import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { requireUser } from "@/lib/session";
+import { idSchema } from "@/lib/validate";
 
 const goalSchema = z.object({
   title: z.string().min(1).max(200),
@@ -52,6 +53,7 @@ export async function createGoal(input: GoalInput) {
 
 export async function updateGoal(id: string, input: GoalInput) {
   const { householdId } = await requireUser();
+  idSchema.parse(id);
   const d = goalSchema.parse(input);
   await prisma.goal.update({
     where: { id, householdId },
@@ -74,6 +76,7 @@ export async function updateGoal(id: string, input: GoalInput) {
 
 export async function deleteGoal(id: string) {
   const { householdId } = await requireUser();
+  idSchema.parse(id);
   await prisma.goal.delete({ where: { id, householdId } });
   revalidatePath("/goals");
   return { ok: true as const };
@@ -81,6 +84,8 @@ export async function deleteGoal(id: string) {
 
 export async function toggleMilestone(id: string, done: boolean) {
   const { householdId } = await requireUser();
+  idSchema.parse(id);
+  z.boolean().parse(done);
   await prisma.goalMilestone.update({
     where: { id, goal: { householdId } },
     data: { done },
@@ -91,6 +96,8 @@ export async function toggleMilestone(id: string, done: boolean) {
 
 export async function addMilestone(goalId: string, title: string) {
   const { householdId } = await requireUser();
+  idSchema.parse(goalId);
+  title = z.string().min(1).max(200).parse(title);
   const goal = await prisma.goal.findFirst({
     where: { id: goalId, householdId },
     select: { id: true },
@@ -106,6 +113,7 @@ export async function addMilestone(goalId: string, title: string) {
 
 export async function deleteMilestone(id: string) {
   const { householdId } = await requireUser();
+  idSchema.parse(id);
   await prisma.goalMilestone.delete({
     where: { id, goal: { householdId } },
   });

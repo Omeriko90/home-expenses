@@ -1,14 +1,16 @@
+import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/db";
 
 /**
- * DB-verified current user. Reads the JWT session, then confirms the user
- * still exists and returns the fresh record — so role/household are never
- * stale and removed members lose access on their next action.
+ * DB-verified current user, or null. Confirms the JWT's user still exists and
+ * that the session wasn't issued before the last password change — so removed
+ * members and stolen sessions die on their next request. The session doing a
+ * password change is re-stamped via unstable_update (see changePassword).
  */
-export async function requireUser() {
+export async function freshSessionUser() {
   const session = await auth();
-  if (!session?.user?.id) throw new Error("Unauthorized");
+  if (!session?.user?.id) return null;
 
   const user = await prisma.user.findUnique({
     where: { id: session.user.id },
@@ -19,9 +21,29 @@ export async function requireUser() {
       locale: true,
       role: true,
       householdId: true,
+      passwordChangedAt: true,
     },
   });
-  if (!user) throw new Error("Unauthorized");
+  if (!user) return null;
+
+  const authAt = session.user.authAt;
+  if (
+    user.passwordChangedAt &&
+    authAt &&
+    authAt < user.passwordChangedAt.getTime()
+  ) {
+    return null;
+  }
+
+  const { passwordChangedAt: _ignored, ...publicUser } = user;
+  return publicUser;
+}
+
+export async function requireUser() {
+  const user = await freshSessionUser();
+  // Stale/removed sessions land on the login form (it renders for them — the
+  // logged-in bounce is DB-checked too), where signing in mints a new session.
+  if (!user) redirect("/login");
   return user;
 }
 

@@ -5,18 +5,24 @@ import bcrypt from "bcryptjs";
 import { AuthError } from "next-auth";
 import { prisma } from "@/lib/db";
 import { signIn } from "@/auth";
+import { hashToken } from "@/lib/tokens";
 
 /**
  * Public (unauthenticated) invite flow. The opaque token is the only input —
  * email, household and role are resolved server-side from the Invitation row.
+ * The DB stores only a sha256 of the token.
  */
 
 function validInviteWhere(token: string) {
-  return { token, acceptedAt: null, expiresAt: { gt: new Date() } };
+  return {
+    tokenHash: hashToken(token),
+    acceptedAt: null,
+    expiresAt: { gt: new Date() },
+  };
 }
 
 export async function getInvitation(token: string) {
-  if (!token) return null;
+  if (!token || typeof token !== "string") return null;
   const invitation = await prisma.invitation.findFirst({
     where: validInviteWhere(token),
     select: {

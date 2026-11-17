@@ -15,6 +15,8 @@ declare module "next-auth" {
       locale: string;
       role: AppRole;
       householdId: string;
+      /** Sign-in instant (ms); sessions older than passwordChangedAt are rejected. */
+      authAt: number;
     } & DefaultSession["user"];
   }
 }
@@ -25,5 +27,6 @@ declare module "next-auth/jwt" {
     locale: string;
     role: AppRole;
     householdId: string;
+    authAt?: number;
   }
 }

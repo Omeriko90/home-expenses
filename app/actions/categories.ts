@@ -4,6 +4,7 @@ import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { requireUser } from "@/lib/session";
+import { idSchema } from "@/lib/validate";
 
 const schema = z.object({
   name: z.string().min(1).max(80),
@@ -29,6 +30,7 @@ export async function createCategory(input: CategoryInput) {
 
 export async function updateCategory(id: string, input: CategoryInput) {
   const { householdId } = await requireUser();
+  idSchema.parse(id);
   const data = schema.parse(input);
   await prisma.category.update({ where: { id, householdId }, data });
   revalidatePath("/categories");
@@ -37,6 +39,7 @@ export async function updateCategory(id: string, input: CategoryInput) {
 
 export async function deleteCategory(id: string) {
   const { householdId } = await requireUser();
+  idSchema.parse(id);
   const count = await prisma.transaction.count({
     where: { categoryId: id, householdId },
   });
@@ -62,6 +65,7 @@ export async function deleteCategory(id: string) {
 
 export async function setCategoryArchived(id: string, archived: boolean) {
   const { householdId } = await requireUser();
+  idSchema.parse(id);
   await prisma.category.update({ where: { id, householdId }, data: { archived } });
   revalidatePath("/categories");
   return { ok: true as const };

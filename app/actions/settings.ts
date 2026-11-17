@@ -1,6 +1,5 @@
 "use server";
 
-import crypto from "node:crypto";
 import { z } from "zod";
 import bcrypt from "bcryptjs";
 import { revalidatePath } from "next/cache";
@@ -9,6 +8,9 @@ import { prisma } from "@/lib/db";
 import { requireUser, requireAdmin } from "@/lib/session";
 import { unstable_update } from "@/auth";
 import { sendInviteEmail } from "@/lib/email";
+import { generateToken, hashToken } from "@/lib/tokens";
+import { idSchema } from "@/lib/validate";
+import { isRateLimited, recordAttempt, clearAttempts } from "@/lib/rate-limit";
 import { LOCALE_COOKIE } from "@/lib/i18n/server";
 import { dictionaries, LOCALES, type Locale } from "@/lib/i18n/dictionaries";
 
@@ -60,15 +62,30 @@ export async function changePassword(input: z.infer<typeof passwordSchema>) {
   const user = await requireUser();
   const { currentPassword, newPassword } = passwordSchema.parse(input);
 
+  // Throttle current-password guesses from a hijacked session.
+  const limiterKey = `pwchange:${user.id}`;
+  if (isRateLimited(limiterKey, 5, 15 * 60 * 1000)) {
+    return { error: "wrongPassword" as const };
+  }
+
   const dbUser = await prisma.user.findUniqueOrThrow({
     where: { id: user.id },
     select: { passwordHash: true },
   });
   const ok = await bcrypt.compare(currentPassword, dbUser.passwordHash);
-  if (!ok) return { error: "wrongPassword" as const };
+  if (!ok) {
+    recordAttempt(limiterKey);
+    return { error: "wrongPassword" as const };
+  }
+  clearAttempts(limiterKey);
 
   const passwordHash = await bcrypt.hash(newPassword, 12);
-  await prisma.user.update({ where: { id: user.id }, data: { passwordHash } });
+  await prisma.user.update({
+    where: { id: user.id },
+    data: { passwordHash, passwordChangedAt: new Date() },
+  });
+  // Re-stamp this session so only OTHER sessions are invalidated.
+  await unstable_update({ user: { authAt: Date.now() } });
   return { ok: true as const };
 }
 
@@ -77,7 +94,7 @@ export async function changePassword(input: z.infer<typeof passwordSchema>) {
 // ------------------------------------------------------------------ //
 export async function updateHousehold(name: string) {
   const admin = await requireAdmin();
-  const trimmed = name.trim();
+  const trimmed = z.string().parse(name).trim();
   if (!trimmed || trimmed.length > 80) return { error: "invalid" as const };
   await prisma.household.update({
     where: { id: admin.householdId },
@@ -151,10 +168,10 @@ export async function createInvitation(input: z.infer<typeof inviteSchema>) {
     return { error: "alreadyInvited" as const };
   }
 
-  const token = crypto.randomBytes(32).toString("hex");
+  const token = generateToken();
   const data = {
     email,
-    token,
+    tokenHash: hashToken(token),
     role,
     expiresAt: new Date(Date.now() + INVITE_TTL_MS),
     acceptedAt: null,
@@ -183,16 +200,20 @@ export async function createInvitation(input: z.infer<typeof inviteSchema>) {
 
 export async function resendInvitation(id: string) {
   const admin = await requireAdmin();
+  idSchema.parse(id);
   const invitation = await prisma.invitation.findFirst({
     where: { id, householdId: admin.householdId, acceptedAt: null },
     include: { household: { select: { name: true } } },
   });
   if (!invitation) return { error: "notFound" as const };
 
-  const token = crypto.randomBytes(32).toString("hex");
+  const token = generateToken();
   await prisma.invitation.update({
     where: { id },
-    data: { token, expiresAt: new Date(Date.now() + INVITE_TTL_MS) },
+    data: {
+      tokenHash: hashToken(token),
+      expiresAt: new Date(Date.now() + INVITE_TTL_MS),
+    },
   });
 
   const { delivered, inviteUrl } = await sendInvitation({
@@ -208,6 +229,7 @@ export async function resendInvitation(id: string) {
 
 export async function revokeInvitation(id: string) {
   const admin = await requireAdmin();
+  idSchema.parse(id);
   await prisma.invitation.deleteMany({
     where: { id, householdId: admin.householdId },
   });
@@ -220,6 +242,7 @@ export async function revokeInvitation(id: string) {
 // ------------------------------------------------------------------ //
 export async function removeMember(userId: string) {
   const admin = await requireAdmin();
+  idSchema.parse(userId);
   if (userId === admin.id) return { error: "cannotRemoveSelf" as const };
 
   const target = await prisma.user.findFirst({
