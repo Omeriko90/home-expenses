@@ -135,9 +135,7 @@ export function InvestmentsView({
               <EmptyState icon={<TrendingUp />} title={t.investments.empty} />
             ) : (
               <>
-                {shown.length > 1 && (
-                  <GroupSummaryCards portfolios={shown} typeFilter={typeFilter} />
-                )}
+                <GroupSummaryCards portfolios={shown} typeFilter={typeFilter} />
                 <InvestmentCharts
                   portfolios={groupPortfolios}
                   yearlyTotals={yearlyTotals}
@@ -150,6 +148,7 @@ export function InvestmentsView({
                     year={year}
                     typeFilter={typeFilter}
                     typeOptions={typeOptions}
+                    showCards={shown.length > 1}
                   />
                 ))}
               </>
@@ -162,8 +161,8 @@ export function InvestmentsView({
 }
 
 // Aggregate cards for the active group — headline numbers before the charts
-// and per-portfolio detail. Only rendered with >1 visible portfolio, where
-// they wouldn't just duplicate a single portfolio's own cards.
+// and per-portfolio detail. With a single visible portfolio these are its
+// numbers and the portfolio section skips its own (duplicate) card grid.
 function GroupSummaryCards({
   portfolios,
   typeFilter,
@@ -228,11 +227,13 @@ function PortfolioSection({
   year,
   typeFilter,
   typeOptions,
+  showCards,
 }: {
   portfolio: PortfolioSummary;
   year: number;
   typeFilter: string | null;
   typeOptions: AutocompleteOption[];
+  showCards: boolean;
 }) {
   const { t } = useI18n();
 
@@ -288,28 +289,30 @@ function PortfolioSection({
         </div>
       </div>
 
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard
-          label={t.investments.currentValue}
-          value={formatMoney(value)}
-          accent="investment"
-        />
-        <StatCard
-          label={t.investments.deposits}
-          value={typeFilter ? "—" : formatMoney(p.deposits)}
-        />
-        <StatCard
-          label={t.investments.changeYoy}
-          value={formatMoney(change, { sign: true })}
-          accent="investment"
-          sub={<ChangeIndicator amount={change} pct={changePct} mode="percent" />}
-        />
-        <StatCard
-          label={t.investments.return}
-          value={returnPct === null ? "—" : formatPercent(returnPct, { sign: true })}
-          accent="investment"
-        />
-      </div>
+      {showCards && (
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <StatCard
+            label={t.investments.currentValue}
+            value={formatMoney(value)}
+            accent="investment"
+          />
+          <StatCard
+            label={t.investments.deposits}
+            value={typeFilter ? "—" : formatMoney(p.deposits)}
+          />
+          <StatCard
+            label={t.investments.changeYoy}
+            value={formatMoney(change, { sign: true })}
+            accent="investment"
+            sub={<ChangeIndicator amount={change} pct={changePct} mode="percent" />}
+          />
+          <StatCard
+            label={t.investments.return}
+            value={returnPct === null ? "—" : formatPercent(returnPct, { sign: true })}
+            accent="investment"
+          />
+        </div>
+      )}
 
       <Card className="overflow-hidden">
         {holdings.length === 0 ? (
