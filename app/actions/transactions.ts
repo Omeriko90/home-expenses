@@ -17,9 +17,23 @@ const schema = z.object({
 
 export type TransactionInput = z.infer<typeof schema>;
 
+// The category FK is not household-scoped at the DB level — verify ownership
+// before writing, as in upsertBudget.
+async function assertCategoryInHousehold(
+  categoryId: string,
+  householdId: string,
+) {
+  const category = await prisma.category.findFirst({
+    where: { id: categoryId, householdId },
+    select: { id: true },
+  });
+  if (!category) throw new Error("Category not found");
+}
+
 export async function createTransaction(input: TransactionInput) {
   const user = await requireUser();
   const data = schema.parse(input);
+  await assertCategoryInHousehold(data.categoryId, user.householdId);
   const date = new Date(data.date);
   await prisma.transaction.create({
     data: {
@@ -43,6 +57,7 @@ export async function updateTransaction(id: string, input: TransactionInput) {
   const { householdId } = await requireUser();
   idSchema.parse(id);
   const data = schema.parse(input);
+  await assertCategoryInHousehold(data.categoryId, householdId);
   const date = new Date(data.date);
   await prisma.transaction.update({
     where: { id, householdId },

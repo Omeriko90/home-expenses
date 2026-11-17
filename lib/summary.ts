@@ -136,10 +136,11 @@ export type CategoryMonthlySpend = {
 export async function getCategoryMonthlySpend(
   categoryId: string,
   year: number,
+  householdId: string,
 ): Promise<CategoryMonthlySpend> {
   const rows = await prisma.transaction.groupBy({
     by: ["year", "month"],
-    where: { categoryId, year: { in: [year, year - 1] } },
+    where: { categoryId, householdId, year: { in: [year, year - 1] } },
     _sum: { amount: true },
   });
 
