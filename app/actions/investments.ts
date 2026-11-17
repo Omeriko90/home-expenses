@@ -4,6 +4,7 @@ import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { requireUser } from "@/lib/session";
+import { idSchema, yearSchema } from "@/lib/validate";
 
 const holdingSchema = z.object({
   portfolioId: z.string().min(1),
@@ -74,6 +75,7 @@ export async function upsertHolding(input: z.infer<typeof holdingSchema>) {
 
 export async function deleteHolding(holdingId: string) {
   const { householdId } = await requireUser();
+  idSchema.parse(holdingId);
   await prisma.holding.delete({
     where: { id: holdingId, portfolio: { householdId } },
   });
@@ -87,6 +89,9 @@ export async function upsertDeposits(
   deposits: number,
 ) {
   const { householdId } = await requireUser();
+  idSchema.parse(portfolioId);
+  yearSchema.parse(year);
+  z.number().min(0).parse(deposits);
   const portfolio = await prisma.portfolio.findFirst({
     where: { id: portfolioId, householdId },
     select: { id: true },
@@ -103,6 +108,8 @@ export async function upsertDeposits(
 
 export async function createPortfolio(name: string, group: "MAIN" | "KIDS") {
   const { householdId } = await requireUser();
+  name = z.string().min(1).max(120).parse(name);
+  z.enum(["MAIN", "KIDS"]).parse(group);
   await prisma.portfolio.create({ data: { name, group, householdId } });
   revalidatePath("/investments");
   return { ok: true as const };

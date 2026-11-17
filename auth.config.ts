@@ -21,10 +21,10 @@ export const authConfig = {
         return true;
       }
 
+      // Auth pages are public. The "already logged in → dashboard" bounce
+      // lives in the pages themselves (DB-checked, so stale sessions can
+      // still reach the login form instead of redirect-looping).
       if (isAuthPage) {
-        if (isLoggedIn) {
-          return Response.redirect(new URL("/dashboard", nextUrl));
-        }
         return true;
       }
 
@@ -43,12 +43,20 @@ export const authConfig = {
         token.locale = u.locale ?? "he";
         token.role = u.role ?? "MEMBER";
         token.householdId = u.householdId ?? "";
+        // Sign-in instant; compared against passwordChangedAt to invalidate
+        // stale sessions after a password change (see lib/session.ts).
+        token.authAt = Date.now();
       }
       // unstable_update() from server actions (e.g. profile rename).
       if (trigger === "update" && session?.user) {
-        const u = session.user as { name?: string; locale?: string };
+        const u = session.user as {
+          name?: string;
+          locale?: string;
+          authAt?: number;
+        };
         if (u.name) token.name = u.name;
         if (u.locale) token.locale = u.locale;
+        if (u.authAt) token.authAt = u.authAt;
       }
       return token;
     },
@@ -58,6 +66,7 @@ export const authConfig = {
         session.user.locale = (token.locale as string) ?? "he";
         session.user.role = (token.role as "ADMIN" | "MEMBER") ?? "MEMBER";
         session.user.householdId = (token.householdId as string) ?? "";
+        session.user.authAt = (token.authAt as number) ?? 0;
       }
       return session;
     },

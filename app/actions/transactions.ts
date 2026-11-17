@@ -4,6 +4,7 @@ import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { requireUser } from "@/lib/session";
+import { idSchema } from "@/lib/validate";
 
 const schema = z.object({
   date: z.string().min(1), // ISO date
@@ -40,6 +41,7 @@ export async function createTransaction(input: TransactionInput) {
 
 export async function updateTransaction(id: string, input: TransactionInput) {
   const { householdId } = await requireUser();
+  idSchema.parse(id);
   const data = schema.parse(input);
   const date = new Date(data.date);
   await prisma.transaction.update({
@@ -61,6 +63,7 @@ export async function updateTransaction(id: string, input: TransactionInput) {
 
 export async function deleteTransaction(id: string) {
   const { householdId } = await requireUser();
+  idSchema.parse(id);
   await prisma.transaction.delete({ where: { id, householdId } });
   revalidatePath("/transactions");
   return { ok: true as const };

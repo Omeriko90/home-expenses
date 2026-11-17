@@ -66,6 +66,8 @@ model User {
   email        String   @unique
   name         String
   passwordHash String
+  // Sessions issued before this instant are rejected (see lib/session.ts).
+  passwordChangedAt DateTime?
   locale       String   @default("he") // "he" | "en"
   role         Role     @default(MEMBER)
   createdAt    DateTime @default(now())
@@ -78,12 +80,13 @@ model User {
   passwordResetTokens PasswordResetToken[]
 }
 
-// Pending invite to join a household. The opaque `token` is the only thing
-// that travels in the invite link; email/household/role resolve server-side.
+// Pending invite to join a household. The opaque token is the only thing that
+// travels in the invite link; email/household/role resolve server-side. Only a
+// sha256 of the token is stored (same scheme as PasswordResetToken).
 model Invitation {
   id         String    @id @default(cuid())
   email      String
-  token      String    @unique
+  tokenHash  String    @unique
   role       Role      @default(MEMBER)
   expiresAt  DateTime
   acceptedAt DateTime?
