@@ -42,7 +42,7 @@ export async function getInvitation(token: string) {
 const acceptSchema = z.object({
   token: z.string().min(1),
   name: z.string().min(1).max(80),
-  password: z.string().min(6),
+  password: z.string().min(8),
 });
 
 export type AcceptState = { error?: string } | undefined;
@@ -59,7 +59,7 @@ export async function acceptInvitation(
   if (!parsed.success) return { error: "invalid" };
   const { token, name, password } = parsed.data;
 
-  const passwordHash = await bcrypt.hash(password, 10);
+  const passwordHash = await bcrypt.hash(password, 12);
 
   // Re-validate and consume the invitation atomically.
   const result = await prisma.$transaction(async (tx) => {

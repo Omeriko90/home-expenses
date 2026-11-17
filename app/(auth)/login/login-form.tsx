@@ -40,11 +40,21 @@ export function LoginForm() {
             />
           </Field>
           {state?.error && (
-            <p className="text-sm text-danger">{t.auth.invalidCredentials}</p>
+            <p className="text-sm text-danger">
+              {state.error === "rateLimited"
+                ? t.auth.tooManyAttempts
+                : t.auth.invalidCredentials}
+            </p>
           )}
           <Button type="submit" disabled={pending} className="w-full">
             {pending ? t.common.loading : t.auth.signIn}
           </Button>
+          <Link
+            href="/forgot-password"
+            className="text-center text-sm text-primary hover:underline"
+          >
+            {t.auth.forgotPassword}
+          </Link>
         </form>
         <p className="mt-4 text-center text-sm text-muted-foreground">
           {t.auth.noAccount}{" "}

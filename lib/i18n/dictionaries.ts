@@ -186,6 +186,16 @@ const he = {
       householdName: "שם הבית",
       registerCreatesHousehold:
         "ההרשמה פותחת בית חדש. קיבלתם הזמנה הביתה? היכנסו דרך הקישור שבהזמנה.",
+      registrationFailed: "לא ניתן להירשם עם הפרטים שהוזנו",
+      passwordHint: "לפחות 8 תווים",
+      tooManyAttempts: "יותר מדי ניסיונות, נסו שוב מאוחר יותר",
+      forgotPassword: "שכחת סיסמה?",
+      resetPassword: "איפוס סיסמה",
+      newPassword: "סיסמה חדשה",
+      sendResetLink: "שליחת קישור לאיפוס",
+      resetEmailSent: "אם קיים חשבון עם האימייל הזה, נשלח אליו קישור לאיפוס",
+      invalidResetLink: "הקישור לאיפוס אינו תקף או שפג תוקפו",
+      backToLogin: "חזרה להתחברות",
     },
     settings: {
       title: "הגדרות",
@@ -435,6 +445,16 @@ const en: Dictionary = {
       householdName: "Home name",
       registerCreatesHousehold:
         "Signing up opens a new home. Got an invite? Come in through the link in your invitation.",
+      registrationFailed: "Unable to register with these details",
+      passwordHint: "At least 8 characters",
+      tooManyAttempts: "Too many attempts, try again later",
+      forgotPassword: "Forgot password?",
+      resetPassword: "Reset password",
+      newPassword: "New password",
+      sendResetLink: "Send reset link",
+      resetEmailSent: "If an account exists for this email, a reset link was sent",
+      invalidResetLink: "This reset link is invalid or has expired",
+      backToLogin: "Back to login",
     },
     settings: {
       title: "Settings",

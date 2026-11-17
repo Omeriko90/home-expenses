@@ -31,7 +31,7 @@ async function main() {
     householdId = household.id;
   }
 
-  const passwordHash = await bcrypt.hash(password, 10);
+  const passwordHash = await bcrypt.hash(password, 12);
   const user = await prisma.user.upsert({
     where: { email: email.toLowerCase() },
     update: { name, passwordHash, locale, role },
