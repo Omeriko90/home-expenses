@@ -68,7 +68,9 @@ export function CategorySpendAccordion({
 
   return (
     <>
-    <div className="min-h-0 flex-1 overflow-y-auto">
+    {/* The dashboard scrolls (cards + charts above), so the category list
+        caps at 550px and scrolls internally; the totals row stays below. */}
+    <div className="max-h-[min(550px,100dvh)] min-h-0 flex-1 overflow-y-auto">
       <div
         className={cn(
           ROW_GRID,
