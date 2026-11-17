@@ -92,7 +92,11 @@ export function TransactionsView({
   return (
     // Fill <main>'s height: the table scrolls internally so the count/total
     // footer at the bottom of the card is always visible.
-    <div className="flex h-full min-h-0 flex-col gap-6">
+    // Fit the viewport exactly so the table scrolls internally and the totals
+    // row stays visible. Derived from the shell: topbar h-16 + border (1px)
+    // + <main> py-6 (3rem) — the layout wrapper is min-h-full (auto height),
+    // so flex-1/h-full can't provide a definite height here.
+    <div className="flex h-[calc(100dvh-7rem-1px)] min-h-0 flex-col gap-6">
       {/* Month/year picker at the start; action buttons at the end. */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <MonthYearPicker year={year} month={month} />

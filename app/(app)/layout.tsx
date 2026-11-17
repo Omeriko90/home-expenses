@@ -31,7 +31,11 @@ export default async function AppLayout({
       <div className="flex min-w-0 flex-1 flex-col">
         <Topbar userName={userName} />
         <main className="flex-1 overflow-y-auto overflow-x-hidden px-4 py-6 sm:px-6 lg:px-8">
-          <div className="mx-auto h-full w-full max-w-6xl">{children}</div>
+          {/* min-h-full + flex: short pages can still fill the viewport via
+              flex-1, while tall pages grow so main's bottom padding stays. */}
+          <div className="mx-auto flex min-h-full w-full max-w-6xl flex-col">
+            {children}
+          </div>
         </main>
       </div>
     </div>
