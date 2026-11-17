@@ -31,6 +31,15 @@ export const { handlers, auth, signIn, signOut, unstable_update } = NextAuth({
         const ok = await bcrypt.compare(password, user.passwordHash);
         if (!ok) return null;
 
+        // Transparently upgrade hashes created with a lower cost factor.
+        if (bcrypt.getRounds(user.passwordHash) < 12) {
+          const passwordHash = await bcrypt.hash(password, 12);
+          await prisma.user.update({
+            where: { id: user.id },
+            data: { passwordHash },
+          });
+        }
+
         return {
           id: user.id,
           email: user.email,

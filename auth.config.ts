@@ -11,7 +11,9 @@ export const authConfig = {
       const isLoggedIn = !!auth?.user;
       const isAuthPage =
         nextUrl.pathname.startsWith("/login") ||
-        nextUrl.pathname.startsWith("/register");
+        nextUrl.pathname.startsWith("/register") ||
+        nextUrl.pathname.startsWith("/forgot-password") ||
+        nextUrl.pathname.startsWith("/reset-password");
 
       // Invite-accept is public: the invitee has no account yet. A logged-in
       // user may still open it (to see the "log out first" notice).

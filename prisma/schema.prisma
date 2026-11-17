@@ -73,8 +73,9 @@ model User {
   householdId String
   household   Household @relation(fields: [householdId], references: [id])
 
-  transactions    Transaction[]
-  sentInvitations Invitation[]  @relation("InvitationInviter")
+  transactions        Transaction[]
+  sentInvitations     Invitation[]         @relation("InvitationInviter")
+  passwordResetTokens PasswordResetToken[]
 }
 
 // Pending invite to join a household. The opaque `token` is the only thing
@@ -95,6 +96,21 @@ model Invitation {
   invitedBy   User?   @relation("InvitationInviter", fields: [invitedById], references: [id], onDelete: SetNull)
 
   @@unique([householdId, email])
+}
+
+// Single-use, short-lived tokens for the forgot-password flow.
+// Only a sha256 of the token is stored; the raw token lives in the emailed link.
+model PasswordResetToken {
+  id        String    @id @default(cuid())
+  userId    String
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
 
 // Shared category model — `type` distinguishes expense vs investment categories.

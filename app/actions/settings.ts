@@ -53,7 +53,7 @@ export async function updateProfile(input: z.infer<typeof profileSchema>) {
 // ------------------------------------------------------------------ //
 const passwordSchema = z.object({
   currentPassword: z.string().min(1),
-  newPassword: z.string().min(6),
+  newPassword: z.string().min(8),
 });
 
 export async function changePassword(input: z.infer<typeof passwordSchema>) {
@@ -67,7 +67,7 @@ export async function changePassword(input: z.infer<typeof passwordSchema>) {
   const ok = await bcrypt.compare(currentPassword, dbUser.passwordHash);
   if (!ok) return { error: "wrongPassword" as const };
 
-  const passwordHash = await bcrypt.hash(newPassword, 10);
+  const passwordHash = await bcrypt.hash(newPassword, 12);
   await prisma.user.update({ where: { id: user.id }, data: { passwordHash } });
   return { ok: true as const };
 }

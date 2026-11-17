@@ -42,16 +42,15 @@ export function RegisterForm() {
               name="password"
               type="password"
               required
-              minLength={6}
+              minLength={8}
               autoComplete="new-password"
             />
+            <p className="text-xs text-muted-foreground">
+              {t.auth.passwordHint}
+            </p>
           </Field>
           {state?.error && (
-            <p className="text-sm text-danger">
-              {state.error === "exists"
-                ? t.auth.haveAccount
-                : t.auth.invalidCredentials}
-            </p>
+            <p className="text-sm text-danger">{t.auth.registrationFailed}</p>
           )}
           <Button type="submit" disabled={pending} className="w-full">
             {pending ? t.common.loading : t.auth.signUp}

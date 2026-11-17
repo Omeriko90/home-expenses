@@ -55,7 +55,7 @@ export function PasswordForm() {
               value={next}
               onChange={(e) => setNext(e.target.value)}
               required
-              minLength={6}
+              minLength={8}
               autoComplete="new-password"
             />
           </Field>
