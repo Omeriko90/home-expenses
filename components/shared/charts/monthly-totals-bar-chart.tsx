@@ -11,7 +11,7 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { useI18n } from "@/lib/i18n/context";
-import { formatMoneyCompact } from "@/lib/utils";
+import { formatMoneyCompact, shortMonths } from "@/lib/utils";
 import { ChartTooltip } from "./chart-tooltip";
 import { EXPENSE_COLOR, NEUTRAL_COLOR, GRID_COLOR } from "./chart-palette";
 
@@ -25,8 +25,9 @@ export function MonthlyTotalsBarChart({
   totalsCurrent: number[];
   totalsPrevious: number[];
 }) {
-  const { t } = useI18n();
-  const data = t.months.map((month, i) => ({
+  const { locale } = useI18n();
+  // Short labels so all 12 fit with interval={0} on narrow screens.
+  const data = shortMonths(locale).map((month, i) => ({
     month,
     previous: totalsPrevious[i],
     current: totalsCurrent[i],
@@ -36,7 +37,7 @@ export function MonthlyTotalsBarChart({
     <ResponsiveContainer width="100%" height="100%">
       <BarChart data={data} margin={{ top: 4, left: 4, right: 4 }}>
         <CartesianGrid strokeDasharray="3 3" stroke={GRID_COLOR} vertical={false} />
-        <XAxis dataKey="month" tick={{ fontSize: 11 }} tickLine={false} />
+        <XAxis dataKey="month" interval={0} tick={{ fontSize: 10 }} tickMargin={4} tickLine={false} />
         <YAxis
           tickFormatter={formatMoneyCompact}
           tick={{ fontSize: 11 }}

@@ -11,7 +11,7 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { useI18n } from "@/lib/i18n/context";
-import { cn, formatMoneyCompact } from "@/lib/utils";
+import { cn, formatMoneyCompact, shortMonths } from "@/lib/utils";
 import type { MonthlyCategorySpend } from "@/lib/summary";
 import { colorFor, GRID_COLOR } from "./chart-palette";
 import { ChartTooltip } from "./chart-tooltip";
@@ -25,7 +25,7 @@ export function CategoryMonthlyLineChart({
 }: {
   monthly: MonthlyCategorySpend;
 }) {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const [expanded, setExpanded] = React.useState(false);
   const [visible, setVisible] = React.useState<Set<string>>(
     () =>
@@ -35,8 +35,10 @@ export function CategoryMonthlyLineChart({
   );
 
   // Refund months can net negative; the chart shows spend, so floor at 0.
+  // Short labels so all 12 fit with interval={0} on narrow screens.
+  const months = shortMonths(locale);
   const data = monthly.byMonth.map((m, i) => ({
-    month: t.months[i],
+    month: months[i],
     ...Object.fromEntries(
       Object.entries(m).map(([id, v]) => [id, Math.max(0, v)]),
     ),
@@ -59,9 +61,10 @@ export function CategoryMonthlyLineChart({
     <div className="flex h-full flex-col gap-1">
       <div className="min-h-0 flex-1">
         <ResponsiveContainer width="100%" height="100%">
-          <LineChart data={data} margin={{ top: 4, left: 4, right: 4 }}>
+          {/* Side margins keep the edge month labels (Jan/Dec) from clipping. */}
+          <LineChart data={data} margin={{ top: 4, left: 12, right: 12 }}>
             <CartesianGrid strokeDasharray="3 3" stroke={GRID_COLOR} vertical={false} />
-            <XAxis dataKey="month" tick={{ fontSize: 11 }} tickLine={false} />
+            <XAxis dataKey="month" interval={0} tick={{ fontSize: 10 }} tickMargin={4} tickLine={false} />
             <YAxis
               tickFormatter={formatMoneyCompact}
               tick={{ fontSize: 11 }}
