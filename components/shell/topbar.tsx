@@ -5,7 +5,6 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Menu, Settings, User } from "lucide-react";
 import { Nav } from "./nav";
-import { LocaleToggle } from "./locale-toggle";
 import { LogoutButton } from "./logout-button";
 import { useI18n } from "@/lib/i18n/context";
 import { IconButton } from "@/components/shared/icon-button";
@@ -70,7 +69,6 @@ export function Topbar({ userName }: { userName: string }) {
       </div>
 
       <div className="flex items-center gap-1">
-        <LocaleToggle />
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <IconButton label={userName}>
