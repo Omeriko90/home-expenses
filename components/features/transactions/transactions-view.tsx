@@ -62,15 +62,24 @@ export function TransactionsView({
 
   // Rows are already scoped to the selected month on the server; the
   // category/type/amount/search refinements happen client-side.
-  const filtered = rows.filter((r) => {
-    if (cat !== "all" && r.categoryId !== cat) return false;
-    if (kind !== "all" && r.kind !== kind) return false;
-    if (amountMin !== "" && r.amount < amountMin) return false;
-    if (amountMax !== "" && r.amount > amountMax) return false;
-    if (q && !r.businessName.toLowerCase().includes(q.toLowerCase())) return false;
-    return true;
-  });
-  const total = filtered.reduce((s, r) => s + r.amount, 0);
+  // The free-text inputs are deferred so keystrokes repaint the input
+  // immediately and the (memoized) re-filter runs as a deferred render.
+  const deferredQ = React.useDeferredValue(q);
+  const deferredMin = React.useDeferredValue(amountMin);
+  const deferredMax = React.useDeferredValue(amountMax);
+  const { filtered, total } = React.useMemo(() => {
+    const needle = deferredQ.toLowerCase();
+    const filtered = rows.filter((r) => {
+      if (cat !== "all" && r.categoryId !== cat) return false;
+      if (kind !== "all" && r.kind !== kind) return false;
+      if (deferredMin !== "" && r.amount < deferredMin) return false;
+      if (deferredMax !== "" && r.amount > deferredMax) return false;
+      if (needle && !r.businessName.toLowerCase().includes(needle)) return false;
+      return true;
+    });
+    const total = filtered.reduce((s, r) => s + r.amount, 0);
+    return { filtered, total };
+  }, [rows, cat, kind, deferredMin, deferredMax, deferredQ]);
 
   function openAdd() {
     setEditing(null);
