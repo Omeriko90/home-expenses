@@ -15,6 +15,7 @@ import { EmptyState } from "@/components/shared/empty-state";
 import { Field } from "@/components/shared/field";
 import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 import { IconButton } from "@/components/shared/icon-button";
+import { RowActions } from "@/components/shared/row-actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -103,7 +104,7 @@ export function CategoryManager({ initial }: { initial: Category[] }) {
                   .map((c) => (
                     <Card
                       key={c.id}
-                      className="flex items-start justify-between gap-2 p-4"
+                      className="group/row flex items-start justify-between gap-2 p-4"
                     >
                       <div className="min-w-0 flex flex-col gap-0.5">
                         <div className="flex items-center gap-2">
@@ -121,7 +122,7 @@ export function CategoryManager({ initial }: { initial: Category[] }) {
                           {c.txCount} {t.nav.transactions}
                         </span>
                       </div>
-                      <div className="flex shrink-0 gap-0.5">
+                      <RowActions className="shrink-0">
                         <IconButton
                           label={t.common.edit}
                           onClick={() => openEdit(c)}
@@ -140,7 +141,7 @@ export function CategoryManager({ initial }: { initial: Category[] }) {
                         >
                           <Trash2 />
                         </IconButton>
-                      </div>
+                      </RowActions>
                     </Card>
                   ))}
               </div>

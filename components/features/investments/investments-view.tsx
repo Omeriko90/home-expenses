@@ -28,6 +28,7 @@ import { InvestmentCharts } from "./investment-charts";
 import { YearSelect } from "@/components/shared/year-select";
 import { StatCard, ChangeIndicator } from "@/components/shared/stat-card";
 import { IconButton } from "@/components/shared/icon-button";
+import { RowActions } from "@/components/shared/row-actions";
 import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 import { Field } from "@/components/shared/field";
 import { MoneyInput } from "@/components/shared/money-input";
@@ -278,7 +279,7 @@ function PortfolioSection({
                     {formatMoney(h.value)}
                   </TableCell>
                   <TableCell>
-                    <div className="flex gap-0.5">
+                    <RowActions>
                       <IconButton
                         label={t.common.edit}
                         onClick={() =>
@@ -293,7 +294,7 @@ function PortfolioSection({
                       >
                         <Trash2 />
                       </IconButton>
-                    </div>
+                    </RowActions>
                   </TableCell>
                 </TableRow>
               ))}
