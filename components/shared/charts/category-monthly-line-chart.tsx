@@ -19,8 +19,6 @@ import { ChartTooltip } from "./chart-tooltip";
 const DEFAULT_VISIBLE = 6;
 const MAX_LEGEND_ITEMS = 8;
 
-/** Monthly spend per category; top categories visible, legend toggles the rest.
- * Percent mode shows each category as its share of that month's total. */
 export function CategoryMonthlyLineChart({
   monthly,
   mode,

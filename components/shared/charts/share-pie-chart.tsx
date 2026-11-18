@@ -11,8 +11,6 @@ export type ShareSlice = { name: string; value: number; color?: string | null };
 
 const MAX_LEGEND_ITEMS = 8;
 
-/** "Share of total" pie — used for category spend, channels, and portfolios.
- * Geometry is always value-proportional; `mode` only switches label/legend/tooltip formats. */
 export function SharePieChart({
   data,
   mode = "percent",

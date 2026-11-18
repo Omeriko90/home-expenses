@@ -15,8 +15,6 @@ import { formatMoneyCompact, formatPercent, formatPercentCompact, yoyPercent } f
 import { ChartTooltip } from "./chart-tooltip";
 import { EXPENSE_COLOR, NEUTRAL_COLOR, GRID_COLOR } from "./chart-palette";
 
-/** Total household spend per month, selected year vs the previous one.
- * Percent mode shows a single series: YoY change per month. */
 export function MonthlyTotalsBarChart({
   year,
   totalsCurrent,
