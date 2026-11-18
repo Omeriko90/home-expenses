@@ -40,7 +40,6 @@ export function formatPercent(value: number, opts: { sign?: boolean } = {}): str
   return pct < 0 ? `-${str}` : str;
 }
 
-/** Localized short month names (Jan…Dec / ינו׳…דצמ׳) for chart axis ticks. */
 export function shortMonths(locale: string): string[] {
   const fmt = new Intl.DateTimeFormat(locale, { month: "short" });
   return Array.from({ length: 12 }, (_, m) => fmt.format(new Date(2026, m, 1)));

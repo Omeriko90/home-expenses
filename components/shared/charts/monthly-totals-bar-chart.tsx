@@ -26,7 +26,6 @@ export function MonthlyTotalsBarChart({
   totalsPrevious: number[];
 }) {
   const { locale } = useI18n();
-  // Short labels so all 12 fit with interval={0} on narrow screens.
   const data = shortMonths(locale).map((month, i) => ({
     month,
     previous: totalsPrevious[i],
