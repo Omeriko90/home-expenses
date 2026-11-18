@@ -101,26 +101,47 @@ export function SummaryView({
       ) : (
         <>
           <div className="grid gap-3 lg:grid-cols-2">
-            <ChartCard title={t.summary.chartSpendPie}>
+            <ChartCard
+              title={t.summary.chartSpendPie}
+              description={
+                mode === "money"
+                  ? t.summary.chartSpendPieDescMoney
+                  : t.summary.chartSpendPieDescPercent
+              }
+            >
               <SharePieChart
                 data={spend
                   .filter((r) => r.current > 0)
                   .map((r) => ({ name: r.name, value: r.current, color: r.color }))}
+                mode={mode}
               />
             </ChartCard>
-            <ChartCard title={t.summary.chartMonthlyTotals}>
+            <ChartCard
+              title={t.summary.chartMonthlyTotals}
+              description={
+                mode === "money"
+                  ? t.summary.chartMonthlyTotalsDescMoney
+                  : t.summary.chartMonthlyTotalsDescPercent
+              }
+            >
               <MonthlyTotalsBarChart
                 year={year}
                 totalsCurrent={monthly.totalsCurrent}
                 totalsPrevious={monthly.totalsPrevious}
+                mode={mode}
               />
             </ChartCard>
             {monthly.categories.length > 0 && (
               <ChartCard
                 title={t.summary.chartMonthlyByCategory}
+                description={
+                  mode === "money"
+                    ? t.summary.chartMonthlyByCategoryDescMoney
+                    : t.summary.chartMonthlyByCategoryDescPercent
+                }
                 className="lg:col-span-2"
               >
-                <CategoryMonthlyLineChart monthly={monthly} />
+                <CategoryMonthlyLineChart monthly={monthly} mode={mode} />
               </ChartCard>
             )}
           </div>

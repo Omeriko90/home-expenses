@@ -3,6 +3,7 @@
 import * as React from "react";
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from "recharts";
 import { useI18n } from "@/lib/i18n/context";
+import { formatMoneyCompact, formatPercent } from "@/lib/utils";
 import { colorFor } from "./chart-palette";
 import { ChartTooltip } from "./chart-tooltip";
 
@@ -10,8 +11,15 @@ export type ShareSlice = { name: string; value: number; color?: string | null };
 
 const MAX_LEGEND_ITEMS = 8;
 
-/** "Share of total" pie — used for category spend, channels, and portfolios. */
-export function SharePieChart({ data }: { data: ShareSlice[] }) {
+/** "Share of total" pie — used for category spend, channels, and portfolios.
+ * Geometry is always value-proportional; `mode` only switches label/legend/tooltip formats. */
+export function SharePieChart({
+  data,
+  mode = "percent",
+}: {
+  data: ShareSlice[];
+  mode?: "money" | "percent";
+}) {
   const { t } = useI18n();
   const [expanded, setExpanded] = React.useState(false);
 
@@ -32,9 +40,11 @@ export function SharePieChart({ data }: { data: ShareSlice[] }) {
               outerRadius="80%"
               paddingAngle={2}
               strokeWidth={0}
-              label={({ percent }) =>
+              label={({ percent, value }) =>
                 percent !== undefined && percent >= 0.04
-                  ? `${Math.round(percent * 100)}%`
+                  ? mode === "money"
+                    ? formatMoneyCompact(Number(value))
+                    : `${Math.round(percent * 100)}%`
                   : ""
               }
               labelLine={false}
@@ -43,7 +53,17 @@ export function SharePieChart({ data }: { data: ShareSlice[] }) {
                 <Cell key={d.name} fill={colorFor(d.color, i)} />
               ))}
             </Pie>
-            <Tooltip content={<ChartTooltip />} />
+            <Tooltip
+              content={
+                <ChartTooltip
+                  formatter={
+                    mode === "percent"
+                      ? (v) => formatPercent(total > 0 ? v / total : 0)
+                      : undefined
+                  }
+                />
+              }
+            />
           </PieChart>
         </ResponsiveContainer>
       </div>
@@ -56,7 +76,6 @@ export function SharePieChart({ data }: { data: ShareSlice[] }) {
             />
             <span dir="auto" className="min-w-0 break-words">
               {d.name}
-              {total > 0 && ` · ${Math.round((d.value / total) * 100)}%`}
             </span>
           </li>
         ))}
