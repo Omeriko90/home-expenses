@@ -45,7 +45,14 @@ export function TransactionFilters({
           <SelectItem value="all">{t.transactions.allCategories}</SelectItem>
           {categories.map((c) => (
             <SelectItem key={c.id} value={c.id}>
-              {c.name}
+              <span className="flex items-center gap-1">
+                {c.name}
+                {c.archived && (
+                  <span className="text-xs text-muted-foreground">
+                    ({t.common.archived})
+                  </span>
+                )}
+              </span>
             </SelectItem>
           ))}
         </SelectContent>
