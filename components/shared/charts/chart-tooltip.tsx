@@ -15,10 +15,12 @@ export function ChartTooltip({
   active,
   payload,
   label,
+  formatter = formatMoney,
 }: {
   active?: boolean;
   payload?: TooltipEntry[];
   label?: string | number;
+  formatter?: (value: number) => string;
 }) {
   if (!active || !payload?.length) return null;
   return (
@@ -40,7 +42,7 @@ export function ChartTooltip({
               {entry.name}
             </span>
             <span className="tnum font-medium">
-              {formatMoney(Number(entry.value ?? 0))}
+              {entry.value == null ? "—" : formatter(Number(entry.value))}
             </span>
           </li>
         ))}
