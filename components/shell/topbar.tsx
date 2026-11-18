@@ -2,25 +2,19 @@
 
 import * as React from "react";
 import { usePathname } from "next/navigation";
-import { Menu, User } from "lucide-react";
+import { Menu } from "lucide-react";
 import { Nav } from "./nav";
-import { LogoutButton } from "./logout-button";
+import { UserCard } from "./user-card";
 import { useI18n } from "@/lib/i18n/context";
 import { IconButton } from "@/components/shared/icon-button";
 import {
   Sheet,
   SheetContent,
+  SheetFooter,
   SheetHeader,
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 
 const PAGE_KEYS = [
   "dashboard",
@@ -32,7 +26,13 @@ const PAGE_KEYS = [
   "settings",
 ] as const;
 
-export function Topbar({ userName }: { userName: string }) {
+export function Topbar({
+  userName,
+  userEmail,
+}: {
+  userName: string;
+  userEmail: string;
+}) {
   const { t, locale } = useI18n();
   const pathname = usePathname();
   const [open, setOpen] = React.useState(false);
@@ -57,28 +57,16 @@ export function Topbar({ userName }: { userName: string }) {
               <SheetHeader>
                 <SheetTitle className="text-primary">{t.appName}</SheetTitle>
               </SheetHeader>
-              <div className="px-3 pb-6">
+              <div className="min-h-0 flex-1 overflow-y-auto px-3">
                 <Nav onNavigate={() => setOpen(false)} />
               </div>
+              <SheetFooter className="border-t border-border p-3">
+                <UserCard userName={userName} userEmail={userEmail} />
+              </SheetFooter>
             </SheetContent>
           </Sheet>
         </div>
         <h1 className="text-lg font-semibold tracking-tight">{pageTitle}</h1>
-      </div>
-
-      <div className="flex items-center gap-1">
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <IconButton label={userName}>
-              <User />
-            </IconButton>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuLabel>{userName}</DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <LogoutButton />
-          </DropdownMenuContent>
-        </DropdownMenu>
       </div>
     </header>
   );
