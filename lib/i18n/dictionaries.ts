@@ -56,6 +56,10 @@ const he = {
         "לקטגוריה יש תנועות משויכות, ולכן היא תועבר לארכיון במקום להימחק.",
       empty: "עדיין אין קטגוריות",
       duplicate: "קטגוריה בשם זה כבר קיימת",
+      color: "צבע",
+      noColor: "ללא צבע",
+      lastUsed: "שימוש אחרון",
+      neverUsed: "ללא שימוש",
     },
     budgets: {
       title: "תקציב",
@@ -333,6 +337,10 @@ const en: Dictionary = {
         "This category has transactions, so it will be archived instead of deleted.",
       empty: "No categories yet",
       duplicate: "A category with this name already exists",
+      color: "Color",
+      noColor: "No color",
+      lastUsed: "Last used",
+      neverUsed: "Never used",
     },
     budgets: {
       title: "Budget",

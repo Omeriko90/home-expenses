@@ -4,6 +4,7 @@ import * as React from "react";
 import { Pencil, Plus, Trash2, Archive, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
 import { useI18n } from "@/lib/i18n/context";
+import { formatMoney, cn } from "@/lib/utils";
 import {
   createCategory,
   updateCategory,
@@ -11,6 +12,7 @@ import {
   setCategoryArchived,
   type CategoryInput,
 } from "@/app/actions/categories";
+import { CHART_COLORS } from "@/components/shared/charts/chart-palette";
 import { EmptyState } from "@/components/shared/empty-state";
 import { Field } from "@/components/shared/field";
 import { ConfirmDialog } from "@/components/shared/confirm-dialog";
@@ -18,9 +20,14 @@ import { IconButton } from "@/components/shared/icon-button";
 import { RowActions } from "@/components/shared/row-actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 import {
   Dialog,
   DialogContent,
@@ -35,8 +42,11 @@ type Category = {
   nameEn: string | null;
   description: string | null;
   type: "EXPENSE" | "INVESTMENT";
+  color: string | null;
   archived: boolean;
   txCount: number;
+  yearSpend: number;
+  lastUsed: string | null;
 };
 
 export function CategoryManager({ initial }: { initial: Category[] }) {
@@ -46,8 +56,6 @@ export function CategoryManager({ initial }: { initial: Category[] }) {
   const [formOpen, setFormOpen] = React.useState(false);
   const [toDelete, setToDelete] = React.useState<Category | null>(null);
   const [pending, startTransition] = React.useTransition();
-
-  const list = initial.filter((c) => c.type === tab);
 
   function openAdd() {
     setEditing(null);
@@ -93,61 +101,55 @@ export function CategoryManager({ initial }: { initial: Category[] }) {
           </Button>
         </div>
 
-        {(["EXPENSE", "INVESTMENT"] as const).map((type) => (
-          <TabsContent key={type} value={type}>
-            {list.length === 0 ? (
-              <EmptyState title={t.categories.empty} />
-            ) : (
-              <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-                {initial
-                  .filter((c) => c.type === type)
-                  .map((c) => (
-                    <Card
-                      key={c.id}
-                      className="group/row flex items-start justify-between gap-2 p-4"
-                    >
-                      <div className="min-w-0 flex flex-col gap-0.5">
-                        <div className="flex items-center gap-2">
-                          <span className="font-medium truncate">{c.name}</span>
-                          {c.archived && (
-                            <Badge variant="warning">{t.common.archived}</Badge>
-                          )}
-                        </div>
-                        {c.description && (
-                          <span className="text-sm text-muted-foreground truncate">
-                            {c.description}
-                          </span>
-                        )}
-                        <span className="text-xs text-muted-foreground">
-                          {c.txCount} {t.nav.transactions}
-                        </span>
-                      </div>
-                      <RowActions className="shrink-0">
-                        <IconButton
-                          label={t.common.edit}
-                          onClick={() => openEdit(c)}
-                        >
-                          <Pencil />
-                        </IconButton>
-                        <IconButton
-                          label={c.archived ? t.common.restore : t.common.archive}
-                          onClick={() => toggleArchive(c)}
-                        >
-                          {c.archived ? <RotateCcw /> : <Archive />}
-                        </IconButton>
-                        <IconButton
-                          label={t.common.delete}
-                          onClick={() => setToDelete(c)}
-                        >
-                          <Trash2 />
-                        </IconButton>
-                      </RowActions>
-                    </Card>
-                  ))}
-              </div>
-            )}
-          </TabsContent>
-        ))}
+        {(["EXPENSE", "INVESTMENT"] as const).map((type) => {
+          const ofType = initial.filter((c) => c.type === type);
+          const active = ofType.filter((c) => !c.archived);
+          const archived = ofType.filter((c) => c.archived);
+          return (
+            <TabsContent key={type} value={type}>
+              {ofType.length === 0 ? (
+                <EmptyState title={t.categories.empty} />
+              ) : (
+                <div className="flex flex-col gap-4">
+                  <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                    {active.map((c) => (
+                      <CategoryCard
+                        key={c.id}
+                        category={c}
+                        onEdit={openEdit}
+                        onToggleArchive={toggleArchive}
+                        onDelete={setToDelete}
+                      />
+                    ))}
+                  </div>
+                  {archived.length > 0 && (
+                    <Accordion type="single" collapsible>
+                      <AccordionItem value="archived" className="border-b-0">
+                        <AccordionTrigger className="text-sm text-muted-foreground">
+                          {t.common.archived} ({archived.length})
+                        </AccordionTrigger>
+                        <AccordionContent>
+                          <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                            {archived.map((c) => (
+                              <CategoryCard
+                                key={c.id}
+                                category={c}
+                                className="opacity-60"
+                                onEdit={openEdit}
+                                onToggleArchive={toggleArchive}
+                                onDelete={setToDelete}
+                              />
+                            ))}
+                          </div>
+                        </AccordionContent>
+                      </AccordionItem>
+                    </Accordion>
+                  )}
+                </div>
+              )}
+            </TabsContent>
+          );
+        })}
       </Tabs>
 
       <CategoryForm
@@ -174,6 +176,80 @@ export function CategoryManager({ initial }: { initial: Category[] }) {
   );
 }
 
+function CategoryCard({
+  category: c,
+  className,
+  onEdit,
+  onToggleArchive,
+  onDelete,
+}: {
+  category: Category;
+  className?: string;
+  onEdit: (c: Category) => void;
+  onToggleArchive: (c: Category) => void;
+  onDelete: (c: Category) => void;
+}) {
+  const { t } = useI18n();
+  return (
+    <Card
+      className={cn(
+        "group/row flex items-start justify-between gap-2 p-4",
+        className,
+      )}
+    >
+      <div className="min-w-0 flex flex-col gap-0.5">
+        <div className="flex items-center gap-2">
+          <span
+            className={cn(
+              "size-2.5 shrink-0 rounded-full",
+              !c.color && "border border-border-strong",
+            )}
+            style={c.color ? { backgroundColor: c.color } : undefined}
+          />
+          <span className="font-medium truncate">{c.name}</span>
+        </div>
+        {c.description && (
+          <span className="text-sm text-muted-foreground truncate">
+            {c.description}
+          </span>
+        )}
+        <span className="text-xs text-muted-foreground">
+          {c.txCount} {t.nav.transactions}
+          {c.yearSpend > 0 && (
+            <> · {formatMoney(c.yearSpend)} {t.summary.thisYear}</>
+          )}
+        </span>
+        <span className="text-xs text-muted-foreground">
+          {c.lastUsed
+            ? `${t.categories.lastUsed}: ${formatDate(c.lastUsed)}`
+            : t.categories.neverUsed}
+        </span>
+      </div>
+      <RowActions className="shrink-0">
+        <IconButton label={t.common.edit} onClick={() => onEdit(c)}>
+          <Pencil />
+        </IconButton>
+        <IconButton
+          label={c.archived ? t.common.restore : t.common.archive}
+          onClick={() => onToggleArchive(c)}
+        >
+          {c.archived ? <RotateCcw /> : <Archive />}
+        </IconButton>
+        <IconButton label={t.common.delete} onClick={() => onDelete(c)}>
+          <Trash2 />
+        </IconButton>
+      </RowActions>
+    </Card>
+  );
+}
+
+function formatDate(iso: string): string {
+  const d = new Date(iso);
+  const dd = String(d.getUTCDate()).padStart(2, "0");
+  const mm = String(d.getUTCMonth() + 1).padStart(2, "0");
+  return `${dd}/${mm}/${d.getUTCFullYear()}`;
+}
+
 function CategoryForm({
   open,
   onOpenChange,
@@ -189,11 +265,13 @@ function CategoryForm({
   const [pending, startTransition] = React.useTransition();
   const [name, setName] = React.useState("");
   const [description, setDescription] = React.useState("");
+  const [color, setColor] = React.useState<string | null>(null);
 
   React.useEffect(() => {
     if (open) {
       setName(editing?.name ?? "");
       setDescription(editing?.description ?? "");
+      setColor(editing?.color ?? null);
     }
   }, [open, editing]);
 
@@ -203,6 +281,7 @@ function CategoryForm({
       name: name.trim(),
       description: description.trim() || null,
       type: editing?.type ?? defaultType,
+      color,
     };
     if (!input.name) return;
     startTransition(async () => {
@@ -243,6 +322,35 @@ function CategoryForm({
               value={description}
               onChange={(e) => setDescription(e.target.value)}
             />
+          </Field>
+          <Field label={t.categories.color}>
+            {/* Swatches reuse the chart palette so the picked color matches
+                the charts exactly. */}
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                aria-label={t.categories.noColor}
+                title={t.categories.noColor}
+                onClick={() => setColor(null)}
+                className={cn(
+                  "size-6 rounded-full border-2 border-dashed border-border-strong",
+                  color === null && "ring-2 ring-ring ring-offset-2",
+                )}
+              />
+              {CHART_COLORS.map((hex) => (
+                <button
+                  key={hex}
+                  type="button"
+                  aria-label={hex}
+                  onClick={() => setColor(hex)}
+                  className={cn(
+                    "size-6 rounded-full",
+                    color === hex && "ring-2 ring-ring ring-offset-2",
+                  )}
+                  style={{ backgroundColor: hex }}
+                />
+              ))}
+            </div>
           </Field>
           <DialogFooter>
             <Button
