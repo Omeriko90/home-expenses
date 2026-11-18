@@ -11,7 +11,7 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { useI18n } from "@/lib/i18n/context";
-import { cn, formatMoneyCompact } from "@/lib/utils";
+import { cn, formatMoneyCompact, formatPercent, formatPercentCompact } from "@/lib/utils";
 import type { MonthlyCategorySpend } from "@/lib/summary";
 import { colorFor, GRID_COLOR } from "./chart-palette";
 import { ChartTooltip } from "./chart-tooltip";
@@ -19,11 +19,14 @@ import { ChartTooltip } from "./chart-tooltip";
 const DEFAULT_VISIBLE = 6;
 const MAX_LEGEND_ITEMS = 8;
 
-/** Monthly spend per category; top categories visible, legend toggles the rest. */
+/** Monthly spend per category; top categories visible, legend toggles the rest.
+ * Percent mode shows each category as its share of that month's total. */
 export function CategoryMonthlyLineChart({
   monthly,
+  mode,
 }: {
   monthly: MonthlyCategorySpend;
+  mode: "money" | "percent";
 }) {
   const { t } = useI18n();
   const [expanded, setExpanded] = React.useState(false);
@@ -35,12 +38,22 @@ export function CategoryMonthlyLineChart({
   );
 
   // Refund months can net negative; the chart shows spend, so floor at 0.
-  const data = monthly.byMonth.map((m, i) => ({
-    month: t.months[i],
-    ...Object.fromEntries(
-      Object.entries(m).map(([id, v]) => [id, Math.max(0, v)]),
-    ),
-  }));
+  const percent = mode === "percent";
+  const data = monthly.byMonth.map((m, i) => {
+    const floored = Object.entries(m).map(
+      ([id, v]) => [id, Math.max(0, v)] as const,
+    );
+    const monthTotal = floored.reduce((s, [, v]) => s + v, 0);
+    return {
+      month: t.months[i],
+      ...Object.fromEntries(
+        floored.map(([id, v]) => [
+          id,
+          percent ? (monthTotal > 0 ? v / monthTotal : null) : v,
+        ]),
+      ),
+    };
+  });
   const collapsible = monthly.categories.length > MAX_LEGEND_ITEMS;
   const shown = expanded
     ? monthly.categories
@@ -63,13 +76,15 @@ export function CategoryMonthlyLineChart({
             <CartesianGrid strokeDasharray="3 3" stroke={GRID_COLOR} vertical={false} />
             <XAxis dataKey="month" tick={{ fontSize: 11 }} tickLine={false} />
             <YAxis
-              tickFormatter={formatMoneyCompact}
+              tickFormatter={percent ? formatPercentCompact : formatMoneyCompact}
               tick={{ fontSize: 11 }}
               tickLine={false}
               axisLine={false}
               width={56}
             />
-            <Tooltip content={<ChartTooltip />} />
+            <Tooltip
+              content={<ChartTooltip formatter={percent ? formatPercent : undefined} />}
+            />
             {monthly.categories.map((c, i) => (
               <Line
                 key={c.categoryId}
