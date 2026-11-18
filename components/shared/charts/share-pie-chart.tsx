@@ -20,7 +20,7 @@ export function SharePieChart({ data }: { data: ShareSlice[] }) {
   const shown = expanded ? data : data.slice(0, MAX_LEGEND_ITEMS);
 
   return (
-    <div className="flex h-full flex-col gap-1">
+    <div className="flex h-full flex-col gap-1 lg:flex-row lg:items-stretch lg:gap-4">
       <div className="min-h-0 flex-1">
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>
@@ -47,14 +47,14 @@ export function SharePieChart({ data }: { data: ShareSlice[] }) {
           </PieChart>
         </ResponsiveContainer>
       </div>
-      <ul className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1">
+      <ul className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 lg:w-36 lg:shrink-0 lg:flex-col lg:flex-nowrap lg:items-start lg:justify-start lg:gap-y-1.5 lg:overflow-y-auto">
         {shown.map((d, i) => (
-          <li key={d.name} className="flex items-center gap-1.5 text-xs">
+          <li key={d.name} className="flex min-w-0 items-center gap-1.5 text-xs">
             <span
               className="inline-block size-2 shrink-0 rounded-full"
               style={{ backgroundColor: colorFor(d.color, i) }}
             />
-            <span dir="auto">
+            <span dir="auto" className="min-w-0 break-words">
               {d.name}
               {total > 0 && ` · ${Math.round((d.value / total) * 100)}%`}
             </span>
