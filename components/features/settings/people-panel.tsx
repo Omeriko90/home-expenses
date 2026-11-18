@@ -30,6 +30,7 @@ import {
 } from "@/components/ui/table";
 import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 import { IconButton } from "@/components/shared/icon-button";
+import { RowActions } from "@/components/shared/row-actions";
 import { EmptyState } from "@/components/shared/empty-state";
 import { InviteForm } from "./invite-form";
 import type { SettingsUser } from "./settings-view";
@@ -212,12 +213,14 @@ export function PeoplePanel({
                   {isAdmin && (
                     <TableCell className="text-end">
                       {m.id !== currentUser.id && (
-                        <IconButton
-                          label={t.settings.remove}
-                          onClick={() => setRemoveTarget(m)}
-                        >
-                          <Trash2 className="text-danger" />
-                        </IconButton>
+                        <RowActions className="justify-end">
+                          <IconButton
+                            label={t.settings.remove}
+                            onClick={() => setRemoveTarget(m)}
+                          >
+                            <Trash2 className="text-danger" />
+                          </IconButton>
+                        </RowActions>
                       )}
                     </TableCell>
                   )}
@@ -258,7 +261,7 @@ export function PeoplePanel({
                     </TableCell>
                     {isAdmin && (
                       <TableCell className="text-end">
-                        <div className="flex items-center justify-end gap-1">
+                        <RowActions className="items-center justify-end gap-1">
                           <Button
                             variant="ghost"
                             size="sm"
@@ -273,7 +276,7 @@ export function PeoplePanel({
                           >
                             <Trash2 className="text-danger" />
                           </IconButton>
-                        </div>
+                        </RowActions>
                       </TableCell>
                     )}
                   </TableRow>

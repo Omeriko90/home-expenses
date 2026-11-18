@@ -10,6 +10,7 @@ import { EmptyState } from "@/components/shared/empty-state";
 import { MonthYearPicker } from "@/components/shared/month-year-picker";
 import { ImportDialog } from "@/components/features/import/import-dialog";
 import { IconButton } from "@/components/shared/icon-button";
+import { RowActions } from "@/components/shared/row-actions";
 import { MoneyInput } from "@/components/shared/money-input";
 import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 import { Button } from "@/components/ui/button";
@@ -221,7 +222,7 @@ export function TransactionsView({
                     {formatMoney(r.amount, { decimals: true })}
                   </TableCell>
                   <TableCell>
-                    <div className="flex gap-0.5">
+                    <RowActions>
                       <IconButton label={t.common.edit} onClick={() => openEdit(r)}>
                         <Pencil />
                       </IconButton>
@@ -231,7 +232,7 @@ export function TransactionsView({
                       >
                         <Trash2 />
                       </IconButton>
-                    </div>
+                    </RowActions>
                   </TableCell>
                 </TableRow>
               ))}

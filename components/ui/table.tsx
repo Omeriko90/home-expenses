@@ -41,7 +41,7 @@ export function TableRow({ className, ...props }: React.ComponentProps<"tr">) {
   return (
     <tr
       className={cn(
-        "border-b border-border transition-colors hover:bg-surface-muted/60 data-[state=selected]:bg-surface-muted",
+        "group/row border-b border-border transition-colors hover:bg-surface-muted/60 data-[state=selected]:bg-surface-muted",
         className,
       )}
       {...props}
