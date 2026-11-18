@@ -56,7 +56,7 @@ export function CategoryMonthlyLineChart({
   }
 
   return (
-    <div className="flex h-full flex-col gap-1">
+    <div className="flex h-full flex-col gap-1 lg:flex-row lg:items-stretch lg:gap-4">
       <div className="min-h-0 flex-1">
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={data} margin={{ top: 4, left: 4, right: 4 }}>
@@ -84,7 +84,7 @@ export function CategoryMonthlyLineChart({
           </LineChart>
         </ResponsiveContainer>
       </div>
-      <ul className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1">
+      <ul className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 lg:w-48 lg:shrink-0 lg:flex-col lg:flex-nowrap lg:items-start lg:justify-start lg:gap-y-1.5 lg:overflow-y-auto">
         {shown.map((c, i) => {
           const hidden = !visible.has(c.categoryId);
           return (
