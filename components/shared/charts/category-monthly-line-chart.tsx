@@ -61,7 +61,6 @@ export function CategoryMonthlyLineChart({
     <div className="flex h-full flex-col gap-1">
       <div className="min-h-0 flex-1">
         <ResponsiveContainer width="100%" height="100%">
-          {/* Side margins keep the edge month labels (Jan/Dec) from clipping. */}
           <LineChart data={data} margin={{ top: 4, left: 12, right: 12 }}>
             <CartesianGrid strokeDasharray="3 3" stroke={GRID_COLOR} vertical={false} />
             <XAxis dataKey="month" interval={0} tick={{ fontSize: 10 }} tickMargin={4} tickLine={false} />
