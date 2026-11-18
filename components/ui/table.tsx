@@ -17,7 +17,15 @@ export function Table({
 }
 
 export function TableHeader({ className, ...props }: React.ComponentProps<"thead">) {
-  return <thead className={cn("[&_tr]:border-b border-border", className)} {...props} />;
+  return (
+    <thead
+      className={cn(
+        "sticky top-0 z-10 bg-surface [&_tr]:border-b border-border",
+        className,
+      )}
+      {...props}
+    />
+  );
 }
 
 export function TableBody({ className, ...props }: React.ComponentProps<"tbody">) {
@@ -45,7 +53,7 @@ export function TableHead({ className, ...props }: React.ComponentProps<"th">) {
   return (
     <th
       className={cn(
-        "h-11 px-3 text-start align-middle text-xs font-semibold uppercase tracking-wide text-muted-foreground",
+        "h-11 px-3 text-start align-middle text-xs font-semibold uppercase tracking-wide text-muted-foreground first:ps-[17px] last:pe-[17px]",
         className,
       )}
       {...props}
@@ -56,7 +64,7 @@ export function TableHead({ className, ...props }: React.ComponentProps<"th">) {
 export function TableCell({ className, ...props }: React.ComponentProps<"td">) {
   return (
     <td
-      className={cn("px-3 py-2.5 align-middle", className)}
+      className={cn("px-3 py-2.5 align-middle first:ps-[17px] last:pe-[17px]", className)}
       {...props}
     />
   );

@@ -33,7 +33,6 @@ export async function updateProfile(input: z.infer<typeof profileSchema>) {
     data: { name: name.trim(), locale },
   });
 
-  // The UI locale is cookie-driven (read by getLocale in lib/i18n/server.ts).
   if (LOCALES.includes(locale as Locale)) {
     const store = await cookies();
     store.set(LOCALE_COOKIE, locale, {

@@ -78,9 +78,7 @@ export function BudgetEditor({
       />
 
       <Card className="overflow-hidden">
-        {/* Cap to the viewport (shell: topbar + main padding 7rem+1px, page
-            header + gap ≈ 7rem) so the table scrolls internally, not the page. */}
-        <Table containerClassName="max-h-[calc(100dvh-14rem)] overflow-y-auto [&_thead]:sticky [&_thead]:top-0 [&_thead]:z-10 [&_thead]:bg-surface">
+        <Table containerClassName="max-h-[calc(100dvh-14rem)] overflow-y-auto">
           <TableHeader>
             <TableRow>
               <TableHead>{t.common.category}</TableHead>
