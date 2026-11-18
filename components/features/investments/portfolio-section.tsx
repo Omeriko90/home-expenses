@@ -9,6 +9,7 @@ import type { PortfolioSummary } from "@/lib/summary";
 import { deleteHolding } from "@/app/actions/investments";
 import type { AutocompleteOption } from "@/components/shared/autocomplete";
 import { IconButton } from "@/components/shared/icon-button";
+import { RowActions } from "@/components/shared/row-actions";
 import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -109,7 +110,7 @@ export function PortfolioSection({
                     {formatMoney(h.value)}
                   </TableCell>
                   <TableCell>
-                    <div className="flex gap-0.5">
+                    <RowActions>
                       <IconButton
                         label={t.common.edit}
                         onClick={() =>
@@ -124,7 +125,7 @@ export function PortfolioSection({
                       >
                         <Trash2 />
                       </IconButton>
-                    </div>
+                    </RowActions>
                   </TableCell>
                 </TableRow>
               ))}

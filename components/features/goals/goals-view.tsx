@@ -16,6 +16,7 @@ import { PageHeader } from "@/components/shared/page-header";
 import { EmptyState } from "@/components/shared/empty-state";
 import { YearSelect } from "@/components/shared/year-select";
 import { IconButton } from "@/components/shared/icon-button";
+import { RowActions } from "@/components/shared/row-actions";
 import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 import { Field } from "@/components/shared/field";
 import { MoneyInput } from "@/components/shared/money-input";
@@ -160,7 +161,7 @@ function GoalCard({
   const done = pct >= 100;
 
   return (
-    <Card className="flex flex-col">
+    <Card className="group/row flex flex-col">
       <CardContent className="flex flex-1 flex-col gap-3 p-5">
         <div className="flex items-start justify-between gap-2">
           <div className="flex flex-col gap-0.5">
@@ -172,14 +173,14 @@ function GoalCard({
               <span className="text-sm text-muted-foreground">{g.note}</span>
             )}
           </div>
-          <div className="flex shrink-0 gap-0.5">
+          <RowActions className="shrink-0">
             <IconButton label={t.common.edit} onClick={onEdit}>
               <Pencil />
             </IconButton>
             <IconButton label={t.common.delete} onClick={onDelete}>
               <Trash2 />
             </IconButton>
-          </div>
+          </RowActions>
         </div>
 
         {g.type === "NUMERIC" ? (
