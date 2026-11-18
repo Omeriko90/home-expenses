@@ -40,6 +40,11 @@ export function formatPercent(value: number, opts: { sign?: boolean } = {}): str
   return pct < 0 ? `-${str}` : str;
 }
 
+/** Compact % for chart axis ticks (ratio → "25%"). */
+export function formatPercentCompact(value: number): string {
+  return `${Math.round(value * 100)}%`;
+}
+
 /** Year-over-year percentage change, guarding divide-by-zero. */
 export function yoyPercent(current: number, previous: number): number | null {
   if (previous === 0) return null; // "new" / not comparable
