@@ -23,7 +23,10 @@ export default async function TransactionsPage({
   const month = resolveMonth(monthsWithData, year, sp.month);
 
   const [categories, transactions] = await Promise.all([
-    prisma.category.findMany({ where: { householdId }, orderBy: { name: "asc" } }),
+    prisma.category.findMany({
+      where: { householdId },
+      orderBy: [{ archived: "asc" }, { name: "asc" }],
+    }),
     prisma.transaction.findMany({
       where: { year, month, householdId },
       orderBy: { date: "desc" },
@@ -47,6 +50,7 @@ export default async function TransactionsPage({
     id: c.id,
     name: c.name,
     type: c.type,
+    archived: c.archived,
   }));
 
   return (

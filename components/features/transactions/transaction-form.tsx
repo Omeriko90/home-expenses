@@ -11,7 +11,10 @@ import {
 import { Field } from "@/components/shared/field";
 import { MoneyInput } from "@/components/shared/money-input";
 import { DatePicker } from "@/components/shared/date-picker";
-import { Autocomplete } from "@/components/shared/autocomplete";
+import {
+  Autocomplete,
+  type AutocompleteOption,
+} from "@/components/shared/autocomplete";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -33,6 +36,7 @@ export type TxCategory = {
   id: string;
   name: string;
   type: "EXPENSE" | "INVESTMENT";
+  archived: boolean;
 };
 
 export type TxRow = {
@@ -112,7 +116,24 @@ export function TransactionForm({
     });
   }
 
-  const options = categories.map((c) => ({ value: c.id, label: c.name }));
+  // Archived categories are not offered for new transactions, but a
+  // transaction already in one keeps its category selectable when edited.
+  const options = React.useMemo(() => {
+    const opts: AutocompleteOption[] = categories
+      .filter((c) => !c.archived)
+      .map((c) => ({ value: c.id, label: c.name }));
+    if (editing) {
+      const current = categories.find((c) => c.id === editing.categoryId);
+      if (current?.archived) {
+        opts.push({
+          value: current.id,
+          label: current.name,
+          hint: t.common.archived,
+        });
+      }
+    }
+    return opts;
+  }, [categories, editing, t]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
