@@ -40,6 +40,11 @@ export function formatPercent(value: number, opts: { sign?: boolean } = {}): str
   return pct < 0 ? `-${str}` : str;
 }
 
+/** Compact % for chart axis ticks (ratio → "25%"). */
+export function formatPercentCompact(value: number): string {
+  return `${Math.round(value * 100)}%`;
+}
+
 export function shortMonths(locale: string): string[] {
   const fmt = new Intl.DateTimeFormat(locale, { month: "short" });
   return Array.from({ length: 12 }, (_, m) => fmt.format(new Date(2026, m, 1)));
