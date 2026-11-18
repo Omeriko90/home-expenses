@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { Nav } from "@/components/shell/nav";
 import { Topbar } from "@/components/shell/topbar";
+import { UserCard } from "@/components/shell/user-card";
 import { getDictionary } from "@/lib/i18n/server";
 
 export default async function AppLayout({
@@ -14,6 +15,7 @@ export default async function AppLayout({
 
   const t = await getDictionary();
   const userName = session.user.name ?? session.user.email ?? "";
+  const userEmail = session.user.email ?? "";
 
   return (
     // Fixed-height viewport: the shell never scrolls — only <main> does.
@@ -26,10 +28,13 @@ export default async function AppLayout({
         <div className="flex-1 overflow-y-auto px-3 py-2">
           <Nav />
         </div>
+        <div className="shrink-0 border-t border-border p-3">
+          <UserCard userName={userName} userEmail={userEmail} />
+        </div>
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <Topbar userName={userName} />
+        <Topbar userName={userName} userEmail={userEmail} />
         <main className="flex-1 overflow-y-auto overflow-x-hidden px-4 py-6 sm:px-6 lg:px-8">
           {/* min-h-full + flex: short pages can still fill the viewport via
               flex-1, while tall pages grow so main's bottom padding stays. */}
