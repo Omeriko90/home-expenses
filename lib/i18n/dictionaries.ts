@@ -50,8 +50,6 @@ const he = {
       title: "קטגוריות",
       add: "הוספת קטגוריה",
       edit: "עריכת קטגוריה",
-      expenseCategories: "קטגוריות הוצאה",
-      investmentCategories: "קטגוריות השקעה",
       nameHint: "לדוגמה: קניות, חשבונות, חופשות",
       deleteConfirm: "למחוק את הקטגוריה?",
       deleteWithTx:
@@ -343,8 +341,6 @@ const en: Dictionary = {
       title: "Categories",
       add: "Add category",
       edit: "Edit category",
-      expenseCategories: "Expense categories",
-      investmentCategories: "Investment categories",
       nameHint: "e.g. Groceries, Bills, Vacations",
       deleteConfirm: "Delete this category?",
       deleteWithTx:
