@@ -106,6 +106,7 @@ export function InvestmentsView({
                 <InvestmentCharts
                   portfolios={groupPortfolios}
                   yearlyTotals={yearlyTotals}
+                  group={group}
                   type={typeFilter}
                 />
                 {shown.map((p) => (

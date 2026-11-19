@@ -10,10 +10,13 @@ import { InvestmentGrowthLineChart } from "@/components/shared/charts/investment
 export function InvestmentCharts({
   portfolios,
   yearlyTotals,
+  group,
   type,
 }: {
   portfolios: PortfolioSummary[];
   yearlyTotals: YearlyInvestmentTotal[];
+  /** Portfolio group of the active tab; growth data is restricted to it. */
+  group: "MAIN" | "KIDS";
   /** Restrict all charts to this holding type; null shows everything. */
   type: string | null;
 }) {
@@ -42,6 +45,7 @@ export function InvestmentCharts({
 
   const growthByYear = new Map<number, number>();
   for (const r of yearlyTotals) {
+    if (r.group !== group) continue;
     if (type && r.type !== type) continue;
     growthByYear.set(r.year, (growthByYear.get(r.year) ?? 0) + r.total);
   }
