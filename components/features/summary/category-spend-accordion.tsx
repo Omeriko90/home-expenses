@@ -2,10 +2,12 @@
 
 import * as React from "react";
 import { useI18n } from "@/lib/i18n/context";
-import { formatMoney, yoyPercent, cn } from "@/lib/utils";
+import { formatMoney, cn } from "@/lib/utils";
 import type { CategorySpendRow, CategoryMonthlySpend } from "@/lib/summary";
 import { fetchCategoryMonthlySpend } from "@/app/actions/summary";
 import { ChangeIndicator } from "@/components/shared/stat-card";
+import { ROW_GRID } from "./spend-row-grid";
+import { TotalsRow } from "./totals-row";
 import {
   Accordion,
   AccordionItem,
@@ -21,12 +23,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
-// Shared grid template so the sticky header and every trigger row align.
-// The last narrow column holds the expand/collapse chevron.
-// Mobile: two columns (name + chevron); the numbers wrap to a full-width
-// second line. sm+: one row with fixed numeric columns.
-const ROW_GRID =
-  "grid grid-cols-[minmax(0,1fr)_1.25rem] sm:grid-cols-[minmax(0,1fr)_6rem_6rem_8rem_1.25rem] items-center gap-x-2 gap-y-2";
 
 export function CategorySpendAccordion({
   spend,
@@ -107,9 +103,6 @@ export function CategorySpendAccordion({
                     />
                   </div>
                 </div>
-                {/* Mobile: full-width second line with tiny captions.
-                    sm+: `contents` dissolves the wrapper so the spans sit in
-                    the fixed numeric grid columns. */}
                 <div className="col-span-2 row-start-2 flex items-center justify-between gap-2 sm:contents">
                   <span className="flex flex-col sm:block sm:text-end">
                     <span className="text-[10px] text-muted-foreground sm:hidden">
@@ -158,53 +151,6 @@ export function CategorySpendAccordion({
     </div>
     <TotalsRow totals={totals} year={year} mode={mode} />
     </>
-  );
-}
-
-function TotalsRow({
-  totals,
-  year,
-  mode,
-}: {
-  totals: { current: number; previous: number };
-  year: number;
-  mode: "money" | "percent";
-}) {
-  const { t } = useI18n();
-  const change = totals.current - totals.previous;
-  const pct = yoyPercent(totals.current, totals.previous);
-  return (
-    <div
-      className={cn(
-        ROW_GRID,
-        "shrink-0 border-t border-border bg-surface-muted/50 px-4 py-3 text-sm font-semibold",
-      )}
-    >
-      <span>{t.common.total}</span>
-      <div className="col-span-2 row-start-2 flex items-center justify-between gap-2 sm:contents">
-        <span className="flex flex-col sm:block sm:text-end">
-          <span className="text-[10px] font-normal text-muted-foreground sm:hidden">
-            {year}
-          </span>
-          <span className="tnum">{formatMoney(totals.current)}</span>
-        </span>
-        <span className="flex flex-col sm:block sm:text-end">
-          <span className="text-[10px] font-normal text-muted-foreground sm:hidden">
-            {year - 1}
-          </span>
-          <span className="tnum text-muted-foreground">
-            {formatMoney(totals.previous)}
-          </span>
-        </span>
-        <span className="flex flex-col sm:block sm:text-end">
-          <span className="text-[10px] font-normal text-muted-foreground sm:hidden">
-            {t.summary.change}
-          </span>
-          <ChangeIndicator amount={change} pct={pct} mode={mode} invert />
-        </span>
-      </div>
-      <span className="hidden sm:block" />
-    </div>
   );
 }
 
