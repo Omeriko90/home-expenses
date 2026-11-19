@@ -1,11 +1,14 @@
 "use client";
 
 import * as React from "react";
+import { EllipsisVertical, Pencil, Trash2 } from "lucide-react";
 import { useI18n } from "@/lib/i18n/context";
 import { formatMoney, formatPercent, cn } from "@/lib/utils";
 import { toggleMilestone } from "@/app/actions/goals";
 import { EditDeleteActions } from "@/components/shared/edit-delete-actions";
+import { IconButton } from "@/components/shared/icon-button";
 import { Card, CardContent } from "@/components/ui/card";
+import { DropdownMenu } from "@/components/ui/dropdown-menu/DropdownMenu";
 import { Progress } from "@/components/ui/progress";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
@@ -47,9 +50,34 @@ export function GoalCard({
             )}
           </div>
           <EditDeleteActions
-            className="shrink-0"
+            className="hidden shrink-0 sm:flex"
             onEdit={onEdit}
             onDelete={onDelete}
+          />
+          <DropdownMenu
+            align="end"
+            trigger={
+              <IconButton
+                label={t.common.more}
+                className="-me-2 -mt-2 shrink-0 sm:hidden"
+              >
+                <EllipsisVertical />
+              </IconButton>
+            }
+            items={[
+              {
+                label: t.common.edit,
+                icon: <Pencil className="size-4" />,
+                onSelect: onEdit,
+              },
+              { kind: "separator" },
+              {
+                label: t.common.delete,
+                icon: <Trash2 className="size-4" />,
+                variant: "danger",
+                onSelect: onDelete,
+              },
+            ]}
           />
         </div>
 
