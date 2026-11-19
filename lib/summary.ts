@@ -1,3 +1,4 @@
+import type { PortfolioGroup } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { yoyPercent } from "@/lib/utils";
 
@@ -254,10 +255,11 @@ export async function getMonthlyCategorySpend(
 export type YearlyInvestmentTotal = {
   year: number;
   type: string;
+  group: PortfolioGroup;
   total: number;
 };
 
-/** Investment value per year and holding type across all active portfolios. */
+/** Investment value per year, holding type and portfolio group across all active portfolios. */
 export async function getYearlyInvestmentTotals(
   householdId: string,
 ): Promise<YearlyInvestmentTotal[]> {
@@ -266,16 +268,17 @@ export async function getYearlyInvestmentTotals(
     select: {
       year: true,
       value: true,
-      holding: { select: { type: true } },
+      holding: { select: { type: true, portfolio: { select: { group: true } } } },
     },
   });
 
   const totals = new Map<string, YearlyInvestmentTotal>();
   for (const s of snapshots) {
-    const key = `${s.year}:${s.holding.type}`;
+    const key = `${s.year}:${s.holding.type}:${s.holding.portfolio.group}`;
     const row = totals.get(key) ?? {
       year: s.year,
       type: s.holding.type,
+      group: s.holding.portfolio.group,
       total: 0,
     };
     row.total += Number(s.value);
