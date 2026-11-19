@@ -8,13 +8,7 @@ import { useI18n } from "@/lib/i18n/context";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select/baseSelectComponents";
+import { Select } from "@/components/ui/select/Select";
 import { Field } from "@/components/shared/field";
 import type { SettingsUser } from "./settings-view";
 
@@ -29,7 +23,6 @@ export function ProfileForm({ user }: { user: SettingsUser }) {
     if (!name.trim()) return;
     startTransition(async () => {
       await updateProfile({ name: name.trim(), locale: locale as "he" | "en" });
-      // RTL/LTR flip needs the document attributes updated on soft refresh.
       document.documentElement.lang = locale;
       document.documentElement.dir = locale === "he" ? "rtl" : "ltr";
       toast.success(t.settings.saved);
@@ -52,15 +45,14 @@ export function ProfileForm({ user }: { user: SettingsUser }) {
             />
           </Field>
           <Field label={t.settings.language}>
-            <Select value={locale} onValueChange={setLocale}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="he">{t.settings.hebrew}</SelectItem>
-                <SelectItem value="en">{t.settings.english}</SelectItem>
-              </SelectContent>
-            </Select>
+            <Select
+              value={locale}
+              onValueChange={setLocale}
+              options={[
+                { value: "he", label: t.settings.hebrew },
+                { value: "en", label: t.settings.english },
+              ]}
+            />
           </Field>
           <div>
             <Button type="submit" disabled={pending}>

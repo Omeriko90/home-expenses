@@ -1,19 +1,11 @@
 "use client";
 
-import Link from "next/link";
 import { Settings } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { LogoutButton } from "./logout-button";
 import { useI18n } from "@/lib/i18n/context";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu/baseDropdownMenuComponents";
+import { DropdownMenu } from "@/components/ui/dropdown-menu/DropdownMenu";
 
-// userName falls back to the email upstream, so an "@" means there is no
-// real name to take initials from.
 function initials(name: string, email: string): string {
   if (!name || name.includes("@")) return (email[0] ?? "?").toUpperCase();
   const words = name.trim().split(/\s+/);
@@ -34,11 +26,14 @@ export function UserCard({
   const { t } = useI18n();
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <button
-          type="button"
-          className="flex w-full cursor-pointer items-center gap-3 rounded-xl bg-surface-muted p-3 text-start transition-colors hover:bg-border/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+    <DropdownMenu
+      side="top"
+      align="start"
+      contentClassName="w-[var(--radix-dropdown-menu-trigger-width)]"
+      trigger={
+        <Button
+          variant="ghost"
+          className="h-auto w-full justify-start gap-3 rounded-xl bg-surface-muted p-3 text-start enabled:hover:bg-border/60"
         >
           <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-secondary text-sm font-semibold text-white">
             {initials(userName, userEmail)}
@@ -54,22 +49,17 @@ export function UserCard({
               {userEmail}
             </span>
           </span>
-        </button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent
-        side="top"
-        align="start"
-        className="w-[var(--radix-dropdown-menu-trigger-width)]"
-      >
-        <DropdownMenuItem asChild>
-          <Link href="/settings" className="flex items-center gap-2">
-            <Settings className="size-4" />
-            {t.nav.settings}
-          </Link>
-        </DropdownMenuItem>
-        <DropdownMenuSeparator />
-        <LogoutButton />
-      </DropdownMenuContent>
-    </DropdownMenu>
+        </Button>
+      }
+      items={[
+        {
+          label: t.nav.settings,
+          icon: <Settings className="size-4" />,
+          href: "/settings",
+        },
+        { kind: "separator" },
+        { kind: "custom", node: <LogoutButton /> },
+      ]}
+    />
   );
 }

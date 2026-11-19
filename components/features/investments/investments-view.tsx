@@ -7,13 +7,7 @@ import type { PortfolioSummary, YearlyInvestmentTotal } from "@/lib/summary";
 import { EmptyState } from "@/components/shared/empty-state";
 import { type AutocompleteOption } from "@/components/shared/autocomplete";
 import { INVESTMENT_TYPE_PRESETS } from "@/lib/investment-types";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select/baseSelectComponents";
+import { Select } from "@/components/ui/select/Select";
 import { InvestmentCharts } from "./investment-charts";
 import { GroupSummaryCards } from "./group-summary-cards";
 import { PortfolioSection } from "./portfolio-section";
@@ -73,19 +67,12 @@ export function InvestmentsView({
           <Select
             value={typeFilter ?? "all"}
             onValueChange={(v) => setTypeFilter(v === "all" ? null : v)}
-          >
-            <SelectTrigger className="w-44">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">{t.investments.allTypes}</SelectItem>
-              {usedTypes.map((v) => (
-                <SelectItem key={v} value={v}>
-                  {v}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+            className="w-44"
+            options={[
+              { value: "all", label: t.investments.allTypes },
+              ...usedTypes.map((v) => ({ value: v, label: v })),
+            ]}
+          />
           <YearSelect year={year} years={years} />
         </div>
       </div>
