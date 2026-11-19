@@ -75,8 +75,8 @@ export function CategoryManager({ initial }: { initial: Category[] }) {
               {t.categories.investmentCategories}
             </TabsTrigger>
           </TabsList>
-          <Button onClick={openAdd}>
-            <Plus /> {t.categories.add}
+          <Button onClick={openAdd} aria-label={t.categories.add}>
+            <Plus /> <span className="hidden sm:inline">{t.categories.add}</span>
           </Button>
         </div>
 
