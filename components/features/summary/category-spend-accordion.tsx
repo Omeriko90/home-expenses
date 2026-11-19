@@ -23,8 +23,10 @@ import {
 
 // Shared grid template so the sticky header and every trigger row align.
 // The last narrow column holds the expand/collapse chevron.
+// Mobile: two columns (name + chevron); the numbers wrap to a full-width
+// second line. sm+: one row with fixed numeric columns.
 const ROW_GRID =
-  "grid grid-cols-[minmax(0,1fr)_6rem_6rem_8rem_1.25rem] items-center gap-2";
+  "grid grid-cols-[minmax(0,1fr)_1.25rem] sm:grid-cols-[minmax(0,1fr)_6rem_6rem_8rem_1.25rem] items-center gap-x-2 gap-y-2";
 
 export function CategorySpendAccordion({
   spend,
@@ -80,9 +82,9 @@ export function CategorySpendAccordion({
         )}
       >
         <span>{t.common.category}</span>
-        <span className="text-end">{year}</span>
-        <span className="text-end">{year - 1}</span>
-        <span className="text-end">{t.summary.change}</span>
+        <span className="hidden text-end sm:block">{year}</span>
+        <span className="hidden text-end sm:block">{year - 1}</span>
+        <span className="hidden text-end sm:block">{t.summary.change}</span>
         <span />
       </div>
 
@@ -105,22 +107,40 @@ export function CategorySpendAccordion({
                     />
                   </div>
                 </div>
-                <span className="text-end tnum font-medium">
-                  {formatMoney(r.current)}
-                </span>
-                <span className="text-end tnum text-muted-foreground">
-                  {formatMoney(r.previous)}
-                </span>
-                <span className="text-end">
-                  <ChangeIndicator
-                    amount={r.change}
-                    pct={r.changePct}
-                    mode={mode}
-                    invert
-                  />
-                </span>
+                {/* Mobile: full-width second line with tiny captions.
+                    sm+: `contents` dissolves the wrapper so the spans sit in
+                    the fixed numeric grid columns. */}
+                <div className="col-span-2 row-start-2 flex items-center justify-between gap-2 sm:contents">
+                  <span className="flex flex-col sm:block sm:text-end">
+                    <span className="text-[10px] text-muted-foreground sm:hidden">
+                      {year}
+                    </span>
+                    <span className="tnum font-medium">
+                      {formatMoney(r.current)}
+                    </span>
+                  </span>
+                  <span className="flex flex-col sm:block sm:text-end">
+                    <span className="text-[10px] text-muted-foreground sm:hidden">
+                      {year - 1}
+                    </span>
+                    <span className="tnum text-muted-foreground">
+                      {formatMoney(r.previous)}
+                    </span>
+                  </span>
+                  <span className="flex flex-col sm:block sm:text-end">
+                    <span className="text-[10px] text-muted-foreground sm:hidden">
+                      {t.summary.change}
+                    </span>
+                    <ChangeIndicator
+                      amount={r.change}
+                      pct={r.changePct}
+                      mode={mode}
+                      invert
+                    />
+                  </span>
+                </div>
               </AccordionTrigger>
-              <AccordionContent className="border-t border-border bg-surface-muted/30 py-2">
+              <AccordionContent className="overflow-x-auto border-t border-border bg-surface-muted/30 py-2">
                 {monthly ? (
                   <MonthlyTable year={year} row={r} monthly={monthly} />
                 ) : failed[key] ? (
@@ -136,16 +156,18 @@ export function CategorySpendAccordion({
         })}
       </Accordion>
     </div>
-    <TotalsRow totals={totals} mode={mode} />
+    <TotalsRow totals={totals} year={year} mode={mode} />
     </>
   );
 }
 
 function TotalsRow({
   totals,
+  year,
   mode,
 }: {
   totals: { current: number; previous: number };
+  year: number;
   mode: "money" | "percent";
 }) {
   const { t } = useI18n();
@@ -159,14 +181,29 @@ function TotalsRow({
       )}
     >
       <span>{t.common.total}</span>
-      <span className="text-end tnum">{formatMoney(totals.current)}</span>
-      <span className="text-end tnum text-muted-foreground">
-        {formatMoney(totals.previous)}
-      </span>
-      <span className="text-end">
-        <ChangeIndicator amount={change} pct={pct} mode={mode} invert />
-      </span>
-      <span />
+      <div className="col-span-2 row-start-2 flex items-center justify-between gap-2 sm:contents">
+        <span className="flex flex-col sm:block sm:text-end">
+          <span className="text-[10px] font-normal text-muted-foreground sm:hidden">
+            {year}
+          </span>
+          <span className="tnum">{formatMoney(totals.current)}</span>
+        </span>
+        <span className="flex flex-col sm:block sm:text-end">
+          <span className="text-[10px] font-normal text-muted-foreground sm:hidden">
+            {year - 1}
+          </span>
+          <span className="tnum text-muted-foreground">
+            {formatMoney(totals.previous)}
+          </span>
+        </span>
+        <span className="flex flex-col sm:block sm:text-end">
+          <span className="text-[10px] font-normal text-muted-foreground sm:hidden">
+            {t.summary.change}
+          </span>
+          <ChangeIndicator amount={change} pct={pct} mode={mode} invert />
+        </span>
+      </div>
+      <span className="hidden sm:block" />
     </div>
   );
 }
