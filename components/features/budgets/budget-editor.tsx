@@ -205,7 +205,7 @@ export function BudgetEditor({
     <div className="flex flex-col gap-6">
       <PageHeader
         actions={
-          <div className="flex items-center gap-2">
+          <div className="flex w-full items-center gap-2 sm:w-auto">
             <Button
               variant="outline"
               className="bg-surface"
@@ -214,7 +214,11 @@ export function BudgetEditor({
             >
               <Copy /> {t.budgets.copyPrev}
             </Button>
-            <YearSelect year={year} years={years} />
+            <YearSelect
+              year={year}
+              years={years}
+              className="flex-1 sm:flex-none"
+            />
           </div>
         }
       />
