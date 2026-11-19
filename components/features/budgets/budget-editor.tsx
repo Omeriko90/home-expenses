@@ -28,32 +28,6 @@ import {
 
 type Row = { categoryId: string; name: string; monthly: number; actual: number };
 
-/** Truncated category name; shows the full text in a tooltip only when ellipsed. */
-function CategoryName({ name }: { name: string }) {
-  const ref = React.useRef<HTMLSpanElement>(null);
-  const [truncated, setTruncated] = React.useState(false);
-  React.useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    const measure = () => setTruncated(el.scrollWidth > el.clientWidth);
-    measure();
-    // overflow can appear once webfonts swap in without the span's box resizing
-    document.fonts?.ready.then(measure);
-    const ro = new ResizeObserver(measure);
-    ro.observe(el);
-    return () => ro.disconnect();
-  }, [name]);
-  // Always keep the Tooltip trigger mounted: swapping the wrapper in and out
-  // remounts the span, which detaches the ResizeObserver mid-measure.
-  return (
-    <Tooltip content={name} disabled={!truncated}>
-      <span ref={ref} className="block max-w-28 truncate sm:max-w-44">
-        {name}
-      </span>
-    </Tooltip>
-  );
-}
-
 export function BudgetEditor({
   year,
   years,
@@ -64,7 +38,6 @@ export function BudgetEditor({
   year: number;
   years: number[];
   rows: Row[];
-  /** "month": actuals are the current month's spend. "average": yearly total / 12. */
   mode: "month" | "average";
   month: number;
 }) {
@@ -82,8 +55,6 @@ export function BudgetEditor({
     (sum, v) => sum + (typeof v === "number" ? v : 0),
     0,
   );
-  // Totals come from the visible (non-archived) rows so budget/spent/remaining
-  // stay mutually consistent even when archived categories have history.
   const totalSpent = rows.reduce((sum, r) => sum + r.actual, 0);
   const remaining = totalMonthly - totalSpent;
 
@@ -231,7 +202,11 @@ export function BudgetEditor({
                 <TableRow key={r.categoryId}>
                   <TableCell className="font-medium">
                     <div className="flex flex-col gap-1.5">
-                      <CategoryName name={r.name} />
+                      <Tooltip content={r.name}>
+                        <span className="block max-w-28 truncate sm:max-w-44">
+                          {r.name}
+                        </span>
+                      </Tooltip>
                       {hasBar && (
                         <span className="flex items-center gap-2 sm:hidden">
                           <ProgressBar

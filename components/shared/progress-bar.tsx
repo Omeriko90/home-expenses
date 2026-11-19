@@ -1,9 +1,5 @@
 import { cn } from "@/lib/utils";
 
-/**
- * Thin horizontal fill bar. The flex track keeps the fill anchored to the
- * inline start, so it fills right-to-left under dir="rtl".
- */
 export function ProgressBar({
   value,
   max,
@@ -12,7 +8,6 @@ export function ProgressBar({
 }: {
   value: number;
   max: number;
-  /** Render the fill in the danger color (e.g. spend exceeds budget). */
   over?: boolean;
   className?: string;
 }) {
