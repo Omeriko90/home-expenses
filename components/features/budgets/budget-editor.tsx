@@ -52,10 +52,9 @@ export function BudgetEditor({
   const totalSpent = rows.reduce((sum, r) => sum + r.actual, 0);
   const remaining = totalMonthly - totalSpent;
 
-  const spentLabel =
-    mode === "month"
-      ? `${t.budgets.spentLabel} · ${t.months[month - 1]}`
-      : `${t.budgets.spentLabel} · ${t.summary.monthlyAvg}`;
+  const spentSuffix =
+    mode === "month" ? t.months[month - 1] : t.summary.monthlyAvg;
+  const spentLabel = `${t.budgets.spentLabel} · ${spentSuffix}`;
 
   function save(categoryId: string, value: number | "") {
     const monthlyAmount = typeof value === "number" ? value : 0;
@@ -152,7 +151,12 @@ export function BudgetEditor({
       },
     },
     {
-      header: mode === "month" ? t.budgets.spent : t.summary.monthlyAvg,
+      header: (
+        <span className="whitespace-nowrap">
+          {t.budgets.spentLabel}
+          <span className="hidden sm:inline"> · {spentSuffix}</span>
+        </span>
+      ),
       headClassName: "w-20 sm:w-40",
       cellClassName: "tnum",
       cell: (r) =>
