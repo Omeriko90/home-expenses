@@ -1,11 +1,17 @@
 "use client";
 
-import { Pencil, Trash2, Archive, RotateCcw } from "lucide-react";
+import {
+  Pencil,
+  Trash2,
+  Archive,
+  RotateCcw,
+  EllipsisVertical,
+} from "lucide-react";
 import { useI18n } from "@/lib/i18n/context";
 import { formatMoney, cn } from "@/lib/utils";
 import { IconButton } from "@/components/shared/icon-button";
-import { RowActions } from "@/components/shared/row-actions";
 import { Card } from "@/components/ui/card";
+import { DropdownMenu } from "@/components/ui/dropdown-menu/DropdownMenu";
 import type { Category } from "./category-manager";
 
 export function CategoryCard({
@@ -24,10 +30,7 @@ export function CategoryCard({
   const { t } = useI18n();
   return (
     <Card
-      className={cn(
-        "group/row flex items-start justify-between gap-2 p-4",
-        className,
-      )}
+      className={cn("flex items-start justify-between gap-2 p-4", className)}
     >
       <div className="min-w-0 flex flex-col gap-0.5">
         <div className="flex items-center gap-2">
@@ -57,20 +60,37 @@ export function CategoryCard({
             : t.categories.neverUsed}
         </span>
       </div>
-      <RowActions className="shrink-0">
-        <IconButton label={t.common.edit} onClick={() => onEdit(c)}>
-          <Pencil />
-        </IconButton>
-        <IconButton
-          label={c.archived ? t.common.restore : t.common.archive}
-          onClick={() => onToggleArchive(c)}
-        >
-          {c.archived ? <RotateCcw /> : <Archive />}
-        </IconButton>
-        <IconButton label={t.common.delete} onClick={() => onDelete(c)}>
-          <Trash2 />
-        </IconButton>
-      </RowActions>
+      <DropdownMenu
+        align="end"
+        trigger={
+          <IconButton label={t.common.more} className="-me-2 -mt-2 shrink-0">
+            <EllipsisVertical />
+          </IconButton>
+        }
+        items={[
+          {
+            label: t.common.edit,
+            icon: <Pencil className="size-4" />,
+            onSelect: () => onEdit(c),
+          },
+          {
+            label: c.archived ? t.common.restore : t.common.archive,
+            icon: c.archived ? (
+              <RotateCcw className="size-4" />
+            ) : (
+              <Archive className="size-4" />
+            ),
+            onSelect: () => onToggleArchive(c),
+          },
+          { kind: "separator" },
+          {
+            label: t.common.delete,
+            icon: <Trash2 className="size-4" />,
+            variant: "danger",
+            onSelect: () => onDelete(c),
+          },
+        ]}
+      />
     </Card>
   );
 }
