@@ -14,9 +14,6 @@ export function ChartCard({
   children: React.ReactNode;
 }) {
   return (
-    // min-w-0 lets the card shrink below the legend strip's intrinsic
-    // (nowrap) width when it's a grid item — otherwise it overflows its
-    // track on mobile and Recharts locks the chart at the wide measure.
     <Card className={cn("flex min-w-0 flex-col gap-2 p-4", className)}>
       <div>
         <h3 className="text-sm font-medium text-muted-foreground">{title}</h3>
