@@ -5,8 +5,6 @@ import { CategoryManager } from "@/components/features/categories/category-manag
 export default async function CategoriesPage() {
   const { householdId } = await requireUser();
   const year = new Date().getFullYear();
-  // Spend is scoped to the current year while last-used is all-time, so the
-  // two aggregates can't share a single groupBy.
   const [categories, yearSpend, lastUsed] = await Promise.all([
     prisma.category.findMany({
       where: { householdId },

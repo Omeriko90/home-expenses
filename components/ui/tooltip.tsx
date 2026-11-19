@@ -4,7 +4,6 @@ import * as React from "react";
 import * as TooltipPrimitive from "@radix-ui/react-tooltip";
 import { cn } from "@/lib/utils";
 
-/** Self-contained tooltip: wrap any trigger, pass the text as `content`. */
 export function Tooltip({
   content,
   children,

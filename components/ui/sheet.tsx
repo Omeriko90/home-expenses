@@ -26,8 +26,6 @@ const SheetOverlay = React.forwardRef<
 ));
 SheetOverlay.displayName = "SheetOverlay";
 
-// Physical sides (tw-animate-css has no logical slide utilities). The shared
-// Drawer wrapper picks right/left based on the active text direction.
 const sheetVariants = cva(
   "fixed z-50 flex flex-col gap-4 bg-surface shadow-xl transition ease-in-out data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:duration-200 data-[state=open]:duration-300",
   {

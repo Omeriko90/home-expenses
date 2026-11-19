@@ -10,7 +10,6 @@ type TooltipEntry = {
   payload?: Record<string, unknown>;
 };
 
-/** Custom recharts tooltip: ₪ amounts with tabular numerals, card styling. */
 export function ChartTooltip({
   active,
   payload,
