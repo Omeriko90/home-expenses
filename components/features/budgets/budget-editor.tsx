@@ -283,13 +283,13 @@ export function BudgetEditor({
           <span>{t.common.total}</span>
           <div className="flex gap-8 tnum">
             <span>
-              {t.budgets.totalSpent}: {formatMoney(totalSpent)}
+              {t.budgets.spentLabel}: {formatMoney(totalSpent)}
             </span>
             <span>
-              {t.budgets.totalMonthly}: {formatMoney(totalMonthly)}
+              {t.budgets.monthlyShort}: {formatMoney(totalMonthly)}
             </span>
             <span className="hidden sm:inline">
-              {t.budgets.totalYearly}: {formatMoney(totalMonthly * 12)}
+              {t.budgets.yearlyShort}: {formatMoney(totalMonthly * 12)}
             </span>
           </div>
         </TotalsFooterRow>
