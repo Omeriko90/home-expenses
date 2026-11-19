@@ -4,7 +4,12 @@ import * as React from "react";
 import { Copy, Info, TriangleAlert } from "lucide-react";
 import { toast } from "sonner";
 import { useI18n } from "@/lib/i18n/context";
-import { formatMoney, formatPercent, formatPercentCompact } from "@/lib/utils";
+import {
+  cn,
+  formatMoney,
+  formatPercent,
+  formatPercentCompact,
+} from "@/lib/utils";
 import {
   upsertBudget,
   copyBudgetsFromPreviousYear,
@@ -82,11 +87,16 @@ export function BudgetEditor({
     };
   };
 
-  const percentLabel = (r: Row) => {
+  const percentLabel = (r: Row, className?: string) => {
     const { budget, over } = derive(r);
     return over ? (
       <Tooltip content={t.budgets.overBudget}>
-        <span className="inline-flex w-20 shrink-0 items-center gap-0.5 whitespace-nowrap text-xs font-medium text-danger tnum">
+        <span
+          className={cn(
+            "inline-flex w-20 shrink-0 items-center gap-0.5 whitespace-nowrap text-xs font-medium text-danger tnum",
+            className,
+          )}
+        >
           <TriangleAlert className="size-3.5 shrink-0" />
           {budget > 0
             ? formatPercentCompact(r.actual / budget)
@@ -94,7 +104,12 @@ export function BudgetEditor({
         </span>
       </Tooltip>
     ) : (
-      <span className="inline-block w-20 shrink-0 text-xs text-muted-foreground tnum">
+      <span
+        className={cn(
+          "inline-block w-20 shrink-0 text-xs text-muted-foreground tnum",
+          className,
+        )}
+      >
         {budget > 0 ? formatPercentCompact(r.actual / budget) : null}
       </span>
     );
@@ -115,14 +130,14 @@ export function BudgetEditor({
               </span>
             </Tooltip>
             {hasBar && (
-              <span className="flex items-center gap-2 sm:hidden">
+              <span className="flex w-full items-center gap-2 sm:hidden">
                 <ProgressBar
                   value={r.actual}
                   max={budget}
                   over={over}
-                  className="h-2.5 max-w-40"
+                  className="h-3 flex-1"
                 />
-                {percentLabel(r)}
+                {percentLabel(r, "w-auto")}
               </span>
             )}
           </div>
@@ -170,7 +185,7 @@ export function BudgetEditor({
     },
     {
       header: t.budgets.monthlyBudget,
-      headClassName: "w-40",
+      headClassName: "w-28 sm:w-40",
       cell: (r) => {
         const { v } = derive(r);
         return (
