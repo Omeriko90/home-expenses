@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Copy, Info, TriangleAlert } from "lucide-react";
+import { Copy, Info, Search, TriangleAlert } from "lucide-react";
 import { toast } from "sonner";
 import { useI18n } from "@/lib/i18n/context";
 import {
@@ -15,12 +15,14 @@ import {
   copyBudgetsFromPreviousYear,
 } from "@/app/actions/budgets";
 import { PageHeader } from "@/components/shared/page-header";
+import { EmptyState } from "@/components/shared/empty-state";
 import { YearSelect } from "@/components/shared/year-select";
 import { MoneyInput } from "@/components/shared/money-input";
 import { ProgressBar } from "@/components/shared/progress-bar";
 import { StatCard } from "@/components/shared/stat-card";
 import { TotalsFooterRow } from "@/components/shared/totals-footer-row";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Tooltip } from "@/components/ui/tooltip";
 import { Table, type TableColumn } from "@/components/ui/table/Table";
@@ -45,6 +47,8 @@ export function BudgetEditor({
     Object.fromEntries(rows.map((r) => [r.categoryId, r.monthly || ""])),
   );
   const [pending, startTransition] = React.useTransition();
+  const [query, setQuery] = React.useState("");
+  const deferredQuery = React.useDeferredValue(query);
 
   React.useEffect(() => {
     setValues(Object.fromEntries(rows.map((r) => [r.categoryId, r.monthly || ""])));
@@ -60,6 +64,12 @@ export function BudgetEditor({
   const spentSuffix =
     mode === "month" ? t.months[month - 1] : t.summary.monthlyAvg;
   const spentLabel = `${t.budgets.spentLabel} · ${spentSuffix}`;
+
+  const visibleRows = React.useMemo(() => {
+    const q = deferredQuery.trim().toLowerCase();
+    if (!q) return rows;
+    return rows.filter((r) => r.name.toLowerCase().includes(q));
+  }, [rows, deferredQuery]);
 
   function save(categoryId: string, value: number | "") {
     const monthlyAmount = typeof value === "number" ? value : 0;
@@ -296,8 +306,26 @@ export function BudgetEditor({
         />
       </div>
 
+      <div className="relative sm:max-w-xs">
+        <Search className="pointer-events-none absolute inset-y-0 start-3 my-auto size-4 text-muted-foreground" />
+        <Input
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder={t.common.search}
+          className="ps-9"
+        />
+      </div>
+
       <Card className="overflow-hidden">
-        <Table columns={columns} data={rows} rowKey={(r) => r.categoryId} />
+        {visibleRows.length === 0 ? (
+          <EmptyState title={t.common.noData} className="m-4 border-none" />
+        ) : (
+          <Table
+            columns={columns}
+            data={visibleRows}
+            rowKey={(r) => r.categoryId}
+          />
+        )}
         <TotalsFooterRow>
           <span>{t.common.total}</span>
           <div className="flex gap-8 tnum">
