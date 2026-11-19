@@ -259,7 +259,6 @@ export type YearlyInvestmentTotal = {
   total: number;
 };
 
-/** Investment value per year, holding type and portfolio group across all active portfolios. */
 export async function getYearlyInvestmentTotals(
   householdId: string,
 ): Promise<YearlyInvestmentTotal[]> {
