@@ -1,7 +1,15 @@
 "use client";
 
 import * as React from "react";
-import { Pencil, Plus, Trash2, Search, Upload } from "lucide-react";
+import {
+  MoreHorizontal,
+  Pencil,
+  Plus,
+  Search,
+  SlidersHorizontal,
+  Trash2,
+  Upload,
+} from "lucide-react";
 import { toast } from "sonner";
 import { useI18n } from "@/lib/i18n/context";
 import { formatMoney, cn } from "@/lib/utils";
@@ -17,6 +25,17 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import {
   Select,
   SelectContent,
@@ -82,6 +101,58 @@ export function TransactionsView({
     return { filtered, total };
   }, [rows, cat, kind, deferredMin, deferredMax, deferredQ]);
 
+  const activeFilters =
+    Number(cat !== "all") +
+    Number(kind !== "all") +
+    Number(amountMin !== "") +
+    Number(amountMax !== "");
+
+  // Rendered twice — inline on sm+ and inside the mobile filter popover.
+  // Both share the same state, so no syncing is needed.
+  function renderFilterControls(layout: "xs" | "sm") {
+    return (
+      <>
+        <Select value={cat} onValueChange={setCat}>
+          <SelectTrigger className={layout === "sm" ? "w-44" : "w-full"}>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">{t.transactions.allCategories}</SelectItem>
+            {categories.map((c) => (
+              <SelectItem key={c.id} value={c.id}>
+                {c.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Select value={kind} onValueChange={(v) => setKind(v as typeof kind)}>
+          <SelectTrigger className={layout === "sm" ? "w-36" : "w-full"}>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">{t.transactions.allTypes}</SelectItem>
+            <SelectItem value="VARIABLE">{t.transactions.variable}</SelectItem>
+            <SelectItem value="FIXED">{t.transactions.fixed}</SelectItem>
+          </SelectContent>
+        </Select>
+        <div className="flex items-center gap-2">
+          <MoneyInput
+            value={amountMin}
+            onValueChange={setAmountMin}
+            placeholder={t.transactions.amountFrom}
+            className={layout === "sm" ? "w-32" : "flex-1"}
+          />
+          <MoneyInput
+            value={amountMax}
+            onValueChange={setAmountMax}
+            placeholder={t.transactions.amountTo}
+            className={layout === "sm" ? "w-32" : "flex-1"}
+          />
+        </div>
+      </>
+    );
+  }
+
   function openAdd() {
     setEditing(null);
     setFormOpen(true);
@@ -106,11 +177,12 @@ export function TransactionsView({
     // row stays visible. Derived from the shell: topbar h-16 + border (1px)
     // + <main> py-6 (3rem) — the layout wrapper is min-h-full (auto height),
     // so flex-1/h-full can't provide a definite height here.
-    <div className="flex h-[calc(100dvh-7rem-1px)] min-h-0 flex-col gap-6">
-      {/* Month/year picker at the start; action buttons at the end. */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+    <div className="flex h-[calc(100dvh-7rem-1px)] min-h-0 flex-col gap-3 sm:gap-6">
+      {/* Month/year picker at the start; action buttons at the end. On
+          mobile the secondary actions collapse into a ⋯ menu. */}
+      <div className="flex items-center justify-between gap-2">
         <MonthYearPicker year={year} month={month} />
-        <div className="flex items-center gap-2">
+        <div className="hidden items-center gap-2 sm:flex">
           <Button
             variant="outline"
             onClick={() => setImportOpen(true)}
@@ -122,9 +194,33 @@ export function TransactionsView({
             <Plus /> {t.transactions.add}
           </Button>
         </div>
+        <div className="flex items-center gap-2 sm:hidden">
+          <Button onClick={openAdd}>
+            <Plus /> {t.transactions.add}
+          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="outline"
+                size="icon"
+                className="bg-surface"
+                aria-label={t.common.more}
+              >
+                <MoreHorizontal />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onSelect={() => setImportOpen(true)}>
+                <Upload className="size-4" /> {t.nav.import}
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </div>
 
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+      {/* Search stays inline everywhere; the remaining filters are inline on
+          sm+ and collapse into a popover on mobile. */}
+      <div className="flex items-center gap-3">
         <div className="relative flex-1">
           <Search className="pointer-events-none absolute inset-y-0 start-3 my-auto size-4 text-muted-foreground" />
           <Input
@@ -134,46 +230,26 @@ export function TransactionsView({
             className="ps-9"
           />
         </div>
-        <Select value={cat} onValueChange={setCat}>
-          <SelectTrigger className="w-44">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">{t.transactions.allCategories}</SelectItem>
-            {categories.map((c) => (
-              <SelectItem key={c.id} value={c.id}>
-                {c.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <Select
-          value={kind}
-          onValueChange={(v) => setKind(v as typeof kind)}
-        >
-          <SelectTrigger className="w-36">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">{t.transactions.allTypes}</SelectItem>
-            <SelectItem value="VARIABLE">{t.transactions.variable}</SelectItem>
-            <SelectItem value="FIXED">{t.transactions.fixed}</SelectItem>
-          </SelectContent>
-        </Select>
-        <div className="flex items-center gap-2">
-          <MoneyInput
-            value={amountMin}
-            onValueChange={setAmountMin}
-            placeholder={t.transactions.amountFrom}
-            className="w-32"
-          />
-          <MoneyInput
-            value={amountMax}
-            onValueChange={setAmountMax}
-            placeholder={t.transactions.amountTo}
-            className="w-32"
-          />
+        <div className="hidden items-center gap-3 sm:flex">
+          {renderFilterControls("sm")}
         </div>
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button
+              variant="outline"
+              className="bg-surface sm:hidden"
+              aria-label={t.common.filters}
+            >
+              <SlidersHorizontal />
+              {activeFilters > 0 && (
+                <Badge variant="primary">{activeFilters}</Badge>
+              )}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent align="end" className="flex flex-col gap-3">
+            {renderFilterControls("xs")}
+          </PopoverContent>
+        </Popover>
       </div>
 
       {filtered.length === 0 ? (
