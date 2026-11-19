@@ -127,15 +127,11 @@ export async function getCategorySpend(
 }
 
 export type BudgetActuals = {
-  /** "month": current-month spend (current year). "average": yearly total / 12. */
   mode: "month" | "average";
-  /** 1-12; the compared month when mode === "month". */
   month: number;
-  /** categoryId -> monthly actual (already divided by 12 in average mode). */
   byCategory: Record<string, number>;
 };
 
-/** Per-category actual spend to compare against monthly budgets for `year`. */
 export async function getBudgetActuals(
   year: number,
   householdId: string,

@@ -9,17 +9,14 @@ export function Tooltip({
   content,
   children,
   side = "top",
-  disabled = false,
 }: {
   content: React.ReactNode;
   children: React.ReactNode;
   side?: "top" | "bottom" | "left" | "right";
-  /** Keeps the trigger mounted but never opens (e.g. tooltip only when text is truncated). */
-  disabled?: boolean;
 }) {
   return (
     <TooltipPrimitive.Provider delayDuration={150}>
-      <TooltipPrimitive.Root open={disabled ? false : undefined}>
+      <TooltipPrimitive.Root>
         <TooltipPrimitive.Trigger asChild>{children}</TooltipPrimitive.Trigger>
         <TooltipPrimitive.Portal>
           <TooltipPrimitive.Content
