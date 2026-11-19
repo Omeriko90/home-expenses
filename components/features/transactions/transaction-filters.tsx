@@ -6,7 +6,7 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+} from "@/components/ui/select/baseSelectComponents";
 import type { TxCategory } from "./transaction-form";
 
 export type TxKind = "all" | "FIXED" | "VARIABLE";

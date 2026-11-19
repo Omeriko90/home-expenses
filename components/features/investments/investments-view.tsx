@@ -13,7 +13,7 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+} from "@/components/ui/select/baseSelectComponents";
 import { InvestmentCharts } from "./investment-charts";
 import { GroupSummaryCards } from "./group-summary-cards";
 import { PortfolioSection } from "./portfolio-section";
