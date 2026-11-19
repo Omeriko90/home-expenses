@@ -20,7 +20,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
+} from "@/components/ui/table/baseTableComponents";
 import { HoldingForm, type Holding } from "./holding-form";
 import { DepositsForm } from "./deposits-form";
 

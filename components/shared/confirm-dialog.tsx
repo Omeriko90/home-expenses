@@ -7,7 +7,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
+} from "@/components/ui/dialog/baseDialogComponents";
 import { Button } from "@/components/ui/button";
 import { useI18n } from "@/lib/i18n/context";
 

@@ -32,14 +32,14 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+} from "@/components/ui/select/baseSelectComponents";
 import {
   Dialog,
   DialogContent,
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
+} from "@/components/ui/dialog/baseDialogComponents";
 
 type Milestone = { id: string; title: string; done: boolean };
 type Goal = {

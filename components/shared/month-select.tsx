@@ -8,7 +8,7 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+} from "@/components/ui/select/baseSelectComponents";
 
 /** Month picker that drives the `?month=` URL param (preserves other params). */
 export function MonthSelect({ month }: { month: number }) {

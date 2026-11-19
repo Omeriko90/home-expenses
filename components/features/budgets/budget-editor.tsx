@@ -24,7 +24,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
+} from "@/components/ui/table/baseTableComponents";
 
 type Row = { categoryId: string; name: string; monthly: number; actual: number };
 

@@ -27,7 +27,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
+} from "@/components/ui/table/baseTableComponents";
 import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 import { IconButton } from "@/components/shared/icon-button";
 import { RowActions } from "@/components/shared/row-actions";
