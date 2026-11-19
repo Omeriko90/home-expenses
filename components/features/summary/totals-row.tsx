@@ -27,13 +27,13 @@ export function TotalsRow({
       <span>{t.common.total}</span>
       <div className="col-span-2 row-start-2 flex items-center justify-between gap-2 sm:contents">
         <span className="flex flex-col sm:block sm:text-end">
-          <span className="text-[10px] font-normal text-muted-foreground sm:hidden">
+          <span className="text-xs font-normal text-muted-foreground sm:hidden">
             {year}
           </span>
           <span className="tnum">{formatMoney(totals.current)}</span>
         </span>
         <span className="flex flex-col sm:block sm:text-end">
-          <span className="text-[10px] font-normal text-muted-foreground sm:hidden">
+          <span className="text-xs font-normal text-muted-foreground sm:hidden">
             {year - 1}
           </span>
           <span className="tnum text-muted-foreground">
@@ -41,7 +41,7 @@ export function TotalsRow({
           </span>
         </span>
         <span className="flex flex-col sm:block sm:text-end">
-          <span className="text-[10px] font-normal text-muted-foreground sm:hidden">
+          <span className="text-xs font-normal text-muted-foreground sm:hidden">
             {t.summary.change}
           </span>
           <ChangeIndicator amount={change} pct={pct} mode={mode} invert />

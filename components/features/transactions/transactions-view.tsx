@@ -19,7 +19,6 @@ import { MonthYearPicker } from "@/components/shared/month-year-picker";
 import { ImportDialog } from "@/components/features/import/import-dialog";
 import { IconButton } from "@/components/shared/icon-button";
 import { RowActions } from "@/components/shared/row-actions";
-import { MoneyInput } from "@/components/shared/money-input";
 import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -37,13 +36,6 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
   Table,
   TableBody,
   TableCell,
@@ -56,6 +48,7 @@ import {
   type TxRow,
   type TxCategory,
 } from "./transaction-form";
+import { TransactionFilters, type TxKind } from "./transaction-filters";
 
 export function TransactionsView({
   year,
@@ -70,7 +63,7 @@ export function TransactionsView({
 }) {
   const { t } = useI18n();
   const [cat, setCat] = React.useState<string>("all");
-  const [kind, setKind] = React.useState<"all" | "FIXED" | "VARIABLE">("all");
+  const [kind, setKind] = React.useState<TxKind>("all");
   const [amountMin, setAmountMin] = React.useState<number | "">("");
   const [amountMax, setAmountMax] = React.useState<number | "">("");
   const [q, setQ] = React.useState("");
@@ -107,49 +100,17 @@ export function TransactionsView({
     Number(amountMin !== "") +
     Number(amountMax !== "");
 
-  function renderFilterControls(layout: "xs" | "sm") {
-    return (
-      <>
-        <Select value={cat} onValueChange={setCat}>
-          <SelectTrigger className={layout === "sm" ? "w-44" : "w-full"}>
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">{t.transactions.allCategories}</SelectItem>
-            {categories.map((c) => (
-              <SelectItem key={c.id} value={c.id}>
-                {c.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <Select value={kind} onValueChange={(v) => setKind(v as typeof kind)}>
-          <SelectTrigger className={layout === "sm" ? "w-36" : "w-full"}>
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">{t.transactions.allTypes}</SelectItem>
-            <SelectItem value="VARIABLE">{t.transactions.variable}</SelectItem>
-            <SelectItem value="FIXED">{t.transactions.fixed}</SelectItem>
-          </SelectContent>
-        </Select>
-        <div className="flex items-center gap-2">
-          <MoneyInput
-            value={amountMin}
-            onValueChange={setAmountMin}
-            placeholder={t.transactions.amountFrom}
-            className={layout === "sm" ? "w-32" : "flex-1"}
-          />
-          <MoneyInput
-            value={amountMax}
-            onValueChange={setAmountMax}
-            placeholder={t.transactions.amountTo}
-            className={layout === "sm" ? "w-32" : "flex-1"}
-          />
-        </div>
-      </>
-    );
-  }
+  const filterProps = {
+    categories,
+    cat,
+    onCatChange: setCat,
+    kind,
+    onKindChange: setKind,
+    amountMin,
+    onAmountMinChange: setAmountMin,
+    amountMax,
+    onAmountMaxChange: setAmountMax,
+  };
 
   function openAdd() {
     setEditing(null);
@@ -205,7 +166,7 @@ export function TransactionsView({
               </Button>
             </PopoverTrigger>
             <PopoverContent align="end" className="flex flex-col gap-3 p-4">
-              {renderFilterControls("xs")}
+              <TransactionFilters layout="xs" {...filterProps} />
             </PopoverContent>
           </Popover>
           <DropdownMenu>
@@ -242,7 +203,7 @@ export function TransactionsView({
           />
         </div>
         <div className="hidden items-center gap-3 sm:flex">
-          {renderFilterControls("sm")}
+          <TransactionFilters layout="sm" {...filterProps} />
         </div>
       </div>
 
