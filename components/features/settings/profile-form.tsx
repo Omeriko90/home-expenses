@@ -14,7 +14,7 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+} from "@/components/ui/select/baseSelectComponents";
 import { Field } from "@/components/shared/field";
 import type { SettingsUser } from "./settings-view";
 
