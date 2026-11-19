@@ -18,9 +18,7 @@ export default async function AppLayout({
   const userEmail = session.user.email ?? "";
 
   return (
-    // Fixed-height viewport: the shell never scrolls — only <main> does.
     <div className="flex h-dvh overflow-hidden">
-      {/* Desktop sidebar — fixed, always visible, never scrolls with content */}
       <aside className="hidden w-64 shrink-0 flex-col border-e border-border bg-surface lg:flex">
         <div className="flex h-16 shrink-0 items-center px-5 text-lg font-semibold text-primary">
           {t.appName}
@@ -36,8 +34,6 @@ export default async function AppLayout({
       <div className="flex min-w-0 flex-1 flex-col">
         <Topbar userName={userName} userEmail={userEmail} />
         <main className="flex-1 overflow-y-auto overflow-x-hidden px-4 py-6 sm:px-6 lg:px-8">
-          {/* min-h-full + flex: short pages can still fill the viewport via
-              flex-1, while tall pages grow so main's bottom padding stays. */}
           <div className="mx-auto flex min-h-full w-full max-w-6xl flex-col">
             {children}
           </div>

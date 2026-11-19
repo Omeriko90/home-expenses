@@ -12,7 +12,6 @@ export default async function TransactionsPage({
   const { householdId } = await requireUser();
   const year = resolveYearLoose(sp.year);
 
-  // Only the selected month is loaded — never the whole year.
   const monthsWithData = (
     await prisma.transaction.findMany({
       where: { year, householdId },

@@ -14,7 +14,6 @@ import { formatMoneyCompact } from "@/lib/utils";
 import { ChartTooltip } from "./chart-tooltip";
 import { INVESTMENT_COLOR, GRID_COLOR } from "./chart-palette";
 
-/** Total investment value per year across all portfolios. */
 export function InvestmentGrowthLineChart({
   totals,
 }: {

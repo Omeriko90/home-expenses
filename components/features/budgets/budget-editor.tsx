@@ -14,17 +14,11 @@ import { YearSelect } from "@/components/shared/year-select";
 import { MoneyInput } from "@/components/shared/money-input";
 import { ProgressBar } from "@/components/shared/progress-bar";
 import { StatCard } from "@/components/shared/stat-card";
+import { TotalsFooterRow } from "@/components/shared/totals-footer-row";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Tooltip } from "@/components/ui/tooltip";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table/baseTableComponents";
+import { Table, type TableColumn } from "@/components/ui/table/Table";
 
 type Row = { categoryId: string; name: string; monthly: number; actual: number };
 
@@ -76,6 +70,136 @@ export function BudgetEditor({
       toast.success(`${t.budgets.copyPrev} (${res.copied})`);
     });
   }
+
+  const derive = (r: Row) => {
+    const v = values[r.categoryId];
+    const budget = typeof v === "number" ? v : 0;
+    return {
+      v,
+      budget,
+      yearly: budget * 12,
+      over: r.actual > budget,
+      hasBar: budget > 0 || r.actual > 0,
+    };
+  };
+
+  const percentLabel = (r: Row) => {
+    const { budget, over } = derive(r);
+    return over ? (
+      <Tooltip content={t.budgets.overBudget}>
+        <span className="inline-flex w-20 shrink-0 items-center gap-0.5 whitespace-nowrap text-xs font-medium text-danger tnum">
+          <TriangleAlert className="size-3.5 shrink-0" />
+          {budget > 0
+            ? formatPercentCompact(r.actual / budget)
+            : t.budgets.noBudget}
+        </span>
+      </Tooltip>
+    ) : (
+      <span className="inline-block w-20 shrink-0 text-xs text-muted-foreground tnum">
+        {budget > 0 ? formatPercentCompact(r.actual / budget) : null}
+      </span>
+    );
+  };
+
+  const columns: TableColumn<Row>[] = [
+    {
+      header: t.common.category,
+      headClassName: "sm:w-48",
+      cellClassName: "font-medium",
+      cell: (r) => {
+        const { budget, over, hasBar } = derive(r);
+        return (
+          <div className="flex flex-col gap-1.5">
+            <Tooltip content={r.name}>
+              <span className="block max-w-28 truncate sm:max-w-44">
+                {r.name}
+              </span>
+            </Tooltip>
+            {hasBar && (
+              <span className="flex items-center gap-2 sm:hidden">
+                <ProgressBar
+                  value={r.actual}
+                  max={budget}
+                  over={over}
+                  className="h-2.5 max-w-40"
+                />
+                {percentLabel(r)}
+              </span>
+            )}
+          </div>
+        );
+      },
+    },
+    {
+      header: t.budgets.usage,
+      headClassName: "hidden pe-8 sm:table-cell",
+      cellClassName: "hidden pe-8 sm:table-cell",
+      cell: (r) => {
+        const { budget, over, hasBar } = derive(r);
+        return (
+          hasBar && (
+            <span className="flex items-center gap-2">
+              <ProgressBar
+                value={r.actual}
+                max={budget}
+                over={over}
+                className="h-2.5"
+              />
+              {percentLabel(r)}
+            </span>
+          )
+        );
+      },
+    },
+    {
+      header: mode === "month" ? t.budgets.spent : t.summary.monthlyAvg,
+      headClassName: "w-20 sm:w-40",
+      cellClassName: "tnum",
+      cell: (r) =>
+        r.actual === 0 ? (
+          <span className="text-faint">—</span>
+        ) : (
+          <span className={derive(r).over ? "text-danger" : undefined}>
+            {formatMoney(r.actual)}
+          </span>
+        ),
+    },
+    {
+      header: t.budgets.monthlyBudget,
+      headClassName: "w-40",
+      cell: (r) => {
+        const { v } = derive(r);
+        return (
+          <MoneyInput
+            value={v ?? ""}
+            onValueChange={(val) =>
+              setValues((prev) => ({ ...prev, [r.categoryId]: val }))
+            }
+            onBlur={() => save(r.categoryId, v ?? "")}
+          />
+        );
+      },
+    },
+    {
+      header: (
+        <span className="inline-flex items-center gap-1">
+          {t.budgets.yearlyBudget}
+          <Tooltip content={t.budgets.subtitle}>
+            <button
+              type="button"
+              aria-label={t.budgets.subtitle}
+              className="text-muted-foreground hover:text-foreground"
+            >
+              <Info className="size-3.5" />
+            </button>
+          </Tooltip>
+        </span>
+      ),
+      headClassName: "hidden w-40 text-end sm:table-cell",
+      cellClassName: "hidden text-end tnum text-muted-foreground sm:table-cell",
+      cell: (r) => formatMoney(derive(r).yearly),
+    },
+  ];
 
   return (
     <div className="flex flex-col gap-6">
@@ -150,116 +274,8 @@ export function BudgetEditor({
       </div>
 
       <Card className="overflow-hidden">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="sm:w-[200px]">{t.common.category}</TableHead>
-              <TableHead className="hidden pe-8 sm:table-cell">
-                {t.budgets.usage}
-              </TableHead>
-              <TableHead className="w-20 sm:w-40">
-                {mode === "month" ? t.budgets.spent : t.summary.monthlyAvg}
-              </TableHead>
-              <TableHead className="w-40">{t.budgets.monthlyBudget}</TableHead>
-              <TableHead className="hidden w-40 text-end sm:table-cell">
-                <span className="inline-flex items-center gap-1">
-                  {t.budgets.yearlyBudget}
-                  <Tooltip content={t.budgets.subtitle}>
-                    <button
-                      type="button"
-                      aria-label={t.budgets.subtitle}
-                      className="text-muted-foreground hover:text-foreground"
-                    >
-                      <Info className="size-3.5" />
-                    </button>
-                  </Tooltip>
-                </span>
-              </TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {rows.map((r) => {
-              const v = values[r.categoryId];
-              const budget = typeof v === "number" ? v : 0;
-              const yearly = budget * 12;
-              const over = r.actual > budget;
-              const hasBar = budget > 0 || r.actual > 0;
-              const percentLabel = over ? (
-                <Tooltip content={t.budgets.overBudget}>
-                  <span className="inline-flex w-20 shrink-0 items-center gap-0.5 whitespace-nowrap text-xs font-medium text-danger tnum">
-                    <TriangleAlert className="size-3.5 shrink-0" />
-                    {budget > 0
-                      ? formatPercentCompact(r.actual / budget)
-                      : t.budgets.noBudget}
-                  </span>
-                </Tooltip>
-              ) : (
-                <span className="inline-block w-20 shrink-0 text-xs text-muted-foreground tnum">
-                  {budget > 0 ? formatPercentCompact(r.actual / budget) : null}
-                </span>
-              );
-              return (
-                <TableRow key={r.categoryId}>
-                  <TableCell className="font-medium">
-                    <div className="flex flex-col gap-1.5">
-                      <Tooltip content={r.name}>
-                        <span className="block max-w-28 truncate sm:max-w-44">
-                          {r.name}
-                        </span>
-                      </Tooltip>
-                      {hasBar && (
-                        <span className="flex items-center gap-2 sm:hidden">
-                          <ProgressBar
-                            value={r.actual}
-                            max={budget}
-                            over={over}
-                            className="h-2.5 max-w-40"
-                          />
-                          {percentLabel}
-                        </span>
-                      )}
-                    </div>
-                  </TableCell>
-                  <TableCell className="hidden pe-8 sm:table-cell">
-                    {hasBar && (
-                      <span className="flex items-center gap-2">
-                        <ProgressBar
-                          value={r.actual}
-                          max={budget}
-                          over={over}
-                          className="h-2.5"
-                        />
-                        {percentLabel}
-                      </span>
-                    )}
-                  </TableCell>
-                  <TableCell className="tnum">
-                    {r.actual === 0 ? (
-                      <span className="text-faint">—</span>
-                    ) : (
-                      <span className={over ? "text-danger" : undefined}>
-                        {formatMoney(r.actual)}
-                      </span>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    <MoneyInput
-                      value={v ?? ""}
-                      onValueChange={(val) =>
-                        setValues((prev) => ({ ...prev, [r.categoryId]: val }))
-                      }
-                      onBlur={() => save(r.categoryId, v ?? "")}
-                    />
-                  </TableCell>
-                  <TableCell className="hidden text-end tnum text-muted-foreground sm:table-cell">
-                    {formatMoney(yearly)}
-                  </TableCell>
-                </TableRow>
-              );
-            })}
-          </TableBody>
-        </Table>
-        <div className="flex items-center justify-between border-t border-border bg-surface-muted/50 px-4 py-3 text-sm font-semibold">
+        <Table columns={columns} data={rows} rowKey={(r) => r.categoryId} />
+        <TotalsFooterRow>
           <span>{t.common.total}</span>
           <div className="flex gap-8 tnum">
             <span>
@@ -272,7 +288,7 @@ export function BudgetEditor({
               {t.budgets.totalYearly}: {formatMoney(totalMonthly * 12)}
             </span>
           </div>
-        </div>
+        </TotalsFooterRow>
       </Card>
     </div>
   );

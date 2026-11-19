@@ -10,7 +10,6 @@ export interface MoneyInputProps
   onValueChange: (value: number | "") => void;
 }
 
-/** Numeric money input with a ₪ affix. Emits a number (or "" when empty). */
 export const MoneyInput = React.forwardRef<HTMLInputElement, MoneyInputProps>(
   ({ value, onValueChange, className, ...props }, ref) => {
     return (

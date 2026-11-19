@@ -44,7 +44,7 @@ export function Nav({ onNavigate }: { onNavigate?: () => void }) {
                 : "text-muted-foreground hover:bg-surface-muted hover:text-foreground",
             )}
           >
-            <Icon className="size-[18px]" />
+            <Icon className="size-5" />
             {t.nav[key]}
           </Link>
         );
