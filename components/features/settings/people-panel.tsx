@@ -20,14 +20,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table/baseTableComponents";
+import { Table, type TableColumn } from "@/components/ui/table/Table";
 import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 import { IconButton } from "@/components/shared/icon-button";
 import { RowActions } from "@/components/shared/row-actions";
@@ -65,16 +58,13 @@ export function PeoplePanel({
   const [pending, startTransition] = useTransition();
   const isAdmin = currentUser.role === "ADMIN";
 
-  // Household rename (admins)
   const [editingName, setEditingName] = React.useState(false);
   const [hhName, setHhName] = React.useState(householdName);
 
-  // Dialogs
   const [inviteOpen, setInviteOpen] = React.useState(false);
   const [removeTarget, setRemoveTarget] = React.useState<Member | null>(null);
   const [revokeTarget, setRevokeTarget] = React.useState<Invitation | null>(null);
 
-  // Copy-link fallback for undelivered invites
   const [fallbackUrl, setFallbackUrl] = React.useState<string | null>(null);
 
   function saveHouseholdName() {
@@ -136,9 +126,83 @@ export function PeoplePanel({
   const roleLabel = (role: "ADMIN" | "MEMBER") =>
     role === "ADMIN" ? t.settings.admin : t.settings.member;
 
+  const memberColumns: TableColumn<Member>[] = [
+    { header: t.auth.name, cellClassName: "font-medium", cell: (m) => m.name },
+    {
+      header: t.auth.email,
+      cellClassName: "text-muted-foreground",
+      cell: (m) => m.email,
+    },
+    { header: t.settings.role, cell: (m) => <Badge>{roleLabel(m.role)}</Badge> },
+    {
+      header: t.settings.joined,
+      cellClassName: "text-muted-foreground",
+      cell: (m) => dateFmt.format(new Date(m.joinedAt)),
+    },
+    ...(isAdmin
+      ? [
+          {
+            cellClassName: "text-end",
+            cell: (m) =>
+              m.id !== currentUser.id && (
+                <RowActions className="justify-end">
+                  <IconButton
+                    label={t.settings.remove}
+                    onClick={() => setRemoveTarget(m)}
+                  >
+                    <Trash2 className="text-danger" />
+                  </IconButton>
+                </RowActions>
+              ),
+          } satisfies TableColumn<Member>,
+        ]
+      : []),
+  ];
+
+  const invitationColumns: TableColumn<Invitation>[] = [
+    {
+      header: t.auth.email,
+      cellClassName: "font-medium",
+      cell: (inv) => inv.email,
+    },
+    {
+      header: t.settings.role,
+      cell: (inv) => <Badge>{roleLabel(inv.role)}</Badge>,
+    },
+    {
+      header: t.settings.expires,
+      cellClassName: "text-muted-foreground",
+      cell: (inv) => dateFmt.format(new Date(inv.expiresAt)),
+    },
+    ...(isAdmin
+      ? [
+          {
+            cellClassName: "text-end",
+            cell: (inv) => (
+              <RowActions className="items-center justify-end gap-1">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  disabled={pending}
+                  onClick={() => resend(inv.id)}
+                >
+                  {t.settings.resend}
+                </Button>
+                <IconButton
+                  label={t.settings.revoke}
+                  onClick={() => setRevokeTarget(inv)}
+                >
+                  <Trash2 className="text-danger" />
+                </IconButton>
+              </RowActions>
+            ),
+          } satisfies TableColumn<Invitation>,
+        ]
+      : []),
+  ];
+
   return (
     <div className="flex flex-col gap-4">
-      {/* Household name */}
       <Card>
         <CardHeader className="flex-row items-center justify-between space-y-0">
           <CardTitle className="text-base">{t.settings.householdName}</CardTitle>
@@ -177,7 +241,6 @@ export function PeoplePanel({
         </CardContent>
       </Card>
 
-      {/* Members */}
       <Card>
         <CardHeader className="flex-row items-center justify-between space-y-0">
           <CardTitle className="text-base">{t.settings.members}</CardTitle>
@@ -189,49 +252,15 @@ export function PeoplePanel({
           )}
         </CardHeader>
         <CardContent>
-          <Table containerClassName="max-h-[min(550px,100dvh)] overflow-y-auto">
-            <TableHeader>
-              <TableRow>
-                <TableHead>{t.auth.name}</TableHead>
-                <TableHead>{t.auth.email}</TableHead>
-                <TableHead>{t.settings.role}</TableHead>
-                <TableHead>{t.settings.joined}</TableHead>
-                {isAdmin && <TableHead />}
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {members.map((m) => (
-                <TableRow key={m.id}>
-                  <TableCell className="font-medium">{m.name}</TableCell>
-                  <TableCell className="text-muted-foreground">{m.email}</TableCell>
-                  <TableCell>
-                    <Badge>{roleLabel(m.role)}</Badge>
-                  </TableCell>
-                  <TableCell className="text-muted-foreground">
-                    {dateFmt.format(new Date(m.joinedAt))}
-                  </TableCell>
-                  {isAdmin && (
-                    <TableCell className="text-end">
-                      {m.id !== currentUser.id && (
-                        <RowActions className="justify-end">
-                          <IconButton
-                            label={t.settings.remove}
-                            onClick={() => setRemoveTarget(m)}
-                          >
-                            <Trash2 className="text-danger" />
-                          </IconButton>
-                        </RowActions>
-                      )}
-                    </TableCell>
-                  )}
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+          <Table
+            columns={memberColumns}
+            data={members}
+            rowKey={(m) => m.id}
+            containerClassName="max-h-[min(550px,100dvh)] overflow-y-auto"
+          />
         </CardContent>
       </Card>
 
-      {/* Pending invitations */}
       <Card>
         <CardHeader>
           <CardTitle className="text-base">{t.settings.pendingInvites}</CardTitle>
@@ -240,49 +269,12 @@ export function PeoplePanel({
           {invitations.length === 0 ? (
             <EmptyState title={t.settings.noPendingInvites} />
           ) : (
-            <Table containerClassName="max-h-[min(550px,100dvh)] overflow-y-auto">
-              <TableHeader>
-                <TableRow>
-                  <TableHead>{t.auth.email}</TableHead>
-                  <TableHead>{t.settings.role}</TableHead>
-                  <TableHead>{t.settings.expires}</TableHead>
-                  {isAdmin && <TableHead />}
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {invitations.map((inv) => (
-                  <TableRow key={inv.id}>
-                    <TableCell className="font-medium">{inv.email}</TableCell>
-                    <TableCell>
-                      <Badge>{roleLabel(inv.role)}</Badge>
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {dateFmt.format(new Date(inv.expiresAt))}
-                    </TableCell>
-                    {isAdmin && (
-                      <TableCell className="text-end">
-                        <RowActions className="items-center justify-end gap-1">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            disabled={pending}
-                            onClick={() => resend(inv.id)}
-                          >
-                            {t.settings.resend}
-                          </Button>
-                          <IconButton
-                            label={t.settings.revoke}
-                            onClick={() => setRevokeTarget(inv)}
-                          >
-                            <Trash2 className="text-danger" />
-                          </IconButton>
-                        </RowActions>
-                      </TableCell>
-                    )}
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+            <Table
+              columns={invitationColumns}
+              data={invitations}
+              rowKey={(inv) => inv.id}
+              containerClassName="max-h-[min(550px,100dvh)] overflow-y-auto"
+            />
           )}
 
           {fallbackUrl && (
@@ -302,32 +294,36 @@ export function PeoplePanel({
         </CardContent>
       </Card>
 
-      {isAdmin && (
+      {isAdmin && inviteOpen && (
         <InviteForm
-          open={inviteOpen}
-          onOpenChange={setInviteOpen}
+          open
+          onClose={() => setInviteOpen(false)}
           onLinkFallback={setFallbackUrl}
         />
       )}
 
-      <ConfirmDialog
-        open={!!removeTarget}
-        onOpenChange={(open) => !open && setRemoveTarget(null)}
-        title={t.settings.removeMemberTitle}
-        description={t.settings.removeMemberConfirm}
-        confirmLabel={t.settings.remove}
-        onConfirm={confirmRemove}
-        loading={pending}
-      />
-      <ConfirmDialog
-        open={!!revokeTarget}
-        onOpenChange={(open) => !open && setRevokeTarget(null)}
-        title={t.settings.revoke}
-        description={t.settings.revokeInviteConfirm}
-        confirmLabel={t.settings.revoke}
-        onConfirm={confirmRevoke}
-        loading={pending}
-      />
+      {removeTarget && (
+        <ConfirmDialog
+          open
+          onClose={() => setRemoveTarget(null)}
+          title={t.settings.removeMemberTitle}
+          description={t.settings.removeMemberConfirm}
+          confirmLabel={t.settings.remove}
+          onConfirm={confirmRemove}
+          loading={pending}
+        />
+      )}
+      {revokeTarget && (
+        <ConfirmDialog
+          open
+          onClose={() => setRevokeTarget(null)}
+          title={t.settings.revoke}
+          description={t.settings.revokeInviteConfirm}
+          confirmLabel={t.settings.revoke}
+          onConfirm={confirmRevoke}
+          loading={pending}
+        />
+      )}
     </div>
   );
 }

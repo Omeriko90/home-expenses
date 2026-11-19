@@ -3,11 +3,9 @@
 import * as React from "react";
 import {
   MoreHorizontal,
-  Pencil,
   Plus,
   Search,
   SlidersHorizontal,
-  Trash2,
   Upload,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -17,32 +15,20 @@ import { deleteTransaction } from "@/app/actions/transactions";
 import { EmptyState } from "@/components/shared/empty-state";
 import { MonthYearPicker } from "@/components/shared/month-year-picker";
 import { ImportDialog } from "@/components/features/import/import-dialog";
-import { IconButton } from "@/components/shared/icon-button";
-import { RowActions } from "@/components/shared/row-actions";
+import { EditDeleteActions } from "@/components/shared/edit-delete-actions";
 import { ConfirmDialog } from "@/components/shared/confirm-dialog";
+import { TotalsFooterRow } from "@/components/shared/totals-footer-row";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu/baseDropdownMenuComponents";
+import { DropdownMenu } from "@/components/ui/dropdown-menu/DropdownMenu";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table/baseTableComponents";
+import { Table, type TableColumn } from "@/components/ui/table/Table";
 import {
   TransactionForm,
   type TxRow,
@@ -73,10 +59,6 @@ export function TransactionsView({
   const [toDelete, setToDelete] = React.useState<TxRow | null>(null);
   const [pending, startTransition] = React.useTransition();
 
-  // Rows are already scoped to the selected month on the server; the
-  // category/type/amount/search refinements happen client-side.
-  // The free-text inputs are deferred so keystrokes repaint the input
-  // immediately and the (memoized) re-filter runs as a deferred render.
   const deferredQ = React.useDeferredValue(q);
   const deferredMin = React.useDeferredValue(amountMin);
   const deferredMax = React.useDeferredValue(amountMax);
@@ -129,13 +111,47 @@ export function TransactionsView({
     });
   }
 
+  const columns: TableColumn<TxRow>[] = [
+    {
+      header: t.transactions.date,
+      headClassName: "w-28",
+      cellClassName: "tnum text-muted-foreground",
+      cell: (r) => formatDate(r.date),
+    },
+    {
+      header: t.transactions.business,
+      cellClassName: "font-medium",
+      cell: (r) => r.businessName,
+    },
+    { header: t.common.category, cell: (r) => r.categoryName },
+    {
+      header: t.transactions.kind,
+      headClassName: "w-24",
+      cell: (r) => (
+        <Badge variant={r.kind === "FIXED" ? "primary" : "default"}>
+          {r.kind === "FIXED" ? t.transactions.fixed : t.transactions.variable}
+        </Badge>
+      ),
+    },
+    {
+      header: t.common.amount,
+      headClassName: "w-32 text-end",
+      cellClassName: (r) =>
+        cn("text-end tnum font-medium", r.amount < 0 && "text-success"),
+      cell: (r) => formatMoney(r.amount, { decimals: true }),
+    },
+    {
+      headClassName: "w-20",
+      cell: (r) => (
+        <EditDeleteActions
+          onEdit={() => openEdit(r)}
+          onDelete={() => setToDelete(r)}
+        />
+      ),
+    },
+  ];
+
   return (
-    // Fill <main>'s height: the table scrolls internally so the count/total
-    // footer at the bottom of the card is always visible.
-    // Fit the viewport exactly so the table scrolls internally and the totals
-    // row stays visible. Derived from the shell: topbar h-16 + border (1px)
-    // + <main> py-6 (3rem) — the layout wrapper is min-h-full (auto height),
-    // so flex-1/h-full can't provide a definite height here.
     <div className="flex h-[calc(100dvh-7rem-1px)] min-h-0 flex-col gap-3 sm:gap-6">
       <div className="flex items-center justify-between gap-2">
         <MonthYearPicker year={year} month={month} />
@@ -169,8 +185,9 @@ export function TransactionsView({
               <TransactionFilters layout="xs" {...filterProps} />
             </PopoverContent>
           </Popover>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
+          <DropdownMenu
+            align="end"
+            trigger={
               <Button
                 variant="outline"
                 size="icon"
@@ -179,16 +196,20 @@ export function TransactionsView({
               >
                 <MoreHorizontal />
               </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onSelect={openAdd}>
-                <Plus className="size-4" /> {t.transactions.add}
-              </DropdownMenuItem>
-              <DropdownMenuItem onSelect={() => setImportOpen(true)}>
-                <Upload className="size-4" /> {t.nav.import}
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+            }
+            items={[
+              {
+                label: t.transactions.add,
+                icon: <Plus className="size-4" />,
+                onSelect: openAdd,
+              },
+              {
+                label: t.nav.import,
+                icon: <Upload className="size-4" />,
+                onSelect: () => setImportOpen(true),
+              },
+            ]}
+          />
         </div>
       </div>
 
@@ -218,87 +239,47 @@ export function TransactionsView({
         />
       ) : (
         <Card className="flex min-h-0 flex-1 flex-col overflow-hidden">
-          <Table containerClassName="min-h-0 flex-1 overflow-y-auto">
-            <TableHeader className="sticky top-0 z-10 bg-surface shadow-divider">
-              <TableRow>
-                <TableHead className="w-28">{t.transactions.date}</TableHead>
-                <TableHead>{t.transactions.business}</TableHead>
-                <TableHead>{t.common.category}</TableHead>
-                <TableHead className="w-24">{t.transactions.kind}</TableHead>
-                <TableHead className="w-32 text-end">{t.common.amount}</TableHead>
-                <TableHead className="w-20" />
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filtered.map((r) => (
-                <TableRow key={r.id}>
-                  <TableCell className="tnum text-muted-foreground">
-                    {formatDate(r.date)}
-                  </TableCell>
-                  <TableCell className="font-medium">{r.businessName}</TableCell>
-                  <TableCell>{r.categoryName}</TableCell>
-                  <TableCell>
-                    <Badge variant={r.kind === "FIXED" ? "primary" : "default"}>
-                      {r.kind === "FIXED"
-                        ? t.transactions.fixed
-                        : t.transactions.variable}
-                    </Badge>
-                  </TableCell>
-                  <TableCell
-                    className={cn(
-                      "text-end tnum font-medium",
-                      r.amount < 0 && "text-success",
-                    )}
-                  >
-                    {formatMoney(r.amount, { decimals: true })}
-                  </TableCell>
-                  <TableCell>
-                    <RowActions>
-                      <IconButton label={t.common.edit} onClick={() => openEdit(r)}>
-                        <Pencil />
-                      </IconButton>
-                      <IconButton
-                        label={t.common.delete}
-                        onClick={() => setToDelete(r)}
-                      >
-                        <Trash2 />
-                      </IconButton>
-                    </RowActions>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-          <div className="flex shrink-0 items-center justify-between border-t border-border bg-surface-muted/50 px-4 py-3 text-sm font-semibold">
+          <Table
+            columns={columns}
+            data={filtered}
+            rowKey={(r) => r.id}
+            containerClassName="min-h-0 flex-1 overflow-y-auto"
+            headerClassName="shadow-divider"
+          />
+          <TotalsFooterRow>
             <span>
               {filtered.length} {t.transactions.count}
             </span>
             <span className="tnum">
               {t.common.total}: {formatMoney(total, { decimals: true })}
             </span>
-          </div>
+          </TotalsFooterRow>
         </Card>
       )}
 
-      <ImportDialog open={importOpen} onOpenChange={setImportOpen} />
+      {importOpen && <ImportDialog open onClose={() => setImportOpen(false)} />}
 
-      <TransactionForm
-        open={formOpen}
-        onOpenChange={setFormOpen}
-        editing={editing}
-        categories={categories}
-        year={year}
-        month={month}
-      />
+      {formOpen && (
+        <TransactionForm
+          open
+          onClose={() => setFormOpen(false)}
+          editing={editing}
+          categories={categories}
+          year={year}
+          month={month}
+        />
+      )}
 
-      <ConfirmDialog
-        open={!!toDelete}
-        onOpenChange={(o) => !o && setToDelete(null)}
-        title={t.transactions.deleteConfirm}
-        description={toDelete?.businessName}
-        onConfirm={handleDelete}
-        loading={pending}
-      />
+      {toDelete && (
+        <ConfirmDialog
+          open
+          onClose={() => setToDelete(null)}
+          title={t.transactions.deleteConfirm}
+          description={toDelete.businessName}
+          onConfirm={handleDelete}
+          loading={pending}
+        />
+      )}
     </div>
   );
 }

@@ -146,7 +146,7 @@ export function CategoryManager({ initial }: { initial: Category[] }) {
       {toDelete && (
         <ConfirmDialog
           open
-          onOpenChange={(o) => !o && setToDelete(null)}
+          onClose={() => setToDelete(null)}
           title={t.categories.deleteConfirm}
           description={toDelete.txCount > 0 ? t.categories.deleteWithTx : undefined}
           confirmLabel={toDelete.txCount > 0 ? t.common.archive : t.common.delete}
