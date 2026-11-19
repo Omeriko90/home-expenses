@@ -3,7 +3,8 @@
 import { useI18n } from "@/lib/i18n/context";
 import { formatMoney, formatPercent, yoyPercent } from "@/lib/utils";
 import type { PortfolioSummary } from "@/lib/summary";
-import { StatCard, ChangeIndicator } from "@/components/shared/stat-card";
+import { StatCard } from "@/components/shared/stat-card";
+import { ChangeIndicator } from "@/components/shared/change-indicator";
 
 export function GroupSummaryCards({
   portfolios,
@@ -14,9 +15,6 @@ export function GroupSummaryCards({
 }) {
   const { t } = useI18n();
 
-  // Mirrors PortfolioSection: with a type filter, totals are recomputed from
-  // the matching holdings; deposits are portfolio-level, so filtered views
-  // show "—". Percentages are derived from the summed totals.
   let value = 0;
   let prevValue = 0;
   let deposits = 0;

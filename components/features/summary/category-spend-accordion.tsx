@@ -5,24 +5,12 @@ import { useI18n } from "@/lib/i18n/context";
 import { formatMoney, cn } from "@/lib/utils";
 import type { CategorySpendRow, CategoryMonthlySpend } from "@/lib/summary";
 import { fetchCategoryMonthlySpend } from "@/app/actions/summary";
-import { ChangeIndicator } from "@/components/shared/stat-card";
+import { ChangeIndicator } from "@/components/shared/change-indicator";
+import { Accordion } from "@/components/ui/accordion/Accordion";
 import { ROW_GRID } from "./spend-row-grid";
 import { TotalsRow } from "./totals-row";
-import {
-  Accordion,
-  AccordionItem,
-  AccordionTrigger,
-  AccordionContent,
-} from "@/components/ui/accordion/baseAccordionComponents";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table/baseTableComponents";
-
+import { MonthlyTable } from "./monthly-table";
+import { MonthlySkeleton } from "./monthly-skeleton";
 
 export function CategorySpendAccordion({
   spend,
@@ -38,8 +26,6 @@ export function CategorySpendAccordion({
   totals: { current: number; previous: number };
 }) {
   const { t } = useI18n();
-  // Fetched monthly data, keyed by `${categoryId}:${year}` — survives
-  // collapse/expand so the same category is never fetched twice.
   const cache = React.useRef(new Map<string, CategoryMonthlySpend>());
   const inflight = React.useRef(new Set<string>());
   const [loaded, setLoaded] = React.useState<Record<string, CategoryMonthlySpend>>({});
@@ -56,7 +42,6 @@ export function CategorySpendAccordion({
         setLoaded((m) => ({ ...m, [key]: data }));
       })
       .catch(() => {
-        // Not cached — re-expanding retries.
         setFailed((f) => ({ ...f, [key]: true }));
       })
       .finally(() => {
@@ -66,14 +51,11 @@ export function CategorySpendAccordion({
 
   return (
     <>
-    {/* The dashboard scrolls (cards + charts above), so the category list
-        caps at 550px and scrolls internally; the totals row stays below. */}
     <div className="max-h-[min(550px,100dvh)] min-h-0 flex-1 overflow-y-auto">
       <div
         className={cn(
           ROW_GRID,
           "sticky top-0 z-10 bg-surface shadow-divider",
-          // Match TableHead typography.
           "h-11 px-4 text-xs font-semibold uppercase tracking-wide text-muted-foreground",
         )}
       >
@@ -86,14 +68,15 @@ export function CategorySpendAccordion({
 
       <Accordion
         type="multiple"
-        onValueChange={(open: string[]) => open.forEach(load)}
-      >
-        {spend.map((r) => {
+        onValueChange={(open) => open.forEach(load)}
+        items={spend.map((r) => {
           const key = `${r.categoryId}:${year}`;
           const monthly = loaded[key];
-          return (
-            <AccordionItem key={r.categoryId} value={r.categoryId}>
-              <AccordionTrigger className={cn(ROW_GRID, "px-4 py-3")}>
+          return {
+            value: r.categoryId,
+            triggerClassName: cn(ROW_GRID, "px-4 py-3"),
+            trigger: (
+              <>
                 <div className="flex flex-col gap-1">
                   <span className="font-medium">{r.name}</span>
                   <div className="h-1.5 w-full max-w-48 overflow-hidden rounded-full bg-surface-muted">
@@ -132,94 +115,24 @@ export function CategorySpendAccordion({
                     />
                   </span>
                 </div>
-              </AccordionTrigger>
-              <AccordionContent className="overflow-x-auto border-t border-border bg-surface-muted/30 py-2">
-                {monthly ? (
-                  <MonthlyTable year={year} row={r} monthly={monthly} />
-                ) : failed[key] ? (
-                  <div className="px-3 py-4 text-sm text-muted-foreground">
-                    {t.common.noData}
-                  </div>
-                ) : (
-                  <MonthlySkeleton />
-                )}
-              </AccordionContent>
-            </AccordionItem>
-          );
+              </>
+            ),
+            contentClassName:
+              "overflow-x-auto border-t border-border bg-surface-muted/30 py-2",
+            content: monthly ? (
+              <MonthlyTable year={year} row={r} monthly={monthly} />
+            ) : failed[key] ? (
+              <div className="px-3 py-4 text-sm text-muted-foreground">
+                {t.common.noData}
+              </div>
+            ) : (
+              <MonthlySkeleton />
+            ),
+          };
         })}
-      </Accordion>
+      />
     </div>
     <TotalsRow totals={totals} year={year} mode={mode} />
     </>
-  );
-}
-
-function MonthlyTable({
-  year,
-  row,
-  monthly,
-}: {
-  year: number;
-  row: CategorySpendRow;
-  monthly: CategoryMonthlySpend;
-}) {
-  const { t } = useI18n();
-  return (
-    <Table>
-      <TableHeader>
-        <TableRow className="hover:bg-transparent">
-          <TableHead className="h-9 ps-4" />
-          {t.months.map((m) => (
-            <TableHead key={m} className="h-9 text-end">
-              {m}
-            </TableHead>
-          ))}
-          <TableHead className="h-9 text-end">{t.common.total}</TableHead>
-          <TableHead className="h-9 pe-4 text-end">{t.summary.monthlyAvg}</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        <YearRow year={year} values={monthly.current} total={row.current} />
-        <YearRow year={year - 1} values={monthly.previous} total={row.previous} muted />
-      </TableBody>
-    </Table>
-  );
-}
-
-function YearRow({
-  year,
-  values,
-  total,
-  muted = false,
-}: {
-  year: number;
-  values: number[];
-  total: number;
-  muted?: boolean;
-}) {
-  return (
-    <TableRow className={cn("hover:bg-transparent", muted && "text-muted-foreground")}>
-      <TableCell className="py-2.5 ps-4 font-medium tnum">{year}</TableCell>
-      {values.map((v, i) => (
-        <TableCell key={i} className="py-2.5 text-end tnum whitespace-nowrap">
-          {v === 0 ? <span className="text-faint">—</span> : formatMoney(v)}
-        </TableCell>
-      ))}
-      <TableCell className="py-2.5 text-end tnum font-semibold whitespace-nowrap">
-        {formatMoney(total)}
-      </TableCell>
-      <TableCell className="py-2.5 pe-4 text-end tnum whitespace-nowrap">
-        {formatMoney(total / 12)}
-      </TableCell>
-    </TableRow>
-  );
-}
-
-function MonthlySkeleton() {
-  return (
-    <div className="flex flex-col gap-2 px-3 py-4" aria-busy>
-      <div className="h-4 w-full animate-pulse rounded bg-surface-muted" />
-      <div className="h-4 w-2/3 animate-pulse rounded bg-surface-muted" />
-    </div>
   );
 }
