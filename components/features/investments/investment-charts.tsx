@@ -15,7 +15,6 @@ export function InvestmentCharts({
 }: {
   portfolios: PortfolioSummary[];
   yearlyTotals: YearlyInvestmentTotal[];
-  /** Portfolio group of the active tab; growth data is restricted to it. */
   group: "MAIN" | "KIDS";
   /** Restrict all charts to this holding type; null shows everything. */
   type: string | null;

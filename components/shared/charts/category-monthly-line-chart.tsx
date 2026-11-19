@@ -104,8 +104,6 @@ export function CategoryMonthlyLineChart({
           </LineChart>
         </ResponsiveContainer>
       </div>
-      {/* Mobile: single-row strip scrolling horizontally so the chart keeps
-          its full height. Desktop (lg+): fixed-width side column. */}
       <ul className="flex flex-nowrap items-center gap-x-3 overflow-x-auto pb-1 [scrollbar-width:none] lg:w-48 lg:shrink-0 lg:flex-col lg:items-start lg:gap-y-1.5 lg:overflow-x-visible lg:overflow-y-auto lg:pb-0 lg:[scrollbar-width:auto]">
         {shown.map((c, i) => {
           const hidden = !visible.has(c.categoryId);

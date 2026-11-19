@@ -107,8 +107,6 @@ export function TransactionsView({
     Number(amountMin !== "") +
     Number(amountMax !== "");
 
-  // Rendered twice — inline on sm+ and inside the mobile filter popover.
-  // Both share the same state, so no syncing is needed.
   function renderFilterControls(layout: "xs" | "sm") {
     return (
       <>
@@ -178,8 +176,6 @@ export function TransactionsView({
     // + <main> py-6 (3rem) — the layout wrapper is min-h-full (auto height),
     // so flex-1/h-full can't provide a definite height here.
     <div className="flex h-[calc(100dvh-7rem-1px)] min-h-0 flex-col gap-3 sm:gap-6">
-      {/* Month/year picker at the start; action buttons at the end. On
-          mobile the secondary actions collapse into a ⋯ menu. */}
       <div className="flex items-center justify-between gap-2">
         <MonthYearPicker year={year} month={month} />
         <div className="hidden items-center gap-2 sm:flex">
@@ -235,8 +231,6 @@ export function TransactionsView({
         </div>
       </div>
 
-      {/* Search stays inline everywhere; the remaining filters are inline on
-          sm+ (mobile has them in the row-1 popover). */}
       <div className="flex items-center gap-3">
         <div className="relative flex-1">
           <Search className="pointer-events-none absolute inset-y-0 start-3 my-auto size-4 text-muted-foreground" />
