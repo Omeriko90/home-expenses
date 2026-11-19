@@ -126,6 +126,39 @@ export async function getCategorySpend(
     .sort((a, b) => b.current - a.current);
 }
 
+export type BudgetActuals = {
+  /** "month": current-month spend (current year). "average": yearly total / 12. */
+  mode: "month" | "average";
+  /** 1-12; the compared month when mode === "month". */
+  month: number;
+  /** categoryId -> monthly actual (already divided by 12 in average mode). */
+  byCategory: Record<string, number>;
+};
+
+/** Per-category actual spend to compare against monthly budgets for `year`. */
+export async function getBudgetActuals(
+  year: number,
+  householdId: string,
+): Promise<BudgetActuals> {
+  const now = new Date();
+  const isCurrentYear = year === now.getFullYear();
+  const month = now.getMonth() + 1;
+
+  const grouped = await prisma.transaction.groupBy({
+    by: ["categoryId"],
+    where: { householdId, year, ...(isCurrentYear ? { month } : {}) },
+    _sum: { amount: true },
+  });
+
+  const byCategory: Record<string, number> = {};
+  for (const r of grouped) {
+    const total = Number(r._sum.amount ?? 0);
+    byCategory[r.categoryId] = isCurrentYear ? total : total / 12;
+  }
+
+  return { mode: isCurrentYear ? "month" : "average", month, byCategory };
+}
+
 export type CategoryMonthlySpend = {
   /** 12 entries, index 0 = January; 0 when the month has no transactions. */
   current: number[];
