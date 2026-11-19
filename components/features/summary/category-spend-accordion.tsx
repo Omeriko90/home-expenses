@@ -105,7 +105,7 @@ export function CategorySpendAccordion({
                 </div>
                 <div className="col-span-2 row-start-2 flex items-center justify-between gap-2 sm:contents">
                   <span className="flex flex-col sm:block sm:text-end">
-                    <span className="text-[10px] text-muted-foreground sm:hidden">
+                    <span className="text-xs text-muted-foreground sm:hidden">
                       {year}
                     </span>
                     <span className="tnum font-medium">
@@ -113,7 +113,7 @@ export function CategorySpendAccordion({
                     </span>
                   </span>
                   <span className="flex flex-col sm:block sm:text-end">
-                    <span className="text-[10px] text-muted-foreground sm:hidden">
+                    <span className="text-xs text-muted-foreground sm:hidden">
                       {year - 1}
                     </span>
                     <span className="tnum text-muted-foreground">
@@ -121,7 +121,7 @@ export function CategorySpendAccordion({
                     </span>
                   </span>
                   <span className="flex flex-col sm:block sm:text-end">
-                    <span className="text-[10px] text-muted-foreground sm:hidden">
+                    <span className="text-xs text-muted-foreground sm:hidden">
                       {t.summary.change}
                     </span>
                     <ChangeIndicator
