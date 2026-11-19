@@ -19,7 +19,7 @@ import {
   shortMonths,
 } from "@/lib/utils";
 import type { MonthlyCategorySpend } from "@/lib/summary";
-import { colorFor, GRID_COLOR } from "./chart-palette";
+import { colorFor, DISABLED_COLOR, GRID_COLOR } from "./chart-palette";
 import { ChartTooltip } from "./chart-tooltip";
 
 const DEFAULT_VISIBLE = 6;
@@ -41,7 +41,6 @@ export function CategoryMonthlyLineChart({
       ),
   );
 
-  // Refund months can net negative; the chart shows spend, so floor at 0.
   const percent = mode === "percent";
   const months = shortMonths(locale);
   const data = monthly.byMonth.map((m, i) => {
@@ -120,7 +119,7 @@ export function CategoryMonthlyLineChart({
                 <span
                   className="inline-block h-0.5 w-3 shrink-0 rounded-full"
                   style={{
-                    backgroundColor: hidden ? "#b9b4be" : colorFor(c.color, i),
+                    backgroundColor: hidden ? DISABLED_COLOR : colorFor(c.color, i),
                   }}
                 />
                 <span dir="auto">{c.name}</span>

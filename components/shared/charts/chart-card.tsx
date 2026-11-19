@@ -21,7 +21,6 @@ export function ChartCard({
           <p className="mt-0.5 text-xs text-muted-foreground/80">{description}</p>
         )}
       </div>
-      {/* recharts lays out LTR only; Hebrew labels render fine inside the SVG. */}
       <div className="h-72 font-sans" dir="ltr">
         {children}
       </div>

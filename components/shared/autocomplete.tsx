@@ -30,8 +30,6 @@ export function Autocomplete({
   placeholder = "בחר…",
   searchPlaceholder = "חיפוש…",
   emptyText = "לא נמצאו תוצאות",
-  /** When set, typing a value not in the options offers it as a new entry,
-   * labeled with this template ("{v}" is replaced by the typed text). */
   customValueLabel,
   className,
   disabled,
@@ -51,8 +49,6 @@ export function Autocomplete({
   const [open, setOpen] = React.useState(false);
   const [search, setSearch] = React.useState("");
   const selected = options.find((o) => o.value === value);
-  // Collapse inner whitespace and compare case-insensitively so "study Fund"
-  // offers the existing "Study fund" instead of a near-duplicate.
   const trimmed = search.trim().replace(/\s+/g, " ");
   const lower = trimmed.toLowerCase();
   const showCustom =

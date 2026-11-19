@@ -12,10 +12,6 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 
-/**
- * Month + year picker rendered as a small calendar. Drives the `?year=`/`?month=`
- * URL params. Free year navigation via the arrows.
- */
 export function MonthYearPicker({
   year,
   month,
@@ -57,7 +53,6 @@ export function MonthYearPicker({
       </PopoverTrigger>
       <PopoverContent className="w-72 p-3" align="end">
         <div className="mb-2 flex items-center justify-between">
-          {/* Previous year — points toward the reading start (left in LTR, right in RTL) */}
           <IconButton
             label="−"
             variant="ghost"
@@ -67,7 +62,6 @@ export function MonthYearPicker({
             <ChevronRight className="hidden rtl:block" />
           </IconButton>
           <span className="font-semibold tnum">{viewYear}</span>
-          {/* Next year — points toward the reading end (right in LTR, left in RTL) */}
           <IconButton
             label="+"
             variant="ghost"

@@ -6,7 +6,6 @@ import { ChartCard } from "@/components/shared/charts/chart-card";
 import { SharePieChart } from "@/components/shared/charts/share-pie-chart";
 import { InvestmentGrowthLineChart } from "@/components/shared/charts/investment-growth-line-chart";
 
-/** Charts for one portfolio group (the active MAIN/KIDS tab). */
 export function InvestmentCharts({
   portfolios,
   yearlyTotals,
@@ -16,7 +15,6 @@ export function InvestmentCharts({
   portfolios: PortfolioSummary[];
   yearlyTotals: YearlyInvestmentTotal[];
   group: "MAIN" | "KIDS";
-  /** Restrict all charts to this holding type; null shows everything. */
   type: string | null;
 }) {
   const { t } = useI18n();
