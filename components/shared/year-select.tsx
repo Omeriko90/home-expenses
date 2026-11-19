@@ -1,13 +1,7 @@
 "use client";
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select/baseSelectComponents";
+import { Select } from "@/components/ui/select/Select";
 
 export function YearSelect({
   year,
@@ -27,17 +21,12 @@ export function YearSelect({
   }
 
   return (
-    <Select value={String(year)} onValueChange={onChange}>
-      <SelectTrigger className="w-28 tnum">
-        <SelectValue />
-      </SelectTrigger>
-      <SelectContent>
-        {years.map((y) => (
-          <SelectItem key={y} value={String(y)} className="tnum">
-            {y}
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
+    <Select
+      value={String(year)}
+      onValueChange={onChange}
+      className="w-28 tnum"
+      itemClassName="tnum"
+      options={years.map((y) => ({ value: String(y), label: y }))}
+    />
   );
 }
