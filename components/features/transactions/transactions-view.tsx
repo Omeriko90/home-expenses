@@ -195,9 +195,23 @@ export function TransactionsView({
           </Button>
         </div>
         <div className="flex items-center gap-2 sm:hidden">
-          <Button onClick={openAdd}>
-            <Plus /> {t.transactions.add}
-          </Button>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                className="bg-surface"
+                aria-label={t.common.filters}
+              >
+                <SlidersHorizontal />
+                {activeFilters > 0 && (
+                  <Badge variant="primary">{activeFilters}</Badge>
+                )}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent align="end" className="flex flex-col gap-3 p-4">
+              {renderFilterControls("xs")}
+            </PopoverContent>
+          </Popover>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
@@ -210,6 +224,9 @@ export function TransactionsView({
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
+              <DropdownMenuItem onSelect={openAdd}>
+                <Plus className="size-4" /> {t.transactions.add}
+              </DropdownMenuItem>
               <DropdownMenuItem onSelect={() => setImportOpen(true)}>
                 <Upload className="size-4" /> {t.nav.import}
               </DropdownMenuItem>
@@ -219,7 +236,7 @@ export function TransactionsView({
       </div>
 
       {/* Search stays inline everywhere; the remaining filters are inline on
-          sm+ and collapse into a popover on mobile. */}
+          sm+ (mobile has them in the row-1 popover). */}
       <div className="flex items-center gap-3">
         <div className="relative flex-1">
           <Search className="pointer-events-none absolute inset-y-0 start-3 my-auto size-4 text-muted-foreground" />
@@ -233,23 +250,6 @@ export function TransactionsView({
         <div className="hidden items-center gap-3 sm:flex">
           {renderFilterControls("sm")}
         </div>
-        <Popover>
-          <PopoverTrigger asChild>
-            <Button
-              variant="outline"
-              className="bg-surface sm:hidden"
-              aria-label={t.common.filters}
-            >
-              <SlidersHorizontal />
-              {activeFilters > 0 && (
-                <Badge variant="primary">{activeFilters}</Badge>
-              )}
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent align="end" className="flex flex-col gap-3">
-            {renderFilterControls("xs")}
-          </PopoverContent>
-        </Popover>
       </div>
 
       {filtered.length === 0 ? (
