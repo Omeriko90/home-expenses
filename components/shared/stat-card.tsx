@@ -9,7 +9,7 @@ export function StatCard({
   sub,
   accent,
 }: {
-  label: string;
+  label: React.ReactNode;
   value: string;
   sub?: React.ReactNode;
   accent?: "investment" | "expense" | "income" | "primary";
