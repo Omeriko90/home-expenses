@@ -30,7 +30,6 @@ export default async function GoalsPage({
     }),
   ]);
 
-  // Resolve "current" for linked numeric goals.
   let investmentTotal: number | null = null;
   const rows = await Promise.all(
     goals.map(async (g) => {
@@ -50,12 +49,12 @@ export default async function GoalsPage({
         id: g.id,
         title: g.title,
         type: g.type,
-        note: g.note,
-        target: g.targetAmount ? Number(g.targetAmount) : null,
+        note: g.note ?? undefined,
+        target: g.targetAmount ? Number(g.targetAmount) : undefined,
         current,
         linkKind: g.linkKind,
-        linkCategoryId: g.linkCategoryId,
-        linkCategoryName: g.linkCategory?.name ?? null,
+        linkCategoryId: g.linkCategoryId ?? undefined,
+        linkCategoryName: g.linkCategory?.name,
         milestones: g.milestones.map((m) => ({
           id: m.id,
           title: m.title,

@@ -2,7 +2,8 @@
 
 import { useI18n } from "@/lib/i18n/context";
 import { formatMoney, cn, yoyPercent } from "@/lib/utils";
-import { ChangeIndicator } from "@/components/shared/stat-card";
+import { ChangeIndicator } from "@/components/shared/change-indicator";
+import { TotalsFooterRow } from "@/components/shared/totals-footer-row";
 import { ROW_GRID } from "./spend-row-grid";
 
 export function TotalsRow({
@@ -18,12 +19,7 @@ export function TotalsRow({
   const change = totals.current - totals.previous;
   const pct = yoyPercent(totals.current, totals.previous);
   return (
-    <div
-      className={cn(
-        ROW_GRID,
-        "shrink-0 border-t border-border bg-surface-muted/50 px-4 py-3 text-sm font-semibold",
-      )}
-    >
+    <TotalsFooterRow className={cn(ROW_GRID)}>
       <span>{t.common.total}</span>
       <div className="col-span-2 row-start-2 flex items-center justify-between gap-2 sm:contents">
         <span className="flex flex-col sm:block sm:text-end">
@@ -48,6 +44,6 @@ export function TotalsRow({
         </span>
       </div>
       <span className="hidden sm:block" />
-    </div>
+    </TotalsFooterRow>
   );
 }
