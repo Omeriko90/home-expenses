@@ -1,12 +1,6 @@
 import { useI18n } from "@/lib/i18n/context";
 import { MoneyInput } from "@/components/shared/money-input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select/baseSelectComponents";
+import { Select } from "@/components/ui/select/Select";
 import type { TxCategory } from "./transaction-form";
 
 export type TxKind = "all" | "FIXED" | "VARIABLE";
@@ -37,14 +31,15 @@ export function TransactionFilters({
   const { t } = useI18n();
   return (
     <>
-      <Select value={cat} onValueChange={onCatChange}>
-        <SelectTrigger className={layout === "sm" ? "w-44" : "w-full"}>
-          <SelectValue />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="all">{t.transactions.allCategories}</SelectItem>
-          {categories.map((c) => (
-            <SelectItem key={c.id} value={c.id}>
+      <Select
+        value={cat}
+        onValueChange={onCatChange}
+        className={layout === "sm" ? "w-44" : "w-full"}
+        options={[
+          { value: "all", label: t.transactions.allCategories },
+          ...categories.map((c) => ({
+            value: c.id,
+            label: (
               <span className="flex items-center gap-1">
                 {c.name}
                 {c.archived && (
@@ -53,20 +48,20 @@ export function TransactionFilters({
                   </span>
                 )}
               </span>
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-      <Select value={kind} onValueChange={(v) => onKindChange(v as TxKind)}>
-        <SelectTrigger className={layout === "sm" ? "w-36" : "w-full"}>
-          <SelectValue />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="all">{t.transactions.allTypes}</SelectItem>
-          <SelectItem value="VARIABLE">{t.transactions.variable}</SelectItem>
-          <SelectItem value="FIXED">{t.transactions.fixed}</SelectItem>
-        </SelectContent>
-      </Select>
+            ),
+          })),
+        ]}
+      />
+      <Select
+        value={kind}
+        onValueChange={(v) => onKindChange(v as TxKind)}
+        className={layout === "sm" ? "w-36" : "w-full"}
+        options={[
+          { value: "all", label: t.transactions.allTypes },
+          { value: "VARIABLE", label: t.transactions.variable },
+          { value: "FIXED", label: t.transactions.fixed },
+        ]}
+      />
       <div className="flex items-center gap-2">
         <MoneyInput
           value={amountMin}

@@ -1,19 +1,12 @@
 "use client";
 
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog/baseDialogComponents";
+import { Dialog } from "@/components/ui/dialog/Dialog";
 import { Button } from "@/components/ui/button";
 import { useI18n } from "@/lib/i18n/context";
 
 export function ConfirmDialog({
   open,
-  onOpenChange,
+  onClose,
   title,
   description,
   confirmLabel,
@@ -22,7 +15,7 @@ export function ConfirmDialog({
   destructive = true,
 }: {
   open: boolean;
-  onOpenChange: (open: boolean) => void;
+  onClose: () => void;
   title: string;
   description?: string;
   confirmLabel?: string;
@@ -32,14 +25,15 @@ export function ConfirmDialog({
 }) {
   const { t } = useI18n();
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-sm">
-        <DialogHeader>
-          <DialogTitle>{title}</DialogTitle>
-          {description && <DialogDescription>{description}</DialogDescription>}
-        </DialogHeader>
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+    <Dialog
+      open={open}
+      onClose={onClose}
+      title={title}
+      description={description}
+      contentClassName="max-w-sm"
+      footer={
+        <>
+          <Button variant="outline" onClick={onClose}>
             {t.common.cancel}
           </Button>
           <Button
@@ -49,8 +43,8 @@ export function ConfirmDialog({
           >
             {confirmLabel ?? t.common.confirm}
           </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        </>
+      }
+    />
   );
 }

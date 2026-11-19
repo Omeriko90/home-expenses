@@ -1,26 +1,18 @@
 "use client";
 
 import * as React from "react";
-import { Pencil, Plus, Trash2 } from "lucide-react";
+import { Plus } from "lucide-react";
 import { toast } from "sonner";
 import { useI18n } from "@/lib/i18n/context";
 import { formatMoney } from "@/lib/utils";
 import type { PortfolioSummary } from "@/lib/summary";
 import { deleteHolding } from "@/app/actions/investments";
 import type { AutocompleteOption } from "@/components/shared/autocomplete";
-import { IconButton } from "@/components/shared/icon-button";
-import { RowActions } from "@/components/shared/row-actions";
+import { EditDeleteActions } from "@/components/shared/edit-delete-actions";
 import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table/baseTableComponents";
+import { Table, type TableColumn } from "@/components/ui/table/Table";
 import { HoldingForm, type Holding } from "./holding-form";
 import { DepositsForm } from "./deposits-form";
 
@@ -57,6 +49,44 @@ export function PortfolioSection({
     });
   }
 
+  const columns: TableColumn<Holding>[] = [
+    {
+      header: t.investments.instrument,
+      cellClassName: "font-medium",
+      cell: (h) => h.instrument,
+    },
+    {
+      header: t.common.type,
+      cellClassName: "text-muted-foreground",
+      cell: (h) => h.type || "—",
+    },
+    {
+      header: t.investments.house,
+      cellClassName: "text-muted-foreground",
+      cell: (h) => h.house,
+    },
+    {
+      header: t.investments.channel,
+      cellClassName: "text-muted-foreground",
+      cell: (h) => h.channel,
+    },
+    {
+      header: t.investments.value,
+      headClassName: "text-end",
+      cellClassName: "text-end tnum",
+      cell: (h) => formatMoney(h.value),
+    },
+    {
+      headClassName: "w-20",
+      cell: (h) => (
+        <EditDeleteActions
+          onEdit={() => setHoldingForm({ open: true, editing: h })}
+          onDelete={() => setToDelete(h)}
+        />
+      ),
+    },
+  ];
+
   return (
     <div className="flex flex-col gap-3">
       <div className="flex items-center justify-between">
@@ -86,77 +116,44 @@ export function PortfolioSection({
             </p>
           </CardContent>
         ) : (
-          <Table containerClassName="max-h-[min(550px,100dvh)] overflow-y-auto">
-            <TableHeader>
-              <TableRow>
-                <TableHead>{t.investments.instrument}</TableHead>
-                <TableHead>{t.common.type}</TableHead>
-                <TableHead>{t.investments.house}</TableHead>
-                <TableHead>{t.investments.channel}</TableHead>
-                <TableHead className="text-end">{t.investments.value}</TableHead>
-                <TableHead className="w-20" />
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {holdings.map((h) => (
-                <TableRow key={h.id}>
-                  <TableCell className="font-medium">{h.instrument}</TableCell>
-                  <TableCell className="text-muted-foreground">
-                    {h.type || "—"}
-                  </TableCell>
-                  <TableCell className="text-muted-foreground">{h.house}</TableCell>
-                  <TableCell className="text-muted-foreground">{h.channel}</TableCell>
-                  <TableCell className="text-end tnum">
-                    {formatMoney(h.value)}
-                  </TableCell>
-                  <TableCell>
-                    <RowActions>
-                      <IconButton
-                        label={t.common.edit}
-                        onClick={() =>
-                          setHoldingForm({ open: true, editing: h })
-                        }
-                      >
-                        <Pencil />
-                      </IconButton>
-                      <IconButton
-                        label={t.common.delete}
-                        onClick={() => setToDelete(h)}
-                      >
-                        <Trash2 />
-                      </IconButton>
-                    </RowActions>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+          <Table
+            columns={columns}
+            data={holdings}
+            rowKey={(h) => h.id}
+            containerClassName="max-h-[min(550px,100dvh)] overflow-y-auto"
+          />
         )}
       </Card>
 
-      <HoldingForm
-        open={holdingForm.open}
-        onOpenChange={(o) => setHoldingForm((s) => ({ ...s, open: o }))}
-        editing={holdingForm.editing}
-        portfolioId={p.id}
-        year={year}
-        typeOptions={typeOptions}
-      />
-      <DepositsForm
-        open={depositsOpen}
-        onOpenChange={setDepositsOpen}
-        portfolioId={p.id}
-        year={year}
-        current={p.deposits}
-      />
-      <ConfirmDialog
-        open={!!toDelete}
-        onOpenChange={(o) => !o && setToDelete(null)}
-        title={t.investments.deleteConfirm}
-        description={toDelete?.instrument}
-        onConfirm={handleDelete}
-        loading={pending}
-      />
+      {holdingForm.open && (
+        <HoldingForm
+          open
+          onClose={() => setHoldingForm((s) => ({ ...s, open: false }))}
+          editing={holdingForm.editing}
+          portfolioId={p.id}
+          year={year}
+          typeOptions={typeOptions}
+        />
+      )}
+      {depositsOpen && (
+        <DepositsForm
+          open
+          onClose={() => setDepositsOpen(false)}
+          portfolioId={p.id}
+          year={year}
+          current={p.deposits}
+        />
+      )}
+      {toDelete && (
+        <ConfirmDialog
+          open
+          onClose={() => setToDelete(null)}
+          title={t.investments.deleteConfirm}
+          description={toDelete.instrument}
+          onConfirm={handleDelete}
+          loading={pending}
+        />
+      )}
     </div>
   );
 }

@@ -18,35 +18,14 @@ import {
   type ParseResult,
   type CommitRow,
 } from "@/app/actions/import";
-import { Field } from "@/components/shared/field";
 import { Autocomplete } from "@/components/shared/autocomplete";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select/baseSelectComponents";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table/baseTableComponents";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog/baseDialogComponents";
-
-type Step = "upload" | "map" | "review";
+import { Select } from "@/components/ui/select/Select";
+import { Table, type TableColumn } from "@/components/ui/table/Table";
+import { Dialog } from "@/components/ui/dialog/Dialog";
+import { StepIndicator, type Step } from "./step-indicator";
+import { ColumnMap } from "./column-map";
 
 type ReviewRow = {
   key: number;
@@ -111,10 +90,10 @@ function fmtDate(d: Date): string {
 
 export function ImportDialog({
   open,
-  onOpenChange,
+  onClose,
 }: {
   open: boolean;
-  onOpenChange: (o: boolean) => void;
+  onClose: () => void;
 }) {
   const { t } = useI18n();
   const router = useRouter();
@@ -124,16 +103,6 @@ export function ImportDialog({
   const [result, setResult] = React.useState<ParseResult | null>(null);
   const [mapping, setMapping] = React.useState<ParseResult["mapping"] | null>(null);
   const [rows, setRows] = React.useState<ReviewRow[]>([]);
-
-  // Reset everything when the dialog closes.
-  React.useEffect(() => {
-    if (!open) {
-      setStep("upload");
-      setResult(null);
-      setMapping(null);
-      setRows([]);
-    }
-  }, [open]);
 
   const rebuildRows = React.useCallback(
     (res: ParseResult, map: ParseResult["mapping"]) => {
@@ -205,7 +174,7 @@ export function ImportDialog({
     startCommit(async () => {
       const res = await commitImport(payload);
       toast.success(t.import.imported.replace("{n}", String(res.created)));
-      onOpenChange(false);
+      onClose();
       router.refresh();
     });
   }
@@ -219,199 +188,100 @@ export function ImportDialog({
     })) ?? [];
   const unassignedCount = rows.filter((r) => !r.categoryId).length;
 
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent
-        className={cn(
-          "max-h-[90dvh] overflow-hidden flex flex-col",
-          step === "review" ? "max-w-4xl" : "max-w-lg",
-        )}
-      >
-        <DialogHeader>
-          <DialogTitle>{t.import.title}</DialogTitle>
-          <DialogDescription>
-            <StepIndicator step={step} />
-          </DialogDescription>
-        </DialogHeader>
+  const previewColumns: TableColumn<ReviewRow>[] = [
+    {
+      header: t.transactions.date,
+      cellClassName: "tnum text-muted-foreground",
+      cell: (r) => fmtDate(r.date),
+    },
+    { header: t.transactions.business, cell: (r) => r.businessName },
+    {
+      header: t.common.amount,
+      headClassName: "text-end",
+      cellClassName: "text-end tnum",
+      cell: (r) => formatMoney(r.amount, { decimals: true }),
+    },
+  ];
 
-        {/* STEP 1 — upload */}
-        {step === "upload" && (
-          <label className="flex cursor-pointer flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed border-border px-6 py-14 text-center transition-colors hover:border-primary/50 hover:bg-surface-muted/40">
-            <div className="flex size-14 items-center justify-center rounded-full bg-primary-tint text-primary">
-              <Upload className="size-6" />
-            </div>
-            <span className="font-medium">
-              {parsing ? t.import.parsing : t.import.dropHint}
+  const reviewColumns: TableColumn<ReviewRow>[] = [
+    {
+      header: t.transactions.date,
+      headClassName: "w-24",
+      cellClassName: "tnum text-muted-foreground",
+      cell: (r) => fmtDate(r.date),
+    },
+    {
+      header: t.transactions.business,
+      cellClassName: "font-medium",
+      cell: (r) => (
+        <>
+          {r.businessName}
+          {r.fileCategory && (
+            <span className="block text-xs text-muted-foreground">
+              {r.fileCategory}
             </span>
-            <input
-              type="file"
-              accept=".xlsx,.xls,.csv"
-              className="hidden"
-              onChange={onFile}
-              disabled={parsing}
-            />
-          </label>
-        )}
+          )}
+        </>
+      ),
+    },
+    {
+      header: t.common.amount,
+      headClassName: "text-end",
+      cellClassName: "text-end tnum",
+      cell: (r) => formatMoney(r.amount, { decimals: true }),
+    },
+    {
+      header: t.common.category,
+      headClassName: "w-52",
+      cell: (r, idx) => (
+        <Autocomplete
+          options={catOptions}
+          value={r.categoryId}
+          onChange={(v) =>
+            setRows((prev) =>
+              prev.map((x, i) => (i === idx ? { ...x, categoryId: v } : x)),
+            )
+          }
+          placeholder={t.import.unassigned}
+        />
+      ),
+    },
+    {
+      header: t.transactions.kind,
+      headClassName: "w-28",
+      cell: (r, idx) => (
+        <Select
+          value={r.kind}
+          onValueChange={(v) =>
+            setRows((prev) =>
+              prev.map((x, i) =>
+                i === idx ? { ...x, kind: v as "FIXED" | "VARIABLE" } : x,
+              ),
+            )
+          }
+          className="h-9"
+          options={[
+            { value: "VARIABLE", label: t.transactions.variable },
+            { value: "FIXED", label: t.transactions.fixed },
+          ]}
+        />
+      ),
+    },
+  ];
 
-        {/* STEP 2 — map columns */}
-        {step === "map" && result && mapping && (
-          <div className="flex flex-col gap-4 overflow-y-auto">
-            <div className="flex items-center gap-2">
-              <Badge variant="primary">
-                <FileSpreadsheet className="size-3.5" /> {result.provider}
-              </Badge>
-              <span className="text-sm text-muted-foreground">
-                {rows.length} {t.import.rowsFound}
-              </span>
-            </div>
-            <div className="grid gap-3 sm:grid-cols-2">
-              <ColumnMap
-                label={t.import.colDate}
-                value={String(mapping.dateCol)}
-                options={columnOptions}
-                onChange={(v) => remap({ dateCol: Number(v) })}
-              />
-              <ColumnMap
-                label={t.import.colBusiness}
-                value={String(mapping.businessCol)}
-                options={columnOptions}
-                onChange={(v) => remap({ businessCol: Number(v) })}
-              />
-              <ColumnMap
-                label={t.import.colAmount}
-                value={String(mapping.amountCol)}
-                options={columnOptions}
-                onChange={(v) => remap({ amountCol: Number(v) })}
-              />
-              <ColumnMap
-                label={t.import.colCategory}
-                value={
-                  mapping.categoryCol === null
-                    ? "none"
-                    : String(mapping.categoryCol)
-                }
-                options={[{ value: "none", label: t.import.none }, ...columnOptions]}
-                onChange={(v) =>
-                  remap({ categoryCol: v === "none" ? null : Number(v) })
-                }
-              />
-            </div>
-            {/* small preview */}
-            <div className="rounded-lg border border-border overflow-hidden">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>{t.transactions.date}</TableHead>
-                    <TableHead>{t.transactions.business}</TableHead>
-                    <TableHead className="text-end">{t.common.amount}</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {rows.slice(0, 4).map((r) => (
-                    <TableRow key={r.key}>
-                      <TableCell className="tnum text-muted-foreground">
-                        {fmtDate(r.date)}
-                      </TableCell>
-                      <TableCell>{r.businessName}</TableCell>
-                      <TableCell className="text-end tnum">
-                        {formatMoney(r.amount, { decimals: true })}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          </div>
-        )}
-
-        {/* STEP 3 — review categories */}
-        {step === "review" && (
-          <div className="flex flex-col gap-3 overflow-hidden">
-            {unassignedCount > 0 && (
-              <p className="text-sm text-warning">
-                {unassignedCount} · {t.import.needCategory}
-              </p>
-            )}
-            <div className="overflow-y-auto rounded-lg border border-border">
-              <Table containerClassName="max-h-[55dvh] overflow-y-auto">
-                <TableHeader className="sticky top-0 z-10 bg-surface shadow-divider">
-                  <TableRow>
-                    <TableHead className="w-24">{t.transactions.date}</TableHead>
-                    <TableHead>{t.transactions.business}</TableHead>
-                    <TableHead className="text-end">{t.common.amount}</TableHead>
-                    <TableHead className="w-52">{t.common.category}</TableHead>
-                    <TableHead className="w-28">{t.transactions.kind}</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {rows.map((r, idx) => (
-                    <TableRow
-                      key={r.key}
-                      className={cn(!r.categoryId && "bg-warning/5")}
-                    >
-                      <TableCell className="tnum text-muted-foreground">
-                        {fmtDate(r.date)}
-                      </TableCell>
-                      <TableCell className="font-medium">
-                        {r.businessName}
-                        {r.fileCategory && (
-                          <span className="block text-xs text-muted-foreground">
-                            {r.fileCategory}
-                          </span>
-                        )}
-                      </TableCell>
-                      <TableCell className="text-end tnum">
-                        {formatMoney(r.amount, { decimals: true })}
-                      </TableCell>
-                      <TableCell>
-                        <Autocomplete
-                          options={catOptions}
-                          value={r.categoryId}
-                          onChange={(v) =>
-                            setRows((prev) =>
-                              prev.map((x, i) =>
-                                i === idx ? { ...x, categoryId: v } : x,
-                              ),
-                            )
-                          }
-                          placeholder={t.import.unassigned}
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <Select
-                          value={r.kind}
-                          onValueChange={(v) =>
-                            setRows((prev) =>
-                              prev.map((x, i) =>
-                                i === idx
-                                  ? { ...x, kind: v as "FIXED" | "VARIABLE" }
-                                  : x,
-                              ),
-                            )
-                          }
-                        >
-                          <SelectTrigger className="h-9">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="VARIABLE">
-                              {t.transactions.variable}
-                            </SelectItem>
-                            <SelectItem value="FIXED">
-                              {t.transactions.fixed}
-                            </SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          </div>
-        )}
-
-        <DialogFooter className="flex-row justify-between sm:justify-between">
+  return (
+    <Dialog
+      open={open}
+      onClose={onClose}
+      title={t.import.title}
+      description={<StepIndicator step={step} />}
+      contentClassName={cn(
+        "max-h-[90dvh] overflow-hidden flex flex-col",
+        step === "review" ? "max-w-4xl" : "max-w-lg",
+      )}
+      footerClassName="flex-row justify-between sm:justify-between"
+      footer={
+        <>
           {step === "upload" ? (
             <span />
           ) : (
@@ -432,67 +302,98 @@ export function ImportDialog({
               <Check /> {t.import.commit}
             </Button>
           )}
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-function StepIndicator({ step }: { step: Step }) {
-  const { t } = useI18n();
-  const steps: { key: Step; label: string }[] = [
-    { key: "upload", label: t.import.selectFile },
-    { key: "map", label: t.import.columnMapping },
-    { key: "review", label: t.import.review },
-  ];
-  const activeIdx = steps.findIndex((s) => s.key === step);
-  return (
-    <span className="flex items-center gap-1.5">
-      {steps.map((s, i) => (
-        <React.Fragment key={s.key}>
-          <span
-            className={cn(
-              i === activeIdx
-                ? "font-medium text-primary"
-                : i < activeIdx
-                  ? "text-foreground"
-                  : "text-muted-foreground",
-            )}
-          >
-            {i + 1}. {s.label}
+        </>
+      }
+    >
+      {step === "upload" && (
+        <label className="flex cursor-pointer flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed border-border px-6 py-14 text-center transition-colors hover:border-primary/50 hover:bg-surface-muted/40">
+          <div className="flex size-14 items-center justify-center rounded-full bg-primary-tint text-primary">
+            <Upload className="size-6" />
+          </div>
+          <span className="font-medium">
+            {parsing ? t.import.parsing : t.import.dropHint}
           </span>
-          {i < steps.length - 1 && <span className="text-muted-foreground">·</span>}
-        </React.Fragment>
-      ))}
-    </span>
-  );
-}
+          <input
+            type="file"
+            accept=".xlsx,.xls,.csv"
+            className="hidden"
+            onChange={onFile}
+            disabled={parsing}
+          />
+        </label>
+      )}
 
-function ColumnMap({
-  label,
-  value,
-  options,
-  onChange,
-}: {
-  label: string;
-  value: string;
-  options: { value: string; label: string }[];
-  onChange: (v: string) => void;
-}) {
-  return (
-    <Field label={label}>
-      <Select value={value} onValueChange={onChange}>
-        <SelectTrigger>
-          <SelectValue />
-        </SelectTrigger>
-        <SelectContent>
-          {options.map((o) => (
-            <SelectItem key={o.value} value={o.value}>
-              {o.label}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-    </Field>
+      {step === "map" && result && mapping && (
+        <div className="flex flex-col gap-4 overflow-y-auto">
+          <div className="flex items-center gap-2">
+            <Badge variant="primary">
+              <FileSpreadsheet className="size-3.5" /> {result.provider}
+            </Badge>
+            <span className="text-sm text-muted-foreground">
+              {rows.length} {t.import.rowsFound}
+            </span>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <ColumnMap
+              label={t.import.colDate}
+              value={String(mapping.dateCol)}
+              options={columnOptions}
+              onChange={(v) => remap({ dateCol: Number(v) })}
+            />
+            <ColumnMap
+              label={t.import.colBusiness}
+              value={String(mapping.businessCol)}
+              options={columnOptions}
+              onChange={(v) => remap({ businessCol: Number(v) })}
+            />
+            <ColumnMap
+              label={t.import.colAmount}
+              value={String(mapping.amountCol)}
+              options={columnOptions}
+              onChange={(v) => remap({ amountCol: Number(v) })}
+            />
+            <ColumnMap
+              label={t.import.colCategory}
+              value={
+                mapping.categoryCol === null
+                  ? "none"
+                  : String(mapping.categoryCol)
+              }
+              options={[{ value: "none", label: t.import.none }, ...columnOptions]}
+              onChange={(v) =>
+                remap({ categoryCol: v === "none" ? null : Number(v) })
+              }
+            />
+          </div>
+          <div className="rounded-lg border border-border overflow-hidden">
+            <Table
+              columns={previewColumns}
+              data={rows.slice(0, 4)}
+              rowKey={(r) => r.key}
+            />
+          </div>
+        </div>
+      )}
+
+      {step === "review" && (
+        <div className="flex flex-col gap-3 overflow-hidden">
+          {unassignedCount > 0 && (
+            <p className="text-sm text-warning">
+              {unassignedCount} · {t.import.needCategory}
+            </p>
+          )}
+          <div className="overflow-y-auto rounded-lg border border-border">
+            <Table
+              columns={reviewColumns}
+              data={rows}
+              rowKey={(r) => r.key}
+              containerClassName="max-h-[55dvh] overflow-y-auto"
+              headerClassName="sticky top-0 z-10 bg-surface shadow-divider"
+              rowClassName={(r) => cn(!r.categoryId && "bg-warning/5")}
+            />
+          </div>
+        </div>
+      )}
+    </Dialog>
   );
 }

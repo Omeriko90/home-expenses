@@ -89,7 +89,7 @@ export function GoalsView({
       {toDelete && (
         <ConfirmDialog
           open
-          onOpenChange={(o) => !o && setToDelete(null)}
+          onClose={() => setToDelete(null)}
           title={t.goals.deleteConfirm}
           description={toDelete.title}
           onConfirm={handleDelete}

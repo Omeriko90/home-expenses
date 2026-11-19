@@ -8,6 +8,7 @@ import {
   updateTransaction,
   type TransactionInput,
 } from "@/app/actions/transactions";
+import { FormDialog } from "@/components/shared/form-dialog";
 import { Field } from "@/components/shared/field";
 import { MoneyInput } from "@/components/shared/money-input";
 import { DatePicker } from "@/components/shared/date-picker";
@@ -15,22 +16,8 @@ import {
   Autocomplete,
   type AutocompleteOption,
 } from "@/components/shared/autocomplete";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select/baseSelectComponents";
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog/baseDialogComponents";
+import { Select } from "@/components/ui/select/Select";
 
 export type TxCategory = {
   id: string;
@@ -53,14 +40,14 @@ export type TxRow = {
 
 export function TransactionForm({
   open,
-  onOpenChange,
+  onClose,
   editing,
   categories,
   year,
   month,
 }: {
   open: boolean;
-  onOpenChange: (o: boolean) => void;
+  onClose: () => void;
   editing: TxRow | null;
   categories: TxCategory[];
   year: number;
@@ -68,31 +55,18 @@ export function TransactionForm({
 }) {
   const { t } = useI18n();
   const [pending, startTransition] = React.useTransition();
-  const [date, setDate] = React.useState<Date | undefined>(undefined);
-  const [business, setBusiness] = React.useState("");
-  const [amount, setAmount] = React.useState<number | "">("");
-  const [categoryId, setCategoryId] = React.useState<string | null>(null);
-  const [kind, setKind] = React.useState<"FIXED" | "VARIABLE">("VARIABLE");
-  const [note, setNote] = React.useState("");
-
-  React.useEffect(() => {
-    if (!open) return;
-    if (editing) {
-      setDate(new Date(editing.date));
-      setBusiness(editing.businessName);
-      setAmount(editing.amount);
-      setCategoryId(editing.categoryId);
-      setKind(editing.kind);
-      setNote(editing.note ?? "");
-    } else {
-      setDate(new Date(Date.UTC(year, month - 1, 1)));
-      setBusiness("");
-      setAmount("");
-      setCategoryId(null);
-      setKind("VARIABLE");
-      setNote("");
-    }
-  }, [open, editing, year, month]);
+  const [date, setDate] = React.useState<Date | undefined>(() =>
+    editing ? new Date(editing.date) : new Date(Date.UTC(year, month - 1, 1)),
+  );
+  const [business, setBusiness] = React.useState(editing?.businessName ?? "");
+  const [amount, setAmount] = React.useState<number | "">(editing?.amount ?? "");
+  const [categoryId, setCategoryId] = React.useState<string | null>(
+    editing?.categoryId ?? null,
+  );
+  const [kind, setKind] = React.useState<"FIXED" | "VARIABLE">(
+    editing?.kind ?? "VARIABLE",
+  );
+  const [note, setNote] = React.useState(editing?.note ?? "");
 
   function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -112,12 +86,10 @@ export function TransactionForm({
       if (editing) await updateTransaction(editing.id, input);
       else await createTransaction(input);
       toast.success(t.common.save);
-      onOpenChange(false);
+      onClose();
     });
   }
 
-  // Archived categories are not offered for new transactions, but a
-  // transaction already in one keeps its category selectable when edited.
   const options = React.useMemo(() => {
     const opts: AutocompleteOption[] = categories
       .filter((c) => !c.archived)
@@ -136,73 +108,54 @@ export function TransactionForm({
   }, [categories, editing, t]);
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>
-            {editing ? t.transactions.edit : t.transactions.add}
-          </DialogTitle>
-        </DialogHeader>
-        <form onSubmit={submit} className="flex flex-col gap-4">
-          <div className="grid grid-cols-2 gap-4">
-            <Field label={t.transactions.date} required>
-              <DatePicker value={date} onChange={setDate} />
-            </Field>
-            <Field label={t.common.amount} required>
-              <MoneyInput value={amount} onValueChange={setAmount} />
-            </Field>
-          </div>
-          <Field label={t.transactions.business} htmlFor="tx-biz" required>
-            <Input
-              id="tx-biz"
-              value={business}
-              onChange={(e) => setBusiness(e.target.value)}
-              required
-            />
-          </Field>
-          <Field label={t.common.category} required>
-            <Autocomplete
-              options={options}
-              value={categoryId}
-              onChange={setCategoryId}
-              placeholder={t.common.category}
-            />
-          </Field>
-          <Field label={t.transactions.kind}>
-            <Select
-              value={kind}
-              onValueChange={(v) => setKind(v as "FIXED" | "VARIABLE")}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="VARIABLE">{t.transactions.variable}</SelectItem>
-                <SelectItem value="FIXED">{t.transactions.fixed}</SelectItem>
-              </SelectContent>
-            </Select>
-          </Field>
-          <Field label={t.transactions.note} htmlFor="tx-note">
-            <Input
-              id="tx-note"
-              value={note}
-              onChange={(e) => setNote(e.target.value)}
-            />
-          </Field>
-          <DialogFooter>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-            >
-              {t.common.cancel}
-            </Button>
-            <Button type="submit" disabled={pending}>
-              {t.common.save}
-            </Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
+    <FormDialog
+      open={open}
+      onClose={onClose}
+      title={editing ? t.transactions.edit : t.transactions.add}
+      onSubmit={submit}
+      pending={pending}
+    >
+      <div className="grid grid-cols-2 gap-4">
+        <Field label={t.transactions.date} required>
+          <DatePicker value={date} onChange={setDate} />
+        </Field>
+        <Field label={t.common.amount} required>
+          <MoneyInput value={amount} onValueChange={setAmount} />
+        </Field>
+      </div>
+      <Field label={t.transactions.business} htmlFor="tx-biz" required>
+        <Input
+          id="tx-biz"
+          value={business}
+          onChange={(e) => setBusiness(e.target.value)}
+          required
+        />
+      </Field>
+      <Field label={t.common.category} required>
+        <Autocomplete
+          options={options}
+          value={categoryId}
+          onChange={setCategoryId}
+          placeholder={t.common.category}
+        />
+      </Field>
+      <Field label={t.transactions.kind}>
+        <Select
+          value={kind}
+          onValueChange={(v) => setKind(v as "FIXED" | "VARIABLE")}
+          options={[
+            { value: "VARIABLE", label: t.transactions.variable },
+            { value: "FIXED", label: t.transactions.fixed },
+          ]}
+        />
+      </Field>
+      <Field label={t.transactions.note} htmlFor="tx-note">
+        <Input
+          id="tx-note"
+          value={note}
+          onChange={(e) => setNote(e.target.value)}
+        />
+      </Field>
+    </FormDialog>
   );
 }
