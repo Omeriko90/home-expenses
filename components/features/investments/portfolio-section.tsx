@@ -4,16 +4,14 @@ import * as React from "react";
 import { Plus } from "lucide-react";
 import { toast } from "sonner";
 import { useI18n } from "@/lib/i18n/context";
-import { formatMoney } from "@/lib/utils";
 import type { PortfolioSummary } from "@/lib/summary";
 import { deleteHolding } from "@/app/actions/investments";
 import type { AutocompleteOption } from "@/components/shared/autocomplete";
-import { EditDeleteActions } from "@/components/shared/edit-delete-actions";
 import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Table, type TableColumn } from "@/components/ui/table/Table";
 import { HoldingForm, type Holding } from "./holding-form";
+import { HoldingsAccordion } from "./holdings-accordion";
 import { DepositsForm } from "./deposits-form";
 
 export function PortfolioSection({
@@ -49,44 +47,6 @@ export function PortfolioSection({
     });
   }
 
-  const columns: TableColumn<Holding>[] = [
-    {
-      header: t.investments.instrument,
-      cellClassName: "font-medium",
-      cell: (h) => h.instrument,
-    },
-    {
-      header: t.common.type,
-      cellClassName: "text-muted-foreground",
-      cell: (h) => h.type || "—",
-    },
-    {
-      header: t.investments.house,
-      cellClassName: "text-muted-foreground",
-      cell: (h) => h.house,
-    },
-    {
-      header: t.investments.channel,
-      cellClassName: "text-muted-foreground",
-      cell: (h) => h.channel,
-    },
-    {
-      header: t.investments.value,
-      headClassName: "text-end",
-      cellClassName: "text-end tnum",
-      cell: (h) => formatMoney(h.value),
-    },
-    {
-      headClassName: "w-20",
-      cell: (h) => (
-        <EditDeleteActions
-          onEdit={() => setHoldingForm({ open: true, editing: h })}
-          onDelete={() => setToDelete(h)}
-        />
-      ),
-    },
-  ];
-
   return (
     <div className="flex flex-col gap-3">
       <div className="flex items-center justify-between">
@@ -116,12 +76,13 @@ export function PortfolioSection({
             </p>
           </CardContent>
         ) : (
-          <Table
-            columns={columns}
-            data={holdings}
-            rowKey={(h) => h.id}
-            containerClassName="max-h-[min(550px,100dvh)] overflow-y-auto"
-          />
+          <div className="max-h-[min(550px,100dvh)] overflow-y-auto">
+            <HoldingsAccordion
+              holdings={holdings}
+              onEdit={(h) => setHoldingForm({ open: true, editing: h })}
+              onDelete={setToDelete}
+            />
+          </div>
         )}
       </Card>
 
