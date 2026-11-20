@@ -48,7 +48,6 @@ export function BudgetEditor({
   );
   const [pending, startTransition] = React.useTransition();
   const [query, setQuery] = React.useState("");
-  const deferredQuery = React.useDeferredValue(query);
 
   React.useEffect(() => {
     setValues(Object.fromEntries(rows.map((r) => [r.categoryId, r.monthly || ""])));
@@ -65,11 +64,10 @@ export function BudgetEditor({
     mode === "month" ? t.months[month - 1] : t.summary.monthlyAvg;
   const spentLabel = `${t.budgets.spentLabel} · ${spentSuffix}`;
 
-  const visibleRows = React.useMemo(() => {
-    const q = deferredQuery.trim().toLowerCase();
-    if (!q) return rows;
-    return rows.filter((r) => r.name.toLowerCase().includes(q));
-  }, [rows, deferredQuery]);
+  const q = query.trim().toLowerCase();
+  const visibleRows = q
+    ? rows.filter((r) => r.name.toLowerCase().includes(q))
+    : rows;
 
   function save(categoryId: string, value: number | "") {
     const monthlyAmount = typeof value === "number" ? value : 0;
