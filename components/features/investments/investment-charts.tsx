@@ -2,6 +2,7 @@
 
 import { useI18n } from "@/lib/i18n/context";
 import type { PortfolioSummary, YearlyInvestmentTotal } from "@/lib/summary";
+import { groupHoldingsByType } from "@/lib/investments";
 import { ChartCard } from "@/components/shared/charts/chart-card";
 import { SharePieChart } from "@/components/shared/charts/share-pie-chart";
 import { InvestmentGrowthLineChart } from "@/components/shared/charts/investment-growth-line-chart";
@@ -19,14 +20,14 @@ export function InvestmentCharts({
 }) {
   const { t } = useI18n();
 
-  const byType = new Map<string, number>();
   const byChannel = new Map<string, number>();
   const byPortfolio = new Map<string, number>();
+  const shownHoldings: PortfolioSummary["holdings"] = [];
   for (const p of portfolios) {
     for (const h of p.holdings) {
       if (h.value === 0) continue;
       if (type && h.type !== type) continue;
-      byType.set(h.type || "—", (byType.get(h.type || "—") ?? 0) + h.value);
+      shownHoldings.push(h);
       const channel = h.channel || "—";
       byChannel.set(channel, (byChannel.get(channel) ?? 0) + h.value);
       byPortfolio.set(p.name, (byPortfolio.get(p.name) ?? 0) + h.value);
@@ -36,7 +37,10 @@ export function InvestmentCharts({
     [...m.entries()]
       .map(([name, value]) => ({ name, value }))
       .sort((a, b) => b.value - a.value);
-  const typeData = toSlices(byType);
+  const typeData = groupHoldingsByType(shownHoldings).map((g) => ({
+    name: g.type || "—",
+    value: g.sum,
+  }));
   const channelData = toSlices(byChannel);
   const portfolioData = toSlices(byPortfolio);
 
