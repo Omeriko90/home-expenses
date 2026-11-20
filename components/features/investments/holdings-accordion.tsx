@@ -2,6 +2,7 @@
 
 import { useI18n } from "@/lib/i18n/context";
 import { formatMoney } from "@/lib/utils";
+import { groupHoldingsByType } from "@/lib/investments";
 import { EditDeleteActions } from "@/components/shared/edit-delete-actions";
 import { Accordion } from "@/components/ui/accordion/Accordion";
 import { Table, type TableColumn } from "@/components/ui/table/Table";
@@ -51,22 +52,7 @@ export function HoldingsAccordion({
     },
   ];
 
-  const byType = new Map<string, Holding[]>();
-  for (const h of holdings) {
-    const key = h.type || "";
-    byType.set(key, [...(byType.get(key) ?? []), h]);
-  }
-  const groups = [...byType.entries()]
-    .map(([type, items]) => ({
-      type,
-      items,
-      sum: items.reduce((acc, h) => acc + h.value, 0),
-    }))
-    .sort((a, b) => {
-      if (!a.type) return 1;
-      if (!b.type) return -1;
-      return b.sum - a.sum;
-    });
+  const groups = groupHoldingsByType(holdings);
 
   return (
     <Accordion
