@@ -1,14 +1,17 @@
 "use client";
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { cn } from "@/lib/utils";
 import { Select } from "@/components/ui/select/Select";
 
 export function YearSelect({
   year,
   years,
+  className,
 }: {
   year: number;
   years: number[];
+  className?: string;
 }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -24,7 +27,7 @@ export function YearSelect({
     <Select
       value={String(year)}
       onValueChange={onChange}
-      className="w-28 tnum"
+      className={cn("w-28 tnum", className)}
       itemClassName="tnum"
       options={years.map((y) => ({ value: String(y), label: y }))}
     />

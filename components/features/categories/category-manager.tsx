@@ -68,12 +68,8 @@ export function CategoryManager({ initial }: { initial: Category[] }) {
       <Tabs value={tab} onValueChange={(v) => setTab(v as typeof tab)}>
         <div className="flex items-center justify-between gap-2">
           <TabsList>
-            <TabsTrigger value="EXPENSE">
-              {t.categories.expenseCategories}
-            </TabsTrigger>
-            <TabsTrigger value="INVESTMENT">
-              {t.categories.investmentCategories}
-            </TabsTrigger>
+            <TabsTrigger value="EXPENSE">{t.common.expense}</TabsTrigger>
+            <TabsTrigger value="INVESTMENT">{t.common.investment}</TabsTrigger>
           </TabsList>
           <Button onClick={openAdd}>
             <Plus /> {t.categories.add}

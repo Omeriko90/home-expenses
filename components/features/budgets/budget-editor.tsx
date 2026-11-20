@@ -1,21 +1,28 @@
 "use client";
 
 import * as React from "react";
-import { Copy, Info, TriangleAlert } from "lucide-react";
+import { Copy, Info, Search, TriangleAlert } from "lucide-react";
 import { toast } from "sonner";
 import { useI18n } from "@/lib/i18n/context";
-import { formatMoney, formatPercent, formatPercentCompact } from "@/lib/utils";
+import {
+  cn,
+  formatMoney,
+  formatPercent,
+  formatPercentCompact,
+} from "@/lib/utils";
 import {
   upsertBudget,
   copyBudgetsFromPreviousYear,
 } from "@/app/actions/budgets";
 import { PageHeader } from "@/components/shared/page-header";
+import { EmptyState } from "@/components/shared/empty-state";
 import { YearSelect } from "@/components/shared/year-select";
 import { MoneyInput } from "@/components/shared/money-input";
 import { ProgressBar } from "@/components/shared/progress-bar";
 import { StatCard } from "@/components/shared/stat-card";
 import { TotalsFooterRow } from "@/components/shared/totals-footer-row";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Tooltip } from "@/components/ui/tooltip";
 import { Table, type TableColumn } from "@/components/ui/table/Table";
@@ -40,6 +47,7 @@ export function BudgetEditor({
     Object.fromEntries(rows.map((r) => [r.categoryId, r.monthly || ""])),
   );
   const [pending, startTransition] = React.useTransition();
+  const [query, setQuery] = React.useState("");
 
   React.useEffect(() => {
     setValues(Object.fromEntries(rows.map((r) => [r.categoryId, r.monthly || ""])));
@@ -52,10 +60,14 @@ export function BudgetEditor({
   const totalSpent = rows.reduce((sum, r) => sum + r.actual, 0);
   const remaining = totalMonthly - totalSpent;
 
-  const spentLabel =
-    mode === "month"
-      ? `${t.budgets.spentLabel} · ${t.months[month - 1]}`
-      : `${t.budgets.spentLabel} · ${t.summary.monthlyAvg}`;
+  const spentSuffix =
+    mode === "month" ? t.months[month - 1] : t.summary.monthlyAvg;
+  const spentLabel = `${t.budgets.spentLabel} · ${spentSuffix}`;
+
+  const q = query.trim().toLowerCase();
+  const visibleRows = q
+    ? rows.filter((r) => r.name.toLowerCase().includes(q))
+    : rows;
 
   function save(categoryId: string, value: number | "") {
     const monthlyAmount = typeof value === "number" ? value : 0;
@@ -83,11 +95,16 @@ export function BudgetEditor({
     };
   };
 
-  const percentLabel = (r: Row) => {
+  const percentLabel = (r: Row, className?: string) => {
     const { budget, over } = derive(r);
     return over ? (
       <Tooltip content={t.budgets.overBudget}>
-        <span className="inline-flex w-20 shrink-0 items-center gap-0.5 whitespace-nowrap text-xs font-medium text-danger tnum">
+        <span
+          className={cn(
+            "inline-flex w-20 shrink-0 items-center gap-0.5 whitespace-nowrap text-xs font-medium text-danger tnum",
+            className,
+          )}
+        >
           <TriangleAlert className="size-3.5 shrink-0" />
           {budget > 0
             ? formatPercentCompact(r.actual / budget)
@@ -95,7 +112,12 @@ export function BudgetEditor({
         </span>
       </Tooltip>
     ) : (
-      <span className="inline-block w-20 shrink-0 text-xs text-muted-foreground tnum">
+      <span
+        className={cn(
+          "inline-block w-20 shrink-0 text-xs text-muted-foreground tnum",
+          className,
+        )}
+      >
         {budget > 0 ? formatPercentCompact(r.actual / budget) : null}
       </span>
     );
@@ -116,14 +138,14 @@ export function BudgetEditor({
               </span>
             </Tooltip>
             {hasBar && (
-              <span className="flex items-center gap-2 sm:hidden">
+              <span className="flex w-full items-center gap-2 sm:hidden">
                 <ProgressBar
                   value={r.actual}
                   max={budget}
                   over={over}
-                  className="h-2.5 max-w-40"
+                  className="h-3 flex-1"
                 />
-                {percentLabel(r)}
+                {percentLabel(r, "w-auto")}
               </span>
             )}
           </div>
@@ -152,7 +174,12 @@ export function BudgetEditor({
       },
     },
     {
-      header: mode === "month" ? t.budgets.spent : t.summary.monthlyAvg,
+      header: (
+        <span className="whitespace-nowrap">
+          {t.budgets.spentLabel}
+          <span className="hidden sm:inline"> · {spentSuffix}</span>
+        </span>
+      ),
       headClassName: "w-20 sm:w-40",
       cellClassName: "tnum",
       cell: (r) =>
@@ -166,7 +193,7 @@ export function BudgetEditor({
     },
     {
       header: t.budgets.monthlyBudget,
-      headClassName: "w-40",
+      headClassName: "w-28 sm:w-40",
       cell: (r) => {
         const { v } = derive(r);
         return (
@@ -205,7 +232,7 @@ export function BudgetEditor({
     <div className="flex flex-col gap-6">
       <PageHeader
         actions={
-          <div className="flex items-center gap-2">
+          <div className="flex w-full items-center gap-2 sm:w-auto">
             <Button
               variant="outline"
               className="bg-surface"
@@ -214,7 +241,11 @@ export function BudgetEditor({
             >
               <Copy /> {t.budgets.copyPrev}
             </Button>
-            <YearSelect year={year} years={years} />
+            <YearSelect
+              year={year}
+              years={years}
+              className="flex-1 sm:flex-none"
+            />
           </div>
         }
       />
@@ -273,19 +304,37 @@ export function BudgetEditor({
         />
       </div>
 
+      <div className="relative sm:max-w-xs">
+        <Search className="pointer-events-none absolute inset-y-0 start-3 my-auto size-4 text-muted-foreground" />
+        <Input
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder={t.common.search}
+          className="ps-9"
+        />
+      </div>
+
       <Card className="overflow-hidden">
-        <Table columns={columns} data={rows} rowKey={(r) => r.categoryId} />
+        {visibleRows.length === 0 ? (
+          <EmptyState title={t.common.noData} className="m-4 border-none" />
+        ) : (
+          <Table
+            columns={columns}
+            data={visibleRows}
+            rowKey={(r) => r.categoryId}
+          />
+        )}
         <TotalsFooterRow>
           <span>{t.common.total}</span>
           <div className="flex gap-8 tnum">
             <span>
-              {t.budgets.totalSpent}: {formatMoney(totalSpent)}
+              {t.budgets.spentLabel}: {formatMoney(totalSpent)}
             </span>
             <span>
-              {t.budgets.totalMonthly}: {formatMoney(totalMonthly)}
+              {t.budgets.monthlyShort}: {formatMoney(totalMonthly)}
             </span>
             <span className="hidden sm:inline">
-              {t.budgets.totalYearly}: {formatMoney(totalMonthly * 12)}
+              {t.budgets.yearlyShort}: {formatMoney(totalMonthly * 12)}
             </span>
           </div>
         </TotalsFooterRow>
