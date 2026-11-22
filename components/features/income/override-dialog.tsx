@@ -1,21 +1,14 @@
 "use client";
 
-import * as React from "react";
-import { z } from "zod";
+import { useState, useTransition, type FormEvent } from "react";
 import { toast } from "sonner";
 import { useI18n } from "@/lib/i18n/context";
 import { clearMonthOverride, setMonthOverride } from "@/app/actions/income";
-import { useZodForm } from "@/components/ui/form/use-zod-form";
-import { RhfFormDialog } from "@/components/ui/form/form-dialog";
-import { MoneyField } from "@/components/ui/form/money-field";
+import { FormDialog } from "@/components/shared/form-dialog";
+import { Field } from "@/components/shared/field";
+import { MoneyInput } from "@/components/shared/money-input";
 import { Button } from "@/components/ui/button";
 import type { IncomeEntryData, IncomeSourceData } from "./types";
-
-const schema = z.object({
-  amount: z.number().min(0),
-});
-
-type FormValues = z.infer<typeof schema>;
 
 export function OverrideDialog({
   source,
@@ -33,20 +26,22 @@ export function OverrideDialog({
   onClose: () => void;
 }) {
   const { t } = useI18n();
-  const [pending, startTransition] = React.useTransition();
+  const [pending, startTransition] = useTransition();
+  const [amount, setAmount] = useState<number | "">(
+    existingOverride?.amount ?? currentAmount ?? "",
+  );
 
-  const methods = useZodForm<FormValues, FormValues>(schema, {
-    defaultValues: {
-      amount: existingOverride?.amount ?? currentAmount ?? undefined,
-    },
-  });
-
-  function onSubmit(values: FormValues) {
+  function handleSubmit(e: FormEvent) {
+    e.preventDefault();
+    if (typeof amount !== "number") {
+      toast.error(t.common.noData);
+      return;
+    }
     startTransition(async () => {
       await setMonthOverride(source.id, {
         year,
         month,
-        amount: values.amount,
+        amount,
         note: existingOverride?.note ?? null,
       });
       toast.success(t.common.save);
@@ -63,20 +58,16 @@ export function OverrideDialog({
   }
 
   return (
-    <RhfFormDialog
+    <FormDialog
       open
       onClose={onClose}
       title={`${source.name} — ${t.months[month - 1]} ${year}`}
-      methods={methods}
-      onSubmit={onSubmit}
+      onSubmit={handleSubmit}
       pending={pending}
     >
-      <MoneyField
-        name="amount"
-        label={t.common.amount}
-        required
-        hint={t.income.overrideHint}
-      />
+      <Field label={t.common.amount} required hint={t.income.overrideHint}>
+        <MoneyInput value={amount} onValueChange={setAmount} />
+      </Field>
       {existingOverride && (
         <Button
           type="button"
@@ -88,6 +79,6 @@ export function OverrideDialog({
           {t.income.clearOverride}
         </Button>
       )}
-    </RhfFormDialog>
+    </FormDialog>
   );
 }

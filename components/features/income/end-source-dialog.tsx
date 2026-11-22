@@ -1,6 +1,6 @@
 "use client";
 
-import * as React from "react";
+import { useState, useTransition, type FormEvent } from "react";
 import { toast } from "sonner";
 import { useI18n } from "@/lib/i18n/context";
 import { endIncomeSource } from "@/app/actions/income";
@@ -21,11 +21,11 @@ export function EndSourceDialog({
   onClose: () => void;
 }) {
   const { t } = useI18n();
-  const [pending, startTransition] = React.useTransition();
-  const [year, setYear] = React.useState(defaultYear);
-  const [month, setMonth] = React.useState(defaultMonth);
+  const [pending, startTransition] = useTransition();
+  const [year, setYear] = useState(defaultYear);
+  const [month, setMonth] = useState(defaultMonth);
 
-  function submit(e: React.FormEvent) {
+  function handleSubmit(e: FormEvent) {
     e.preventDefault();
     startTransition(async () => {
       await endIncomeSource(source.id, { year, month });
@@ -39,7 +39,7 @@ export function EndSourceDialog({
       open
       onClose={onClose}
       title={`${t.income.end} — ${source.name}`}
-      onSubmit={submit}
+      onSubmit={handleSubmit}
       pending={pending}
       submitLabel={t.income.end}
     >
