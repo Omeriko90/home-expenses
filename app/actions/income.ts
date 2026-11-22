@@ -44,6 +44,8 @@ const createSourceSchema = z.object({
   year: yearSchema,
   month: monthSchema,
   note: noteSchema,
+  endYear: yearSchema.optional().nullable(),
+  endMonth: monthSchema.optional().nullable(),
 });
 
 export type CreateSourceInput = z.infer<typeof createSourceSchema>;
@@ -56,6 +58,8 @@ export async function createIncomeSource(input: CreateSourceInput) {
     await prisma.incomeSource.create({
       data: {
         name: data.name,
+        endYear: data.endYear ?? null,
+        endMonth: data.endMonth ?? null,
         householdId,
         entries: {
           create: {
