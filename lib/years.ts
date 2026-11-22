@@ -2,7 +2,12 @@ import { prisma } from "@/lib/db";
 
 /** Distinct years present in the data, plus the current year, newest first. */
 export async function getYears(householdId: string): Promise<number[]> {
-  const [tx, bud] = await Promise.all([
+  const [
+    transactionYears,
+    budgetYears,
+    incomeEntryYears,
+    incomeSourceEndYears,
+  ] = await Promise.all([
     prisma.transaction.findMany({
       where: { householdId },
       distinct: ["year"],
@@ -13,10 +18,22 @@ export async function getYears(householdId: string): Promise<number[]> {
       distinct: ["year"],
       select: { year: true },
     }),
+    prisma.incomeEntry.findMany({
+      where: { householdId },
+      distinct: ["year"],
+      select: { year: true },
+    }),
+    prisma.incomeSource.findMany({
+      where: { householdId, endYear: { not: null } },
+      distinct: ["endYear"],
+      select: { endYear: true },
+    }),
   ]);
   const set = new Set<number>([
-    ...tx.map((t) => t.year),
-    ...bud.map((b) => b.year),
+    ...transactionYears.map((t) => t.year),
+    ...budgetYears.map((b) => b.year),
+    ...incomeEntryYears.map((e) => e.year),
+    ...incomeSourceEndYears.map((s) => s.endYear as number),
     new Date().getFullYear(),
   ]);
   return [...set].sort((a, b) => b - a);
