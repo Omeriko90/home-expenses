@@ -14,7 +14,21 @@ import { Field } from "@/components/shared/field";
 import { MoneyInput } from "@/components/shared/money-input";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select/Select";
+import { MonthYearField } from "./month-year-field";
 import type { ForecastItem, PlanningCategory, PlannedItemType } from "./types";
+
+const DURATION_PRESETS = [3, 6, 9, 12];
+
+function initialEndSelection(editing: ForecastItem | null): string {
+  if (!editing || editing.endYear == null || editing.endMonth == null)
+    return "none";
+  const duration =
+    editing.endYear * 12 +
+    editing.endMonth -
+    (editing.startYear * 12 + editing.startMonth) +
+    1;
+  return DURATION_PRESETS.includes(duration) ? String(duration) : "custom";
+}
 
 export function PlannedItemForm({
   open,
@@ -46,7 +60,9 @@ export function PlannedItemForm({
   const [startMonth, setStartMonth] = React.useState(
     editing?.startMonth ?? now.getMonth() + 1,
   );
-  const [hasEnd, setHasEnd] = React.useState(editing?.endYear != null);
+  const [endSelection, setEndSelection] = React.useState(() =>
+    initialEndSelection(editing),
+  );
   const [endYear, setEndYear] = React.useState(
     editing?.endYear ?? now.getFullYear() + 1,
   );
@@ -73,10 +89,14 @@ export function PlannedItemForm({
       ? amount / installments
       : null;
 
-  const monthOptions = t.months.map((m, i) => ({
-    value: String(i + 1),
-    label: m,
-  }));
+  function resolveEnd(): { endYear: number | null; endMonth: number | null } {
+    if (type !== "RECURRING" || endSelection === "none")
+      return { endYear: null, endMonth: null };
+    if (endSelection === "custom") return { endYear, endMonth };
+    const endIdx =
+      startYear * 12 + (startMonth - 1) + Number(endSelection) - 1;
+    return { endYear: Math.floor(endIdx / 12), endMonth: (endIdx % 12) + 1 };
+  }
 
   function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -88,6 +108,7 @@ export function PlannedItemForm({
       toast.error(t.planning.installmentsCount);
       return;
     }
+    const end = resolveEnd();
     const input: PlannedItemInput = {
       title: title.trim(),
       type,
@@ -95,8 +116,8 @@ export function PlannedItemForm({
       installments: type === "INSTALLMENTS" ? Number(installments) : null,
       startYear,
       startMonth,
-      endYear: type === "RECURRING" && hasEnd ? endYear : null,
-      endMonth: type === "RECURRING" && hasEnd ? endMonth : null,
+      endYear: end.endYear,
+      endMonth: end.endMonth,
       note: note.trim() || null,
       categoryId: categoryId || null,
     };
@@ -170,54 +191,43 @@ export function PlannedItemForm({
         )}
       </div>
 
-      <Field label={t.planning.startMonth}>
-        <div className="grid grid-cols-2 gap-2">
-          <Select
-            value={String(startMonth)}
-            onValueChange={(v) => setStartMonth(Number(v))}
-            options={monthOptions}
-          />
-          <Input
-            type="number"
-            inputMode="numeric"
-            min={2000}
-            max={2100}
-            value={startYear}
-            onChange={(e) => setStartYear(Number(e.target.value))}
-            aria-label={t.common.year}
-          />
-        </div>
+      <Field label={t.planning.startMonth} htmlFor="p-start">
+        <MonthYearField
+          id="p-start"
+          year={startYear}
+          month={startMonth}
+          onChange={(y, m) => {
+            setStartYear(y);
+            setStartMonth(m);
+          }}
+        />
       </Field>
 
       {type === "RECURRING" && (
         <>
           <Field label={t.planning.endMonth}>
             <Select
-              value={hasEnd ? "end" : "none"}
-              onValueChange={(v) => setHasEnd(v === "end")}
+              value={endSelection}
+              onValueChange={setEndSelection}
               options={[
                 { value: "none", label: t.planning.noEnd },
-                { value: "end", label: t.planning.hasEnd },
+                ...DURATION_PRESETS.map((n) => ({
+                  value: String(n),
+                  label: t.planning.horizonMonths.replace("{n}", String(n)),
+                })),
+                { value: "custom", label: t.planning.durationCustom },
               ]}
             />
           </Field>
-          {hasEnd && (
-            <div className="grid grid-cols-2 gap-2">
-              <Select
-                value={String(endMonth)}
-                onValueChange={(v) => setEndMonth(Number(v))}
-                options={monthOptions}
-              />
-              <Input
-                type="number"
-                inputMode="numeric"
-                min={2000}
-                max={2100}
-                value={endYear}
-                onChange={(e) => setEndYear(Number(e.target.value))}
-                aria-label={t.common.year}
-              />
-            </div>
+          {endSelection === "custom" && (
+            <MonthYearField
+              year={endYear}
+              month={endMonth}
+              onChange={(y, m) => {
+                setEndYear(y);
+                setEndMonth(m);
+              }}
+            />
           )}
         </>
       )}
