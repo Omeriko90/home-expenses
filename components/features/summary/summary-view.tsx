@@ -1,8 +1,8 @@
 "use client";
 
-import * as React from "react";
+import { useState } from "react";
 import { useI18n } from "@/lib/i18n/context";
-import { formatMoney, formatPercent, yoyPercent } from "@/lib/utils";
+import { cn, formatMoney, formatPercent, yoyPercent } from "@/lib/utils";
 import type { CategorySpendRow, MonthlyCategorySpend } from "@/lib/summary";
 import { PageHeader } from "@/components/shared/page-header";
 import { YearSelect } from "@/components/shared/year-select";
@@ -25,6 +25,7 @@ export function SummaryView({
   totals,
   investments,
   goals,
+  income,
 }: {
   year: number;
   years: number[];
@@ -33,9 +34,10 @@ export function SummaryView({
   totals: { current: number; previous: number };
   investments: { value: number; prev: number };
   goals: { reached: number; total: number };
+  income: number;
 }) {
   const { t } = useI18n();
-  const [mode, setMode] = React.useState<"money" | "percent">("money");
+  const [mode, setMode] = useState<"money" | "percent">("money");
 
   const expChange = totals.current - totals.previous;
   const expPct = yoyPercent(totals.current, totals.previous);
@@ -47,7 +49,23 @@ export function SummaryView({
     <div className="flex flex-col gap-6">
       <PageHeader title={t.summary.title} />
 
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+      <div
+        className={cn("grid gap-3 sm:grid-cols-2 lg:grid-cols-3", {
+          "lg:grid-cols-4": income > 0,
+        })}
+      >
+        {income > 0 && (
+          <StatCard
+            label={`${t.income.income} · ${year}`}
+            value={formatMoney(income)}
+            accent="income"
+            sub={
+              <span className="text-muted-foreground">
+                {t.income.leftOver}: {formatMoney(income - totals.current)}
+              </span>
+            }
+          />
+        )}
         <StatCard
           label={`${t.summary.totalExpenses} · ${year}`}
           value={formatMoney(totals.current)}
