@@ -68,23 +68,21 @@ export function PortfolioSection({
         </div>
       </div>
 
-      <Card className="overflow-hidden">
-        {holdings.length === 0 ? (
+      {holdings.length === 0 ? (
+        <Card>
           <CardContent className="py-8">
             <p className="text-center text-sm text-muted-foreground">
               {t.investments.empty}
             </p>
           </CardContent>
-        ) : (
-          <div className="max-h-[min(550px,100dvh)] overflow-y-auto">
-            <HoldingsAccordion
-              holdings={holdings}
-              onEdit={(h) => setHoldingForm({ open: true, editing: h })}
-              onDelete={setToDelete}
-            />
-          </div>
-        )}
-      </Card>
+        </Card>
+      ) : (
+        <HoldingsAccordion
+          holdings={holdings}
+          onEdit={(h) => setHoldingForm({ open: true, editing: h })}
+          onDelete={setToDelete}
+        />
+      )}
 
       {holdingForm.open && (
         <HoldingForm
