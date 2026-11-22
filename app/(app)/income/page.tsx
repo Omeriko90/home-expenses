@@ -1,42 +1,39 @@
 import { requireUser } from "@/lib/session";
 import { fetchIncomeData } from "@/lib/income";
 import { getMonthlyCategorySpend } from "@/lib/summary";
-import { getYears, resolveMonth, resolveYear } from "@/lib/years";
+import { resolveMonth, resolveYearLoose } from "@/lib/years";
 import { IncomeView } from "@/components/features/income/income-view";
+import { View } from "@/components/features/income/types";
 
-export default async function IncomePage({
-  searchParams,
-}: {
+export default async function IncomePage(props: {
   searchParams: Promise<{ year?: string; month?: string; view?: string }>;
 }) {
-  const sp = await searchParams;
+  const searchParams = await props.searchParams;
   const { householdId } = await requireUser();
 
-  const years = await getYears(householdId);
-  const year = resolveYear(years, sp.year);
+  const year = resolveYearLoose(searchParams.year);
 
-  const [{ sources, entries }, spend] = await Promise.all([
+  const [{ sources, entries }, monthlySpend] = await Promise.all([
     fetchIncomeData(householdId),
     getMonthlyCategorySpend(year, householdId),
   ]);
 
-  const monthsWithData = [
+  const monthsWithIncome = [
     ...new Set(
-      entries.filter((e) => e.year === year).map((e) => e.month),
+      entries.filter((entry) => entry.year === year).map((entry) => entry.month),
     ),
   ];
-  const month = resolveMonth(monthsWithData, year, sp.month);
-  const view = sp.view === "year" ? ("year" as const) : ("month" as const);
+  const month = resolveMonth(monthsWithIncome, year, searchParams.month);
+  const view = searchParams.view === View.Year ? View.Year : View.Month;
 
   return (
     <IncomeView
-      years={years}
       year={year}
       month={month}
       view={view}
       sources={sources}
       entries={entries}
-      expenseTotals={spend.totalsCurrent}
+      expenseTotals={monthlySpend.totalsCurrent}
     />
   );
 }

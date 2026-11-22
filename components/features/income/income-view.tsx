@@ -1,6 +1,6 @@
 "use client";
 
-import * as React from "react";
+import { useMemo, useState, useTransition } from "react";
 import { Plus } from "lucide-react";
 import { toast } from "sonner";
 import { useI18n } from "@/lib/i18n/context";
@@ -14,23 +14,27 @@ import {
 import { PageHeader } from "@/components/shared/page-header";
 import { StatCard } from "@/components/shared/stat-card";
 import { ConfirmDialog } from "@/components/shared/confirm-dialog";
-import { YearSelect } from "@/components/shared/year-select";
-import { MonthSelect } from "@/components/shared/month-select";
+import { MonthYearPicker } from "@/components/shared/month-year-picker";
+import { YearPicker } from "@/components/shared/year-picker";
 import { Button } from "@/components/ui/button";
 import { MonthIncomeList } from "./month-income-list";
 import { InactiveSources } from "./inactive-sources";
 import { YearGrid } from "./year-grid";
 import { YearAccordion } from "./year-accordion";
 import { IncomeFormDialog } from "./income-form-dialog";
-import { RaiseDialog } from "./raise-dialog";
+import { EditSourceDialog } from "./edit-source-dialog";
 import { OverrideDialog } from "./override-dialog";
-import { RenameSourceDialog } from "./rename-source-dialog";
 import { EndSourceDialog } from "./end-source-dialog";
 import { ViewToggle } from "./view-toggle";
-import { overrideFor, type IncomeEntryData, type IncomeSourceData } from "./types";
+import {
+  overrideFor,
+  View,
+  type IncomeEntryData,
+  type IncomeSourceData,
+  type ViewMode,
+} from "./types";
 
 export function IncomeView({
-  years,
   year,
   month,
   view,
@@ -38,40 +42,36 @@ export function IncomeView({
   entries,
   expenseTotals,
 }: {
-  years: number[];
   year: number;
   month: number;
-  view: "month" | "year";
+  view: ViewMode;
   sources: IncomeSourceData[];
   entries: IncomeEntryData[];
   expenseTotals: number[];
 }) {
   const { t } = useI18n();
-  const [pending, startTransition] = React.useTransition();
+  const [pending, startTransition] = useTransition();
 
-  const [addOpen, setAddOpen] = React.useState(false);
+  const [addOpen, setAddOpen] = useState(false);
   const [editingOneTime, setEditingOneTime] =
-    React.useState<IncomeEntryData | null>(null);
-  const [raiseFor, setRaiseFor] = React.useState<IncomeSourceData | null>(null);
-  const [overrideTarget, setOverrideTarget] = React.useState<{
+    useState<IncomeEntryData | null>(null);
+  const [editFor, setEditFor] = useState<IncomeSourceData | null>(null);
+  const [overrideTarget, setOverrideTarget] = useState<{
     source: IncomeSourceData;
     month: number;
   } | null>(null);
-  const [renameFor, setRenameFor] = React.useState<IncomeSourceData | null>(
-    null,
-  );
-  const [endFor, setEndFor] = React.useState<IncomeSourceData | null>(null);
-  const [toDelete, setToDelete] = React.useState<{
+  const [endFor, setEndFor] = useState<IncomeSourceData | null>(null);
+  const [toDelete, setToDelete] = useState<{
     kind: "source" | "entry";
     id: string;
     title: string;
   } | null>(null);
 
-  const resolved = React.useMemo(
+  const resolved = useMemo(
     () => resolveMonthIncome(sources, entries, year, month),
     [sources, entries, year, month],
   );
-  const grid = React.useMemo(
+  const grid = useMemo(
     () =>
       Array.from({ length: 12 }, (_, i) =>
         resolveMonthIncome(sources, entries, year, i + 1),
@@ -83,14 +83,28 @@ export function IncomeView({
   const monthExpenses = expenseTotals[month - 1] ?? 0;
   const yearIncome = grid.reduce((sum, m) => sum + m.total, 0);
   const yearExpenses = expenseTotals.reduce((a, b) => a + b, 0);
-  const income = view === "month" ? monthIncome : yearIncome;
-  const expenses = view === "month" ? monthExpenses : yearExpenses;
+  const income = view === View.Month ? monthIncome : yearIncome;
+  const expenses = view === View.Month ? monthExpenses : yearExpenses;
+
+  const overrideMonthResolved =
+    overrideTarget &&
+    resolveMonthIncome(sources, entries, year, overrideTarget.month);
 
   const sourceById = (id: string) => sources.find((s) => s.id === id) ?? null;
 
-  function openOverride(sourceId: string, m: number) {
+  function handleEditCell(sourceId: string, m: number) {
     const source = sourceById(sourceId);
     if (source) setOverrideTarget({ source, month: m });
+  }
+
+  function handleEditSource(sourceId: string) {
+    setEditFor(sourceById(sourceId));
+  }
+
+  function handleDeleteSourceRequest(sourceId: string) {
+    const source = sourceById(sourceId);
+    if (source)
+      setToDelete({ kind: "source", id: source.id, title: source.name });
   }
 
   function handleReactivate(sourceId: string) {
@@ -110,18 +124,17 @@ export function IncomeView({
     });
   }
 
-  const overrideMonthResolved =
-    overrideTarget &&
-    resolveMonthIncome(sources, entries, year, overrideTarget.month);
-
   return (
     <div className="flex flex-col gap-6">
       <PageHeader
         actions={
           <div className="flex w-full flex-wrap items-center gap-2">
             <ViewToggle view={view} />
-            <YearSelect year={year} years={years} />
-            {view === "month" && <MonthSelect month={month} />}
+            {view === View.Month ? (
+              <MonthYearPicker year={year} month={month} />
+            ) : (
+              <YearPicker year={year} />
+            )}
             <div className="ms-auto">
               <Button onClick={() => setAddOpen(true)}>
                 <Plus /> {t.income.add}
@@ -149,19 +162,14 @@ export function IncomeView({
         />
       </div>
 
-      {view === "month" ? (
+      {view === View.Month ? (
         <>
           <MonthIncomeList
             resolved={resolved}
-            onEditMonth={(id) => openOverride(id, month)}
-            onRaise={(id) => setRaiseFor(sourceById(id))}
-            onRename={(id) => setRenameFor(sourceById(id))}
+            onAdd={() => setAddOpen(true)}
+            onEditSource={handleEditSource}
             onEnd={(id) => setEndFor(sourceById(id))}
-            onDeleteSource={(id) => {
-              const s = sourceById(id);
-              if (s)
-                setToDelete({ kind: "source", id: s.id, title: s.name });
-            }}
+            onDeleteSource={handleDeleteSourceRequest}
             onEditOneTime={setEditingOneTime}
             onDeleteOneTime={(entry) =>
               setToDelete({
@@ -176,15 +184,10 @@ export function IncomeView({
             entries={entries}
             year={year}
             month={month}
-            onRaise={(id) => setRaiseFor(sourceById(id))}
-            onRename={(id) => setRenameFor(sourceById(id))}
+            onEditSource={handleEditSource}
             onEnd={(id) => setEndFor(sourceById(id))}
             onReactivate={handleReactivate}
-            onDeleteSource={(id) => {
-              const s = sourceById(id);
-              if (s)
-                setToDelete({ kind: "source", id: s.id, title: s.name });
-            }}
+            onDeleteSource={handleDeleteSourceRequest}
           />
         </>
       ) : (
@@ -194,14 +197,14 @@ export function IncomeView({
             entries={entries}
             months={grid}
             year={year}
-            onEditCell={openOverride}
+            onEditCell={handleEditCell}
           />
           <YearAccordion
             sources={sources}
             entries={entries}
             months={grid}
             year={year}
-            onEditCell={openOverride}
+            onEditCell={handleEditCell}
           />
         </>
       )}
@@ -221,12 +224,16 @@ export function IncomeView({
           editingOneTime={editingOneTime}
         />
       )}
-      {raiseFor && (
-        <RaiseDialog
-          source={raiseFor}
-          defaultYear={year}
-          defaultMonth={month}
-          onClose={() => setRaiseFor(null)}
+      {editFor && (
+        <EditSourceDialog
+          source={editFor}
+          currentAmount={
+            resolved.sources.find((s) => s.sourceId === editFor.id)?.amount ??
+            null
+          }
+          year={year}
+          month={month}
+          onClose={() => setEditFor(null)}
         />
       )}
       {overrideTarget && (
@@ -246,12 +253,6 @@ export function IncomeView({
             overrideTarget.month,
           )}
           onClose={() => setOverrideTarget(null)}
-        />
-      )}
-      {renameFor && (
-        <RenameSourceDialog
-          source={renameFor}
-          onClose={() => setRenameFor(null)}
         />
       )}
       {endFor && (
