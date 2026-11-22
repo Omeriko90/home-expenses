@@ -58,6 +58,12 @@ enum PlannedItemStatus {
   CANCELLED
 }
 
+enum IncomeEntryKind {
+  FIXED // amount applies from year/month onward (a raise = a new FIXED row)
+  OVERRIDE // replaces the source's amount for exactly year/month
+  ONE_TIME // standalone income for one month (no source)
+}
+
 // A household is the tenancy boundary — all finance data belongs to one.
 model Household {
   id        String   @id @default(cuid())
@@ -72,6 +78,8 @@ model Household {
   goals            Goal[]
   businessMappings BusinessMapping[]
   plannedItems     PlannedItem[]
+  incomeSources    IncomeSource[]
+  incomeEntries    IncomeEntry[]
 }
 
 model User {
@@ -312,6 +320,49 @@ model PlannedItem {
   createdAt DateTime @default(now())
 
   @@index([householdId, status])
+}
+
+// A named recurring income (salary, rental). Amount history lives in entries;
+// resolution for a month: OVERRIDE entry for that month, else the latest FIXED
+// entry at-or-before it. Renaming edits this row only.
+model IncomeSource {
+  id   String @id @default(cuid())
+  name String
+  // Ended/archived: the source stops counting after this month (inclusive);
+  // history before it is kept. Both null = active. Reactivate = clear both.
+  endYear  Int?
+  endMonth Int?
+
+  householdId String
+  household   Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
+
+  entries   IncomeEntry[]
+  createdAt DateTime      @default(now())
+
+  @@unique([householdId, name])
+}
+
+model IncomeEntry {
+  id     String          @id @default(cuid())
+  kind   IncomeEntryKind
+  name   String? // ONE_TIME only ("Tax refund"); null for source entries
+  year   Int
+  month  Int // 1-12
+  amount Decimal         @db.Decimal(12, 2)
+  note   String?
+
+  // Set for FIXED/OVERRIDE, null for ONE_TIME.
+  sourceId String?
+  source   IncomeSource? @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+
+  householdId String
+  household   Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  // At most one raise and one override per source-month.
+  @@unique([sourceId, year, month, kind])
+  @@index([householdId, year, month])
 }
 
 model GoalMilestone {
