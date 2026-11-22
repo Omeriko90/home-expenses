@@ -14,7 +14,7 @@ import { Field } from "@/components/shared/field";
 import { MoneyInput } from "@/components/shared/money-input";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select/Select";
-import { MonthYearField } from "./month-year-field";
+import { MonthYearField } from "@/components/shared/month-year-field";
 import {
   PlannedItemTypes,
   type ForecastItem,

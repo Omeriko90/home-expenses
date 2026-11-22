@@ -1,0 +1,85 @@
+import {
+  monthKey,
+  type IncomeEntryData,
+  type IncomeSourceData,
+} from "@/lib/income-resolve";
+
+export type { IncomeEntryData, IncomeSourceData };
+
+export const View = {
+  Month: "month",
+  Year: "year",
+} as const;
+export type ViewMode = (typeof View)[keyof typeof View];
+
+export const IncomeType = {
+  Fixed: "FIXED",
+  OneTime: "ONE_TIME",
+} as const;
+export type IncomeTypeValue = (typeof IncomeType)[keyof typeof IncomeType];
+
+export type SourceStatus =
+  | { kind: "active" }
+  | { kind: "ended"; endYear: number; endMonth: number }
+  | { kind: "notStarted"; startYear: number; startMonth: number }
+  | { kind: "noEntries" };
+
+export function firstFixedOf(
+  entries: IncomeEntryData[],
+  sourceId: string,
+): IncomeEntryData | null {
+  let first: IncomeEntryData | null = null;
+  for (const e of entries) {
+    if (e.sourceId !== sourceId || e.kind !== "FIXED") continue;
+    if (!first || monthKey(e.year, e.month) < monthKey(first.year, first.month))
+      first = e;
+  }
+  return first;
+}
+
+export function sourceStatusForMonth(
+  source: IncomeSourceData,
+  entries: IncomeEntryData[],
+  year: number,
+  month: number,
+): SourceStatus {
+  const key = monthKey(year, month);
+  if (
+    source.endYear !== null &&
+    source.endMonth !== null &&
+    key > monthKey(source.endYear, source.endMonth)
+  ) {
+    return { kind: "ended", endYear: source.endYear, endMonth: source.endMonth };
+  }
+  const first = firstFixedOf(entries, source.id);
+  if (!first) return { kind: "noEntries" };
+  if (monthKey(first.year, first.month) > key)
+    return { kind: "notStarted", startYear: first.year, startMonth: first.month };
+  return { kind: "active" };
+}
+
+export function isWithinLifetime(
+  source: IncomeSourceData,
+  entries: IncomeEntryData[],
+  year: number,
+  month: number,
+): boolean {
+  return sourceStatusForMonth(source, entries, year, month).kind === "active";
+}
+
+export function overrideFor(
+  entries: IncomeEntryData[],
+  sourceId: string,
+  year: number,
+  month: number,
+): IncomeEntryData | null {
+  return (
+    entries.find(
+      (e) =>
+        e.sourceId === sourceId &&
+        e.kind === "OVERRIDE" &&
+        e.year === year &&
+        e.month === month,
+    ) ?? null
+  );
+}

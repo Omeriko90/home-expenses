@@ -3,7 +3,7 @@ import {
   resolveMonthIncome,
   type IncomeSourceData,
   type IncomeEntryData,
-} from "@/lib/income";
+} from "@/lib/income-resolve";
 
 let nextId = 0;
 function entry(partial: Partial<IncomeEntryData>): IncomeEntryData {

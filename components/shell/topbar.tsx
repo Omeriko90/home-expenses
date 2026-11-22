@@ -19,6 +19,7 @@ import {
 const PAGE_KEYS = [
   "dashboard",
   "transactions",
+  "income",
   "categories",
   "budgets",
   "goals",
@@ -43,7 +44,12 @@ export function Topbar({
     PAGE_KEYS.find((k) => pathname === `/${k}` || pathname.startsWith(`/${k}/`)) ??
     "dashboard";
   const pageTitle = t.nav[pageKey];
-  const pageSubtitle = pageKey === "planning" ? t.planning.subtitle : undefined;
+  const pageSubtitle =
+    pageKey === "planning"
+      ? t.planning.subtitle
+      : pageKey === "income"
+        ? t.income.subtitle
+        : undefined;
 
   return (
     <header className="sticky top-0 z-30 flex h-16 items-center justify-between gap-2 border-b border-border bg-surface/80 px-4 backdrop-blur-md">
