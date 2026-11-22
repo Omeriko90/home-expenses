@@ -125,6 +125,8 @@ const he = {
       chartGrowth: "צמיחת ההשקעות לאורך השנים",
       allTypes: "כל הסוגים",
       chartByType: "שווי לפי סוג",
+      holdings: "אחזקות",
+      totalValue: "שווי כולל",
     },
     goals: {
       title: "יעדים",
@@ -418,6 +420,8 @@ const en: Dictionary = {
       chartGrowth: "Investment growth over the years",
       allTypes: "All types",
       chartByType: "Value by type",
+      holdings: "holdings",
+      totalValue: "Total value",
     },
     goals: {
       title: "Goals",
