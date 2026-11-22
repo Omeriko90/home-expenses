@@ -17,6 +17,8 @@ import { MoneyField } from "@/components/ui/form/money-field";
 import { SelectField } from "@/components/ui/form/select-field";
 import { Field } from "@/components/shared/field";
 import { MonthYearField } from "@/components/shared/month-year-field";
+import { Select } from "@/components/ui/select/Select";
+import { monthKey } from "@/lib/income-resolve";
 import type { IncomeEntryData } from "./types";
 
 const schema = z.object({
@@ -24,6 +26,7 @@ const schema = z.object({
   name: z.string().min(1),
   amount: z.number().min(0),
   ym: z.object({ year: z.number().int(), month: z.number().int() }),
+  endYm: z.object({ year: z.number().int(), month: z.number().int() }),
   note: z.string().max(500).optional(),
 });
 
@@ -42,6 +45,7 @@ export function IncomeFormDialog({
 }) {
   const { t } = useI18n();
   const [pending, startTransition] = React.useTransition();
+  const [hasEnd, setHasEnd] = React.useState(false);
 
   const methods = useZodForm<FormValues, FormValues>(schema, {
     defaultValues: editingOneTime
@@ -50,6 +54,7 @@ export function IncomeFormDialog({
           name: editingOneTime.name ?? "",
           amount: editingOneTime.amount,
           ym: { year: editingOneTime.year, month: editingOneTime.month },
+          endYm: { year: editingOneTime.year, month: editingOneTime.month },
           note: editingOneTime.note ?? "",
         }
       : {
@@ -57,12 +62,22 @@ export function IncomeFormDialog({
           name: "",
           amount: undefined,
           ym: { year: defaultYear, month: defaultMonth },
+          endYm: { year: defaultYear, month: defaultMonth },
           note: "",
         },
   });
   const type = methods.watch("type");
 
   function onSubmit(values: FormValues) {
+    const withEnd = values.type === "FIXED" && !editingOneTime && hasEnd;
+    if (
+      withEnd &&
+      monthKey(values.endYm.year, values.endYm.month) <
+        monthKey(values.ym.year, values.ym.month)
+    ) {
+      toast.error(t.income.endBeforeStart);
+      return;
+    }
     startTransition(async () => {
       const input = {
         name: values.name.trim(),
@@ -74,7 +89,11 @@ export function IncomeFormDialog({
       const result = editingOneTime
         ? await updateOneTimeIncome(editingOneTime.id, input)
         : values.type === "FIXED"
-          ? await createIncomeSource(input)
+          ? await createIncomeSource({
+              ...input,
+              endYear: withEnd ? values.endYm.year : null,
+              endMonth: withEnd ? values.endYm.month : null,
+            })
           : await createOneTimeIncome(input);
       if ("error" in result) {
         toast.error(
@@ -133,7 +152,36 @@ export function IncomeFormDialog({
         )}
       />
       {type === "FIXED" && !editingOneTime && (
-        <p className="text-sm text-muted-foreground">{t.income.fixedHint}</p>
+        <>
+          <Field label={t.income.endMonth}>
+            <div className="flex flex-col gap-2">
+              <Select
+                value={hasEnd ? "custom" : "none"}
+                onValueChange={(v) => setHasEnd(v === "custom")}
+                options={[
+                  { value: "none", label: t.income.noEnd },
+                  { value: "custom", label: t.income.pickEndMonth },
+                ]}
+              />
+              {hasEnd && (
+                <Controller
+                  name="endYm"
+                  control={methods.control}
+                  render={({ field }) => (
+                    <MonthYearField
+                      year={field.value.year}
+                      month={field.value.month}
+                      onChange={(year, month) =>
+                        field.onChange({ year, month })
+                      }
+                    />
+                  )}
+                />
+              )}
+            </div>
+          </Field>
+          <p className="text-sm text-muted-foreground">{t.income.fixedHint}</p>
+        </>
       )}
       <TextField name="note" label={t.transactions.note} />
     </RhfFormDialog>
