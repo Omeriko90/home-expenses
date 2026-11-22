@@ -8,6 +8,7 @@ import {
   Tags,
   Wallet,
   Target,
+  CalendarClock,
   TrendingUp,
   Settings,
 } from "lucide-react";
@@ -20,6 +21,7 @@ const items = [
   { href: "/categories", key: "categories", icon: Tags },
   { href: "/budgets", key: "budgets", icon: Wallet },
   { href: "/goals", key: "goals", icon: Target },
+  { href: "/planning", key: "planning", icon: CalendarClock },
   { href: "/investments", key: "investments", icon: TrendingUp },
   { href: "/settings", key: "settings", icon: Settings },
 ] as const;
