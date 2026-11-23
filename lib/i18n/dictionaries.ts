@@ -46,6 +46,15 @@ const he = {
       archive: "העברה לארכיון",
       restore: "שחזור",
     },
+    errors: {
+      required: "שדה חובה",
+      invalidEmail: "כתובת אימייל לא תקינה",
+      amountRequired: "יש להזין סכום",
+      amountPositive: "הסכום חייב להיות גדול מאפס",
+      endBeforeStart: "חודש הסיום חייב להיות אחרי חודש ההתחלה",
+      installmentsMin: "נדרשים לפחות 2 תשלומים",
+      passwordMin: "הסיסמה חייבת להכיל לפחות 8 תווים",
+    },
     categories: {
       title: "קטגוריות",
       add: "הוספת קטגוריה",
@@ -340,6 +349,15 @@ const en: Dictionary = {
       active: "Active",
       archive: "Archive",
       restore: "Restore",
+    },
+    errors: {
+      required: "This field is required",
+      invalidEmail: "Invalid email address",
+      amountRequired: "Amount is required",
+      amountPositive: "Amount must be greater than zero",
+      endBeforeStart: "End month must be after the start month",
+      installmentsMin: "At least 2 installments are required",
+      passwordMin: "Password must be at least 8 characters",
     },
     categories: {
       title: "Categories",
