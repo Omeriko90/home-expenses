@@ -1,6 +1,6 @@
 "use client";
 
-import * as React from "react";
+import type { ReactNode } from "react";
 import {
   FormProvider,
   type FieldValues,
@@ -17,7 +17,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog/baseDialogComponents";
 
-export function RhfFormDialog<
+export function FormDialog<
   TInput extends FieldValues,
   TOutput extends FieldValues,
 >({
@@ -33,17 +33,17 @@ export function RhfFormDialog<
 }: {
   open: boolean;
   onClose: () => void;
-  title: React.ReactNode;
+  title: ReactNode;
   methods: UseFormReturn<TInput, unknown, TOutput>;
   onSubmit: SubmitHandler<TOutput>;
   pending?: boolean;
-  submitLabel?: React.ReactNode;
+  submitLabel?: ReactNode;
   contentClassName?: string;
-  children: React.ReactNode;
+  children: ReactNode;
 }) {
   const { t } = useI18n();
   return (
-    <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
+    <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
       <DialogContent className={contentClassName}>
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>

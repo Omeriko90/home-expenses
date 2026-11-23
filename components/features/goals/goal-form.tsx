@@ -12,7 +12,7 @@ import {
   type GoalFormValues,
 } from "@/lib/schemas/goals";
 import { useZodForm } from "@/components/ui/form/use-zod-form";
-import { RhfFormDialog } from "@/components/ui/form/form-dialog";
+import { FormDialog } from "@/components/ui/form/form-dialog";
 import { TextField } from "@/components/ui/form/text-field";
 import { TextareaField } from "@/components/ui/form/textarea-field";
 import { MoneyField } from "@/components/ui/form/money-field";
@@ -81,7 +81,7 @@ export function GoalForm({
   }
 
   return (
-    <RhfFormDialog
+    <FormDialog
       open={open}
       onClose={onClose}
       title={editing ? t.goals.edit : t.goals.add}
@@ -145,6 +145,6 @@ export function GoalForm({
       )}
 
       <TextField name="note" label={t.transactions.note} />
-    </RhfFormDialog>
+    </FormDialog>
   );
 }

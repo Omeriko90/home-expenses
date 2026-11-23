@@ -9,7 +9,7 @@ import {
   type EndSourceFormValues,
 } from "@/lib/schemas/income";
 import { useZodForm } from "@/components/ui/form/use-zod-form";
-import { RhfFormDialog } from "@/components/ui/form/form-dialog";
+import { FormDialog } from "@/components/ui/form/form-dialog";
 import { MonthYearField } from "@/components/ui/form/month-year-field";
 import type { IncomeSourceData } from "./types";
 
@@ -40,7 +40,7 @@ export function EndSourceDialog({
   }
 
   return (
-    <RhfFormDialog
+    <FormDialog
       open
       onClose={onClose}
       title={`${t.income.end} — ${source.name}`}
@@ -51,6 +51,6 @@ export function EndSourceDialog({
     >
       <MonthYearField name="end" label={t.income.endAfter} />
       <p className="text-sm text-muted-foreground">{t.income.endHint}</p>
-    </RhfFormDialog>
+    </FormDialog>
   );
 }

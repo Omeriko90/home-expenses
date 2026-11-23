@@ -14,7 +14,7 @@ import {
 } from "@/lib/schemas/income";
 import { EndSelections } from "@/lib/schemas/common";
 import { useZodForm } from "@/components/ui/form/use-zod-form";
-import { RhfFormDialog } from "@/components/ui/form/form-dialog";
+import { FormDialog } from "@/components/ui/form/form-dialog";
 import { TextField } from "@/components/ui/form/text-field";
 import { MoneyField } from "@/components/ui/form/money-field";
 import { SelectField } from "@/components/ui/form/select-field";
@@ -22,7 +22,7 @@ import { MonthYearField } from "@/components/ui/form/month-year-field";
 import { useWatch } from "react-hook-form";
 import { IncomeType, type IncomeEntryData } from "./types";
 
-export function IncomeRhfFormDialog({
+export function IncomeFormDialog({
   onClose,
   defaultYear,
   defaultMonth,
@@ -92,7 +92,7 @@ export function IncomeRhfFormDialog({
   }
 
   return (
-    <RhfFormDialog
+    <FormDialog
       open
       onClose={onClose}
       title={editingOneTime ? t.income.edit : t.income.add}
@@ -147,6 +147,6 @@ export function IncomeRhfFormDialog({
       )}
 
       <TextField name="note" label={t.transactions.note} />
-    </RhfFormDialog>
+    </FormDialog>
   );
 }

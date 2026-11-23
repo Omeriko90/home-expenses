@@ -18,7 +18,7 @@ import {
 } from "@/lib/schemas/income";
 import { EndSelections } from "@/lib/schemas/common";
 import { useZodForm } from "@/components/ui/form/use-zod-form";
-import { RhfFormDialog } from "@/components/ui/form/form-dialog";
+import { FormDialog } from "@/components/ui/form/form-dialog";
 import { TextField } from "@/components/ui/form/text-field";
 import { MoneyField } from "@/components/ui/form/money-field";
 import { SelectField } from "@/components/ui/form/select-field";
@@ -111,7 +111,7 @@ export function EditSourceDialog({
   }
 
   return (
-    <RhfFormDialog
+    <FormDialog
       open
       onClose={onClose}
       title={`${t.income.edit} — ${source.name}`}
@@ -158,6 +158,6 @@ export function EditSourceDialog({
           <p className="text-sm text-muted-foreground">{t.income.endHint}</p>
         </>
       )}
-    </RhfFormDialog>
+    </FormDialog>
   );
 }

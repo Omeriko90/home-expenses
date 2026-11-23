@@ -14,7 +14,7 @@ import { CHART_COLORS } from "@/components/shared/charts/chart-palette";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/shared/field";
 import { useZodForm } from "@/components/ui/form/use-zod-form";
-import { RhfFormDialog } from "@/components/ui/form/form-dialog";
+import { FormDialog } from "@/components/ui/form/form-dialog";
 import { TextField } from "@/components/ui/form/text-field";
 import type { Category } from "./category-manager";
 
@@ -64,7 +64,7 @@ export function CategoryForm({
   }
 
   return (
-    <RhfFormDialog
+    <FormDialog
       open={open}
       onClose={onClose}
       title={editing ? t.categories.edit : t.categories.add}
@@ -115,6 +115,6 @@ export function CategoryForm({
           </Field>
         )}
       />
-    </RhfFormDialog>
+    </FormDialog>
   );
 }

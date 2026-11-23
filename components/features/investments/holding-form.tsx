@@ -11,7 +11,7 @@ import {
   type HoldingFormValues,
 } from "@/lib/schemas/investments";
 import { useZodForm } from "@/components/ui/form/use-zod-form";
-import { RhfFormDialog } from "@/components/ui/form/form-dialog";
+import { FormDialog } from "@/components/ui/form/form-dialog";
 import { TextField } from "@/components/ui/form/text-field";
 import { MoneyField } from "@/components/ui/form/money-field";
 import { AutocompleteField } from "@/components/ui/form/autocomplete-field";
@@ -64,7 +64,7 @@ export function HoldingForm({
   }
 
   return (
-    <RhfFormDialog
+    <FormDialog
       open={open}
       onClose={onClose}
       title={editing ? t.investments.editHolding : t.investments.addHolding}
@@ -88,6 +88,6 @@ export function HoldingForm({
         label={`${t.investments.value} (${year})`}
         required
       />
-    </RhfFormDialog>
+    </FormDialog>
   );
 }
