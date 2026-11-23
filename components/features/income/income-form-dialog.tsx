@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition, type FormEvent } from "react";
+import { useMemo, useTransition } from "react";
 import { toast } from "sonner";
 import { useI18n } from "@/lib/i18n/context";
 import {
@@ -8,20 +8,21 @@ import {
   createOneTimeIncome,
   updateOneTimeIncome,
 } from "@/app/actions/income";
-import { monthKey } from "@/lib/income-resolve";
-import { FormDialog } from "@/components/shared/form-dialog";
-import { Field } from "@/components/shared/field";
-import { MoneyInput } from "@/components/shared/money-input";
-import { MonthYearField } from "@/components/shared/month-year-field";
-import { Input } from "@/components/ui/input";
-import { Select } from "@/components/ui/select/Select";
 import {
-  IncomeType,
-  type IncomeEntryData,
-  type IncomeTypeValue,
-} from "./types";
+  createIncomeFormSchema,
+  type IncomeFormValues,
+} from "@/lib/schemas/income";
+import { EndSelections } from "@/lib/schemas/common";
+import { useZodForm } from "@/components/ui/form/use-zod-form";
+import { RhfFormDialog } from "@/components/ui/form/form-dialog";
+import { TextField } from "@/components/ui/form/text-field";
+import { MoneyField } from "@/components/ui/form/money-field";
+import { SelectField } from "@/components/ui/form/select-field";
+import { MonthYearField } from "@/components/ui/form/month-year-field";
+import { useWatch } from "react-hook-form";
+import { IncomeType, type IncomeEntryData } from "./types";
 
-export function IncomeFormDialog({
+export function IncomeRhfFormDialog({
   onClose,
   defaultYear,
   defaultMonth,
@@ -34,59 +35,55 @@ export function IncomeFormDialog({
 }) {
   const { t } = useI18n();
   const [pending, startTransition] = useTransition();
+  const schema = useMemo(() => createIncomeFormSchema(t), [t]);
+  const methods = useZodForm(schema, {
+    defaultValues: {
+      type: editingOneTime ? IncomeType.OneTime : IncomeType.Fixed,
+      name: editingOneTime?.name ?? "",
+      amount: editingOneTime?.amount ?? undefined,
+      start: {
+        year: editingOneTime?.year ?? defaultYear,
+        month: editingOneTime?.month ?? defaultMonth,
+      },
+      hasEnd: EndSelections.None,
+      end: { year: defaultYear, month: defaultMonth },
+      note: editingOneTime?.note ?? "",
+    },
+  });
+  const type = useWatch({ control: methods.control, name: "type" });
+  const hasEnd = useWatch({ control: methods.control, name: "hasEnd" });
 
-  const [type, setType] = useState<IncomeTypeValue>(
-    editingOneTime ? IncomeType.OneTime : IncomeType.Fixed,
-  );
-  const [name, setName] = useState(editingOneTime?.name ?? "");
-  const [amount, setAmount] = useState<number | "">(
-    editingOneTime?.amount ?? "",
-  );
-  const [year, setYear] = useState(
-    editingOneTime?.year ?? defaultYear,
-  );
-  const [month, setMonth] = useState(
-    editingOneTime?.month ?? defaultMonth,
-  );
-  const [hasEnd, setHasEnd] = useState(false);
-  const [endYear, setEndYear] = useState(defaultYear);
-  const [endMonth, setEndMonth] = useState(defaultMonth);
-  const [note, setNote] = useState(editingOneTime?.note ?? "");
-
-  function handleSubmit(e: FormEvent) {
-    e.preventDefault();
-    if (!name.trim() || typeof amount !== "number") {
-      toast.error(t.common.noData);
-      return;
-    }
-    const withEnd = type === IncomeType.Fixed && !editingOneTime && hasEnd;
-    if (withEnd && monthKey(endYear, endMonth) < monthKey(year, month)) {
-      toast.error(t.income.endBeforeStart);
-      return;
-    }
+  function handleSubmit(values: IncomeFormValues) {
+    const withEnd =
+      values.type === IncomeType.Fixed &&
+      !editingOneTime &&
+      values.hasEnd === EndSelections.Custom;
     const input = {
-      name: name.trim(),
-      amount,
-      year,
-      month,
-      note: note.trim() || null,
+      name: values.name,
+      amount: values.amount,
+      year: values.start.year,
+      month: values.start.month,
+      note: values.note.trim() || null,
     };
     startTransition(async () => {
       const result = editingOneTime
         ? await updateOneTimeIncome(editingOneTime.id, input)
-        : type === IncomeType.Fixed
+        : values.type === IncomeType.Fixed
           ? await createIncomeSource({
               ...input,
-              endYear: withEnd ? endYear : null,
-              endMonth: withEnd ? endMonth : null,
+              endYear: withEnd ? values.end.year : null,
+              endMonth: withEnd ? values.end.month : null,
             })
           : await createOneTimeIncome(input);
       if ("error" in result) {
-        toast.error(
-          result.error === "duplicateName"
-            ? t.income.duplicate
-            : t.common.noData,
-        );
+        if (result.error === "duplicateName") {
+          methods.setError("name", {
+            type: "server",
+            message: t.income.duplicate,
+          });
+        } else {
+          toast.error(t.common.noData);
+        }
         return;
       }
       toast.success(t.common.save);
@@ -95,90 +92,61 @@ export function IncomeFormDialog({
   }
 
   return (
-    <FormDialog
+    <RhfFormDialog
       open
       onClose={onClose}
       title={editingOneTime ? t.income.edit : t.income.add}
+      methods={methods}
       onSubmit={handleSubmit}
       pending={pending}
     >
       {!editingOneTime && (
-        <Field label={t.common.type}>
-          <Select
-            value={type}
-            onValueChange={(v) => setType(v as IncomeTypeValue)}
-            options={[
-              { value: IncomeType.Fixed, label: t.income.typeFixed },
-              { value: IncomeType.OneTime, label: t.income.typeOneTime },
-            ]}
-          />
-        </Field>
-      )}
-
-      <Field label={t.common.name} htmlFor="income-name" required>
-        <Input
-          id="income-name"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          placeholder={t.income.nameHint}
-          required
-        />
-      </Field>
-
-      <Field label={t.common.amount} required>
-        <MoneyInput value={amount} onValueChange={setAmount} />
-      </Field>
-
-      <Field
-        label={type === IncomeType.Fixed ? t.income.startMonth : t.common.month}
-        htmlFor="income-ym"
-      >
-        <MonthYearField
-          id="income-ym"
-          year={year}
-          month={month}
-          onChange={(y, m) => {
-            setYear(y);
-            setMonth(m);
+        <SelectField
+          name="type"
+          label={t.common.type}
+          options={[
+            { value: IncomeType.Fixed, label: t.income.typeFixed },
+            { value: IncomeType.OneTime, label: t.income.typeOneTime },
+          ]}
+          onValueChange={(value) => {
+            if (value !== IncomeType.Fixed) {
+              methods.setValue("hasEnd", EndSelections.None);
+              methods.clearErrors("end");
+            }
           }}
         />
-      </Field>
+      )}
+
+      <TextField
+        name="name"
+        label={t.common.name}
+        placeholder={t.income.nameHint}
+        required
+      />
+
+      <MoneyField name="amount" label={t.common.amount} required />
+
+      <MonthYearField
+        name="start"
+        label={type === IncomeType.Fixed ? t.income.startMonth : t.common.month}
+      />
 
       {type === IncomeType.Fixed && !editingOneTime && (
         <>
-          <Field label={t.income.endMonth}>
-            <div className="flex flex-col gap-2">
-              <Select
-                value={hasEnd ? "custom" : "none"}
-                onValueChange={(v) => setHasEnd(v === "custom")}
-                options={[
-                  { value: "none", label: t.income.noEnd },
-                  { value: "custom", label: t.income.pickEndMonth },
-                ]}
-              />
-              {hasEnd && (
-                <MonthYearField
-                  year={endYear}
-                  month={endMonth}
-                  onChange={(y, m) => {
-                    setEndYear(y);
-                    setEndMonth(m);
-                  }}
-                />
-              )}
-            </div>
-          </Field>
+          <SelectField
+            name="hasEnd"
+            label={t.income.endMonth}
+            options={[
+              { value: EndSelections.None, label: t.income.noEnd },
+              { value: EndSelections.Custom, label: t.income.pickEndMonth },
+            ]}
+          />
+          {hasEnd === EndSelections.Custom && <MonthYearField name="end" />}
           <p className="text-sm text-muted-foreground">{t.income.fixedHint}</p>
         </>
       )}
 
-      <Field label={t.transactions.note} htmlFor="income-note">
-        <Input
-          id="income-note"
-          value={note}
-          onChange={(e) => setNote(e.target.value)}
-        />
-      </Field>
-    </FormDialog>
+      <TextField name="note" label={t.transactions.note} />
+    </RhfFormDialog>
   );
 }
