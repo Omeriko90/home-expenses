@@ -1,9 +1,10 @@
 "use client";
 
-import * as React from "react";
+import { useState } from "react";
 import { CalendarDays, ChevronLeft, ChevronRight } from "lucide-react";
 import { useI18n } from "@/lib/i18n/context";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 import { IconButton } from "@/components/shared/icon-button";
 import {
   Popover,
@@ -23,33 +24,34 @@ export function MonthYearField({
   id?: string;
 }) {
   const { t } = useI18n();
-  const [open, setOpen] = React.useState(false);
-  const [viewYear, setViewYear] = React.useState(year);
+  const [open, setOpen] = useState(false);
+  const [viewYear, setViewYear] = useState(year);
 
-  React.useEffect(() => {
-    if (open) setViewYear(year);
-  }, [open, year]);
+  function handleOpenChange(nextOpen: boolean) {
+    setOpen(nextOpen);
+    if (nextOpen) setViewYear(year);
+  }
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover open={open} onOpenChange={handleOpenChange}>
       <PopoverTrigger asChild>
-        <button
+        <Button
           id={id}
-          type="button"
-          className="flex h-10 w-full cursor-pointer items-center gap-2 rounded-md border border-input bg-surface px-3 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-ring"
+          variant="outline"
+          className="w-full justify-start gap-2 bg-surface font-normal shadow-sm"
         >
           <CalendarDays className="size-4 opacity-60" />
           <span className="tnum">
             {t.months[month - 1]} {year}
           </span>
-        </button>
+        </Button>
       </PopoverTrigger>
       <PopoverContent className="w-72 p-3">
         <div className="mb-2 flex items-center justify-between">
           <IconButton
             label="−"
             variant="ghost"
-            onClick={() => setViewYear((y) => y - 1)}
+            onClick={() => setViewYear((currentYear) => currentYear - 1)}
           >
             <ChevronLeft className="rtl:hidden" />
             <ChevronRight className="hidden rtl:block" />
@@ -58,32 +60,28 @@ export function MonthYearField({
           <IconButton
             label="+"
             variant="ghost"
-            onClick={() => setViewYear((y) => y + 1)}
+            onClick={() => setViewYear((currentYear) => currentYear + 1)}
           >
             <ChevronRight className="rtl:hidden" />
             <ChevronLeft className="hidden rtl:block" />
           </IconButton>
         </div>
         <div className="grid grid-cols-3 gap-1">
-          {t.months.map((m, i) => {
-            const active = viewYear === year && i + 1 === month;
+          {t.months.map((monthName, monthIndex) => {
+            const active = viewYear === year && monthIndex + 1 === month;
             return (
-              <button
-                key={i}
-                type="button"
+              <Button
+                key={monthIndex}
+                variant={active ? "primary" : "ghost"}
+                size="sm"
+                className={cn("font-normal", active && "font-medium")}
                 onClick={() => {
-                  onChange(viewYear, i + 1);
+                  onChange(viewYear, monthIndex + 1);
                   setOpen(false);
                 }}
-                className={cn(
-                  "rounded-md py-2 text-sm transition-colors",
-                  active
-                    ? "bg-primary text-primary-foreground"
-                    : "hover:bg-surface-muted",
-                )}
               >
-                {m}
-              </button>
+                {monthName}
+              </Button>
             );
           })}
         </div>

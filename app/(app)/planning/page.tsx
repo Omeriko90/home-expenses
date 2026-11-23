@@ -1,9 +1,9 @@
 import { prisma } from "@/lib/db";
-import { getForecast, type HorizonMonths } from "@/lib/forecast";
+import { getForecast, type RangeMonths } from "@/lib/forecast";
 import { requireUser } from "@/lib/session";
 import { PlanningView } from "@/components/features/planning/planning-view";
 
-function resolveHorizon(requested?: string | string[]): HorizonMonths {
+function resolveRange(requested?: string | string[]): RangeMonths {
   const raw = Array.isArray(requested) ? requested[0] : requested;
   const parsed = raw ? Number(raw) : NaN;
   if (parsed === 6 || parsed === 12 || parsed === 24) return parsed;
@@ -13,14 +13,14 @@ function resolveHorizon(requested?: string | string[]): HorizonMonths {
 export default async function PlanningPage({
   searchParams,
 }: {
-  searchParams: Promise<{ horizon?: string }>;
+  searchParams: Promise<{ range?: string }>;
 }) {
-  const sp = await searchParams;
+  const { range: requestedRange } = await searchParams;
   const { householdId } = await requireUser();
-  const horizon = resolveHorizon(sp.horizon);
+  const range = resolveRange(requestedRange);
 
   const [forecast, archivedItems, categories] = await Promise.all([
-    getForecast(householdId, horizon),
+    getForecast(householdId, range),
     prisma.plannedItem.findMany({
       where: { householdId, status: { not: "ACTIVE" } },
       orderBy: { createdAt: "desc" },
@@ -33,25 +33,25 @@ export default async function PlanningPage({
     }),
   ]);
 
-  const archived = archivedItems.map((it) => ({
-    id: it.id,
-    title: it.title,
-    type: it.type,
-    status: it.status,
-    amount: Number(it.amount),
-    installments: it.installments,
-    startYear: it.startYear,
-    startMonth: it.startMonth,
-    endYear: it.endYear,
-    endMonth: it.endMonth,
-    note: it.note,
-    categoryId: it.categoryId,
-    categoryName: it.category?.name ?? null,
+  const archived = archivedItems.map((item) => ({
+    id: item.id,
+    title: item.title,
+    type: item.type,
+    status: item.status,
+    amount: Number(item.amount),
+    installments: item.installments,
+    startYear: item.startYear,
+    startMonth: item.startMonth,
+    endYear: item.endYear,
+    endMonth: item.endMonth,
+    note: item.note,
+    categoryId: item.categoryId,
+    categoryName: item.category?.name ?? null,
   }));
 
   return (
     <PlanningView
-      horizon={horizon}
+      range={range}
       forecast={forecast}
       archived={archived}
       categories={categories}

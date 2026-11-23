@@ -1,15 +1,26 @@
 import type {
+  BudgetImpactMonth,
   ForecastData,
   ForecastItem,
-  HorizonMonths,
   MonthKey,
+  PlannedItemStatus,
+  PlannedItemType,
+  RangeMonths,
   Verdict,
 } from "@/lib/forecast";
+import { PlannedItemStatuses, PlannedItemTypes } from "@/lib/forecast";
 
-export type { ForecastData, ForecastItem, HorizonMonths, MonthKey, Verdict };
-
-export type PlannedItemType = "ONE_TIME" | "RECURRING" | "INSTALLMENTS";
-export type PlannedItemStatus = "ACTIVE" | "DONE" | "CANCELLED";
+export type {
+  BudgetImpactMonth,
+  ForecastData,
+  ForecastItem,
+  MonthKey,
+  PlannedItemStatus,
+  PlannedItemType,
+  RangeMonths,
+  Verdict,
+};
+export { PlannedItemStatuses, PlannedItemTypes };
 
 export type ArchivedItem = {
   id: string;

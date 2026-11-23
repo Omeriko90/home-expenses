@@ -1,6 +1,6 @@
 "use client";
 
-import * as React from "react";
+import { useState, useTransition, type FormEvent } from "react";
 import { toast } from "sonner";
 import { useI18n } from "@/lib/i18n/context";
 import {
@@ -15,7 +15,12 @@ import { MoneyInput } from "@/components/shared/money-input";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select/Select";
 import { MonthYearField } from "./month-year-field";
-import type { ForecastItem, PlanningCategory, PlannedItemType } from "./types";
+import {
+  PlannedItemTypes,
+  type ForecastItem,
+  type PlanningCategory,
+  type PlannedItemType,
+} from "./types";
 
 const DURATION_PRESETS = [3, 6, 9, 12];
 
@@ -43,46 +48,42 @@ export function PlannedItemForm({
 }) {
   const { t } = useI18n();
   const now = new Date();
-  const [pending, startTransition] = React.useTransition();
-  const [type, setType] = React.useState<PlannedItemType>(
-    editing?.type ?? "ONE_TIME",
+  const [pending, startTransition] = useTransition();
+  const [type, setType] = useState<PlannedItemType>(
+    editing?.type ?? PlannedItemTypes.OneTime,
   );
-  const [title, setTitle] = React.useState(editing?.title ?? "");
-  const [amount, setAmount] = React.useState<number | "">(
-    editing?.amount ?? "",
-  );
-  const [installments, setInstallments] = React.useState<number | "">(
+  const [title, setTitle] = useState(editing?.title ?? "");
+  const [amount, setAmount] = useState<number | "">(editing?.amount ?? "");
+  const [installments, setInstallments] = useState<number | "">(
     editing?.installments ?? "",
   );
-  const [startYear, setStartYear] = React.useState(
+  const [startYear, setStartYear] = useState(
     editing?.startYear ?? now.getFullYear(),
   );
-  const [startMonth, setStartMonth] = React.useState(
+  const [startMonth, setStartMonth] = useState(
     editing?.startMonth ?? now.getMonth() + 1,
   );
-  const [endSelection, setEndSelection] = React.useState(() =>
+  const [endSelection, setEndSelection] = useState(() =>
     initialEndSelection(editing),
   );
-  const [endYear, setEndYear] = React.useState(
+  const [endYear, setEndYear] = useState(
     editing?.endYear ?? now.getFullYear() + 1,
   );
-  const [endMonth, setEndMonth] = React.useState(
+  const [endMonth, setEndMonth] = useState(
     editing?.endMonth ?? now.getMonth() + 1,
   );
-  const [categoryId, setCategoryId] = React.useState(
-    editing?.categoryId ?? "",
-  );
-  const [note, setNote] = React.useState(editing?.note ?? "");
+  const [categoryId, setCategoryId] = useState(editing?.categoryId ?? "");
+  const [note, setNote] = useState(editing?.note ?? "");
 
   const amountLabel =
-    type === "RECURRING"
+    type === PlannedItemTypes.Recurring
       ? `${t.common.amount} (${t.common.monthly})`
-      : type === "INSTALLMENTS"
+      : type === PlannedItemTypes.Installments
         ? `${t.common.amount} (${t.common.total})`
         : t.common.amount;
 
   const perPayment =
-    type === "INSTALLMENTS" &&
+    type === PlannedItemTypes.Installments &&
     typeof amount === "number" &&
     typeof installments === "number" &&
     installments > 0
@@ -90,30 +91,33 @@ export function PlannedItemForm({
       : null;
 
   function resolveEnd(): { endYear: number | null; endMonth: number | null } {
-    if (type !== "RECURRING" || endSelection === "none")
+    if (type !== PlannedItemTypes.Recurring || endSelection === "none")
       return { endYear: null, endMonth: null };
     if (endSelection === "custom") return { endYear, endMonth };
-    const endIdx =
-      startYear * 12 + (startMonth - 1) + Number(endSelection) - 1;
-    return { endYear: Math.floor(endIdx / 12), endMonth: (endIdx % 12) + 1 };
+    const endIndex = startYear * 12 + (startMonth - 1) + Number(endSelection) - 1;
+    return { endYear: Math.floor(endIndex / 12), endMonth: (endIndex % 12) + 1 };
   }
 
-  function submit(e: React.FormEvent) {
-    e.preventDefault();
+  function handleSubmit(event: FormEvent) {
+    event.preventDefault();
     if (!title.trim() || typeof amount !== "number" || amount <= 0) {
       toast.error(t.common.noData);
       return;
     }
-    if (type === "INSTALLMENTS" && (typeof installments !== "number" || installments < 2)) {
+    if (
+      type === PlannedItemTypes.Installments &&
+      (typeof installments !== "number" || installments < 2)
+    ) {
       toast.error(t.planning.installmentsCount);
       return;
     }
     const end = resolveEnd();
-    const input: PlannedItemInput = {
+    const plannedItemInput: PlannedItemInput = {
       title: title.trim(),
       type,
       amount,
-      installments: type === "INSTALLMENTS" ? Number(installments) : null,
+      installments:
+        type === PlannedItemTypes.Installments ? Number(installments) : null,
       startYear,
       startMonth,
       endYear: end.endYear,
@@ -122,8 +126,8 @@ export function PlannedItemForm({
       categoryId: categoryId || null,
     };
     startTransition(async () => {
-      if (editing) await updatePlannedItem(editing.id, input);
-      else await createPlannedItem(input);
+      if (editing) await updatePlannedItem(editing.id, plannedItemInput);
+      else await createPlannedItem(plannedItemInput);
       toast.success(t.common.save);
       onClose();
     });
@@ -134,14 +138,14 @@ export function PlannedItemForm({
       open={open}
       onClose={onClose}
       title={editing ? t.planning.edit : t.planning.add}
-      onSubmit={submit}
+      onSubmit={handleSubmit}
       pending={pending}
     >
       <Field label={t.common.name} htmlFor="p-title" required>
         <Input
           id="p-title"
           value={title}
-          onChange={(e) => setTitle(e.target.value)}
+          onChange={(event) => setTitle(event.target.value)}
           required
         />
       </Field>
@@ -149,11 +153,17 @@ export function PlannedItemForm({
       <Field label={t.common.type}>
         <Select
           value={type}
-          onValueChange={(v) => setType(v as PlannedItemType)}
+          onValueChange={(value) => setType(value as PlannedItemType)}
           options={[
-            { value: "ONE_TIME", label: t.planning.typeOneTime },
-            { value: "RECURRING", label: t.planning.typeRecurring },
-            { value: "INSTALLMENTS", label: t.planning.typeInstallments },
+            { value: PlannedItemTypes.OneTime, label: t.planning.typeOneTime },
+            {
+              value: PlannedItemTypes.Recurring,
+              label: t.planning.typeRecurring,
+            },
+            {
+              value: PlannedItemTypes.Installments,
+              label: t.planning.typeInstallments,
+            },
           ]}
         />
       </Field>
@@ -162,7 +172,7 @@ export function PlannedItemForm({
         <Field label={amountLabel} required>
           <MoneyInput value={amount} onValueChange={setAmount} />
         </Field>
-        {type === "INSTALLMENTS" && (
+        {type === PlannedItemTypes.Installments && (
           <Field
             label={t.planning.installmentsCount}
             htmlFor="p-installments"
@@ -180,9 +190,9 @@ export function PlannedItemForm({
               min={2}
               max={120}
               value={installments}
-              onChange={(e) =>
+              onChange={(event) =>
                 setInstallments(
-                  e.target.value === "" ? "" : Number(e.target.value),
+                  event.target.value === "" ? "" : Number(event.target.value),
                 )
               }
               required
@@ -196,14 +206,14 @@ export function PlannedItemForm({
           id="p-start"
           year={startYear}
           month={startMonth}
-          onChange={(y, m) => {
-            setStartYear(y);
-            setStartMonth(m);
+          onChange={(year, month) => {
+            setStartYear(year);
+            setStartMonth(month);
           }}
         />
       </Field>
 
-      {type === "RECURRING" && (
+      {type === PlannedItemTypes.Recurring && (
         <>
           <Field label={t.planning.endMonth}>
             <Select
@@ -211,9 +221,9 @@ export function PlannedItemForm({
               onValueChange={setEndSelection}
               options={[
                 { value: "none", label: t.planning.noEnd },
-                ...DURATION_PRESETS.map((n) => ({
-                  value: String(n),
-                  label: t.planning.horizonMonths.replace("{n}", String(n)),
+                ...DURATION_PRESETS.map((months) => ({
+                  value: String(months),
+                  label: t.planning.monthsCount.replace("{n}", String(months)),
                 })),
                 { value: "custom", label: t.planning.durationCustom },
               ]}
@@ -223,9 +233,9 @@ export function PlannedItemForm({
             <MonthYearField
               year={endYear}
               month={endMonth}
-              onChange={(y, m) => {
-                setEndYear(y);
-                setEndMonth(m);
+              onChange={(year, month) => {
+                setEndYear(year);
+                setEndMonth(month);
               }}
             />
           )}
@@ -237,7 +247,10 @@ export function PlannedItemForm({
           value={categoryId || null}
           onValueChange={setCategoryId}
           placeholder={t.common.none}
-          options={categories.map((c) => ({ value: c.id, label: c.name }))}
+          options={categories.map((category) => ({
+            value: category.id,
+            label: category.name,
+          }))}
         />
       </Field>
 
@@ -245,7 +258,7 @@ export function PlannedItemForm({
         <Input
           id="p-note"
           value={note}
-          onChange={(e) => setNote(e.target.value)}
+          onChange={(event) => setNote(event.target.value)}
         />
       </Field>
     </FormDialog>

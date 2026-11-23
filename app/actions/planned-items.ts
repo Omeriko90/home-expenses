@@ -5,13 +5,24 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { requireUser } from "@/lib/session";
 import { idSchema, yearSchema } from "@/lib/validate";
+import { PlannedItemStatuses, PlannedItemTypes } from "@/lib/forecast";
 
 const monthSchema = z.number().int().min(1).max(12);
+
+// Absolute month index — lets start/end pairs that cross year boundaries be
+// compared chronologically as plain numbers.
+function toMonthIndex(year: number, month: number): number {
+  return year * 12 + month;
+}
 
 const plannedItemSchema = z
   .object({
     title: z.string().min(1).max(200),
-    type: z.enum(["ONE_TIME", "RECURRING", "INSTALLMENTS"]),
+    type: z.enum([
+      PlannedItemTypes.OneTime,
+      PlannedItemTypes.Recurring,
+      PlannedItemTypes.Installments,
+    ]),
     amount: z.number().positive(),
     installments: z.number().int().min(2).max(120).optional().nullable(),
     startYear: yearSchema,
@@ -21,33 +32,37 @@ const plannedItemSchema = z
     note: z.string().max(500).optional().nullable(),
     categoryId: idSchema.optional().nullable(),
   })
-  .superRefine((d, ctx) => {
-    if (d.type === "INSTALLMENTS" && !d.installments) {
+  .superRefine((input, ctx) => {
+    if (input.type === PlannedItemTypes.Installments && !input.installments) {
       ctx.addIssue({
         code: "custom",
         path: ["installments"],
         message: "installments required",
       });
     }
-    if (d.type === "RECURRING" && d.endYear != null && d.endMonth != null) {
-      const start = d.startYear * 12 + d.startMonth;
-      const end = d.endYear * 12 + d.endMonth;
-      if (end < start) {
-        ctx.addIssue({
-          code: "custom",
-          path: ["endMonth"],
-          message: "end before start",
-        });
-      }
+    if (
+      input.type === PlannedItemTypes.Recurring &&
+      input.endYear != null &&
+      input.endMonth != null &&
+      toMonthIndex(input.endYear, input.endMonth) <
+        toMonthIndex(input.startYear, input.startMonth)
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["endMonth"],
+        message: "end before start",
+      });
     }
   });
 
 export type PlannedItemInput = z.infer<typeof plannedItemSchema>;
 
-const statusSchema = z.enum(["ACTIVE", "DONE", "CANCELLED"]);
+const statusSchema = z.enum([
+  PlannedItemStatuses.Active,
+  PlannedItemStatuses.Done,
+  PlannedItemStatuses.Cancelled,
+]);
 
-// The category FK is not household-scoped at the DB level — verify ownership
-// before writing, as in createTransaction.
 async function assertCategoryInHousehold(
   categoryId: string,
   householdId: string,
@@ -59,39 +74,44 @@ async function assertCategoryInHousehold(
   if (!category) throw new Error("Category not found");
 }
 
-function toData(d: PlannedItemInput) {
-  const recurring = d.type === "RECURRING";
+function mapInputToPlannedItemData(input: PlannedItemInput) {
+  const isRecurring = input.type === PlannedItemTypes.Recurring;
   return {
-    title: d.title,
-    type: d.type,
-    amount: d.amount,
-    installments: d.type === "INSTALLMENTS" ? d.installments : null,
-    startYear: d.startYear,
-    startMonth: d.startMonth,
-    endYear: recurring ? (d.endYear ?? null) : null,
-    endMonth: recurring ? (d.endMonth ?? null) : null,
-    note: d.note ?? null,
-    categoryId: d.categoryId ?? null,
+    title: input.title,
+    type: input.type,
+    amount: input.amount,
+    installments:
+      input.type === PlannedItemTypes.Installments ? input.installments : null,
+    startYear: input.startYear,
+    startMonth: input.startMonth,
+    endYear: isRecurring ? (input.endYear ?? null) : null,
+    endMonth: isRecurring ? (input.endMonth ?? null) : null,
+    note: input.note ?? null,
+    categoryId: input.categoryId ?? null,
   };
 }
 
-export async function createPlannedItem(input: PlannedItemInput) {
+export async function createPlannedItem(rawInput: PlannedItemInput) {
   const { householdId } = await requireUser();
-  const d = plannedItemSchema.parse(input);
-  if (d.categoryId) await assertCategoryInHousehold(d.categoryId, householdId);
-  await prisma.plannedItem.create({ data: { ...toData(d), householdId } });
+  const input = plannedItemSchema.parse(rawInput);
+  if (input.categoryId)
+    await assertCategoryInHousehold(input.categoryId, householdId);
+  await prisma.plannedItem.create({
+    data: { ...mapInputToPlannedItemData(input), householdId },
+  });
   revalidatePath("/planning");
   return { ok: true as const };
 }
 
-export async function updatePlannedItem(id: string, input: PlannedItemInput) {
+export async function updatePlannedItem(id: string, rawInput: PlannedItemInput) {
   const { householdId } = await requireUser();
   idSchema.parse(id);
-  const d = plannedItemSchema.parse(input);
-  if (d.categoryId) await assertCategoryInHousehold(d.categoryId, householdId);
+  const input = plannedItemSchema.parse(rawInput);
+  if (input.categoryId)
+    await assertCategoryInHousehold(input.categoryId, householdId);
   await prisma.plannedItem.update({
     where: { id, householdId },
-    data: toData(d),
+    data: mapInputToPlannedItemData(input),
   });
   revalidatePath("/planning");
   return { ok: true as const };

@@ -6,11 +6,13 @@ export function ChartCard({
   title,
   description,
   className,
+  contentClassName,
   children,
 }: {
   title: string;
   description?: string;
   className?: string;
+  contentClassName?: string;
   children: React.ReactNode;
 }) {
   return (
@@ -21,7 +23,7 @@ export function ChartCard({
           <p className="mt-0.5 text-xs text-muted-foreground/80">{description}</p>
         )}
       </div>
-      <div className="h-72 font-sans" dir="ltr">
+      <div className={cn("h-72 font-sans", contentClassName)} dir="ltr">
         {children}
       </div>
     </Card>

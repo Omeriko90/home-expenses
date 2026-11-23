@@ -1,6 +1,6 @@
 "use client";
 
-import * as React from "react";
+import { useState, useTransition } from "react";
 import { CalendarClock, Info, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { useI18n } from "@/lib/i18n/context";
@@ -17,72 +17,50 @@ import { ChartCard } from "@/components/shared/charts/chart-card";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { ForecastChart } from "./forecast-chart";
-import { HorizonSelect } from "./horizon-select";
+import { RangeSelect } from "./range-select";
 import { PlannedItemRow } from "./planned-item-row";
 import { PlannedItemForm } from "./planned-item-form";
 import { ArchivedItems } from "./archived-items";
+import { usePlannedTotals } from "./use-planned-totals";
 import {
   formatMonthKey,
+  PlannedItemStatuses,
   type ArchivedItem,
   type ForecastData,
   type ForecastItem,
-  type HorizonMonths,
+  type PlannedItemStatus,
   type PlanningCategory,
+  type RangeMonths,
 } from "./types";
 
 export function PlanningView({
-  horizon,
+  range,
   forecast,
   archived,
   categories,
 }: {
-  horizon: HorizonMonths;
+  range: RangeMonths;
   forecast: ForecastData;
   archived: ArchivedItem[];
   categories: PlanningCategory[];
 }) {
   const { t } = useI18n();
-  const [excludedIds, setExcludedIds] = React.useState<Set<string>>(
-    () => new Set(),
+  const [excludedIds, setExcludedIds] = useState<Set<string>>(() => new Set());
+  const [formOpen, setFormOpen] = useState(false);
+  const [editing, setEditing] = useState<ForecastItem | null>(null);
+  const [toDelete, setToDelete] = useState<{ id: string; title: string } | null>(
+    null,
   );
-  const [formOpen, setFormOpen] = React.useState(false);
-  const [editing, setEditing] = React.useState<ForecastItem | null>(null);
-  const [toDelete, setToDelete] = React.useState<{
-    id: string;
-    title: string;
-  } | null>(null);
-  const [pending, startTransition] = React.useTransition();
+  const [pending, startTransition] = useTransition();
 
   const { months, baselineTotal, income, items, baselineMonthsUsed } = forecast;
-  const hasIncome = income.some((v) => v > 0);
+  const hasIncome = income.some((amount) => amount > 0);
+  const { planned, totalPlanned, worstMonth, worstMonthSpend } =
+    usePlannedTotals(forecast, excludedIds);
 
-  const planned = React.useMemo(
-    () =>
-      months.map((_, i) =>
-        items.reduce(
-          (sum, item) =>
-            excludedIds.has(item.id) ? sum : sum + item.impact[i],
-          0,
-        ),
-      ),
-    [months, items, excludedIds],
-  );
-
-  const totalPlanned = planned.reduce((a, b) => a + b, 0);
-  const worstIdx = planned.reduce(
-    (worst, _, i) =>
-      income[i] - baselineTotal[i] - planned[i] <
-      income[worst] - baselineTotal[worst] - planned[worst]
-        ? i
-        : worst,
-    0,
-  );
-  const worstMonth = months[worstIdx];
-  const worstSpend = baselineTotal[worstIdx] + planned[worstIdx];
-
-  function toggleIncluded(id: string, included: boolean) {
-    setExcludedIds((prev) => {
-      const next = new Set(prev);
+  function handleIncludeToggleChange(id: string, included: boolean) {
+    setExcludedIds((previous) => {
+      const next = new Set(previous);
       if (included) next.delete(id);
       else next.add(id);
       return next;
@@ -98,7 +76,7 @@ export function PlanningView({
     });
   }
 
-  function handleSetStatus(id: string, status: "ACTIVE" | "DONE" | "CANCELLED") {
+  function handleSetStatus(id: string, status: PlannedItemStatus) {
     startTransition(async () => {
       await setPlannedItemStatus(id, status);
       toast.success(t.common.save);
@@ -110,7 +88,7 @@ export function PlanningView({
       <PageHeader
         actions={
           <div className="flex w-full items-center justify-between gap-2">
-            <HorizonSelect horizon={horizon} />
+            <RangeSelect range={range} />
             <Button
               onClick={() => {
                 setEditing(null);
@@ -143,7 +121,7 @@ export function PlanningView({
         />
         <StatCard
           label={t.planning.worstMonth}
-          value={formatMoney(worstSpend)}
+          value={formatMoney(worstMonthSpend)}
           accent={hasIncome ? "income" : "expense"}
           sub={
             <span className="text-muted-foreground tnum">
@@ -153,7 +131,11 @@ export function PlanningView({
         />
       </div>
 
-      <ChartCard title={t.planning.chartTitle} description={t.planning.chartDesc}>
+      <ChartCard
+        title={t.planning.chartTitle}
+        description={t.planning.chartDesc}
+        contentClassName="h-56 sm:h-72"
+      >
         <ForecastChart
           months={months}
           baseline={baselineTotal}
@@ -171,7 +153,9 @@ export function PlanningView({
               key={item.id}
               item={item}
               included={!excludedIds.has(item.id)}
-              onIncludedChange={(included) => toggleIncluded(item.id, included)}
+              onIncludedChange={(included) =>
+                handleIncludeToggleChange(item.id, included)
+              }
               onEdit={() => {
                 setEditing(item);
                 setFormOpen(true);
@@ -183,11 +167,13 @@ export function PlanningView({
         </Card>
       )}
 
-      <ArchivedItems
-        items={archived}
-        onRestore={(id) => handleSetStatus(id, "ACTIVE")}
-        onDelete={(item) => setToDelete({ id: item.id, title: item.title })}
-      />
+      {archived.length > 0 && (
+        <ArchivedItems
+          items={archived}
+          onRestore={(id) => handleSetStatus(id, PlannedItemStatuses.Active)}
+          onDelete={(item) => setToDelete({ id: item.id, title: item.title })}
+        />
+      )}
 
       {formOpen && (
         <PlannedItemForm

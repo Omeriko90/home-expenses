@@ -1,14 +1,20 @@
 "use client";
 
-import * as React from "react";
+import { useState } from "react";
 import { ChevronDown, RotateCcw, Trash2 } from "lucide-react";
 import { useI18n } from "@/lib/i18n/context";
 import { cn, formatMoney } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { IconButton } from "@/components/shared/icon-button";
-import { formatMonthKey, type ArchivedItem } from "./types";
+import {
+  formatMonthKey,
+  PlannedItemStatuses,
+  type ArchivedItem,
+} from "./types";
 
+// Rendered only when there are archived items — the parent checks.
 export function ArchivedItems({
   items,
   onRestore,
@@ -19,15 +25,14 @@ export function ArchivedItems({
   onDelete: (item: ArchivedItem) => void;
 }) {
   const { t } = useI18n();
-  const [open, setOpen] = React.useState(false);
-  if (items.length === 0) return null;
+  const [open, setOpen] = useState(false);
 
   return (
     <Card className="overflow-hidden">
-      <button
-        type="button"
-        onClick={() => setOpen((o) => !o)}
-        className="flex w-full items-center justify-between px-4 py-3 text-sm font-medium text-muted-foreground hover:text-foreground"
+      <Button
+        variant="ghost"
+        onClick={() => setOpen((wasOpen) => !wasOpen)}
+        className="w-full justify-between rounded-none px-4 py-3 font-medium text-muted-foreground hover:text-foreground"
       >
         <span>
           {t.planning.archivedItems} ({items.length})
@@ -35,7 +40,7 @@ export function ArchivedItems({
         <ChevronDown
           className={cn("size-4 transition-transform", open && "rotate-180")}
         />
-      </button>
+      </Button>
       {open && (
         <div className="divide-y divide-border border-t border-border">
           {items.map((item) => (
@@ -46,9 +51,13 @@ export function ArchivedItems({
                     {item.title}
                   </span>
                   <Badge
-                    variant={item.status === "DONE" ? "success" : "default"}
+                    variant={
+                      item.status === PlannedItemStatuses.Done
+                        ? "success"
+                        : "default"
+                    }
                   >
-                    {item.status === "DONE"
+                    {item.status === PlannedItemStatuses.Done
                       ? t.planning.done
                       : t.planning.cancelled}
                   </Badge>
