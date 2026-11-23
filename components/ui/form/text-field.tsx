@@ -14,6 +14,7 @@ export function TextField({
   disabled,
   readOnly,
   autoComplete,
+  autoFocus,
   className,
   inputClassName,
 }: {
@@ -26,6 +27,7 @@ export function TextField({
   disabled?: boolean;
   readOnly?: boolean;
   autoComplete?: string;
+  autoFocus?: boolean;
   className?: string;
   inputClassName?: string;
 }) {
@@ -51,6 +53,7 @@ export function TextField({
         disabled={disabled}
         readOnly={readOnly}
         autoComplete={autoComplete}
+        autoFocus={autoFocus}
         aria-invalid={!!error}
         className={inputClassName}
         {...register(name)}

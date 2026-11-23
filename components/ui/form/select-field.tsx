@@ -45,9 +45,10 @@ export function SelectField({
         >
           <Select
             value={typeof field.value === "string" ? field.value : undefined}
-            onValueChange={(v) => {
-              field.onChange(v);
-              onValueChange?.(v);
+            onValueChange={(value) => {
+              field.onChange(value);
+              field.onBlur();
+              onValueChange?.(value);
             }}
             options={options}
             placeholder={placeholder}

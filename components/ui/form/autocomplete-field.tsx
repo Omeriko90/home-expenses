@@ -53,7 +53,10 @@ export function AutocompleteField({
             id={name}
             options={options}
             value={typeof field.value === "string" ? field.value : null}
-            onChange={field.onChange}
+            onChange={(value) => {
+              field.onChange(value);
+              field.onBlur();
+            }}
             placeholder={placeholder}
             searchPlaceholder={searchPlaceholder}
             emptyText={emptyText}
