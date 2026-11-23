@@ -5,16 +5,23 @@ import { revalidatePath } from "next/cache";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { requireUser } from "@/lib/session";
-import { idSchema, monthSchema, yearSchema } from "@/lib/validate";
+import { idSchema } from "@/lib/validate";
+import {
+  monthInputSchema,
+  createSourceSchema,
+  raiseSchema,
+  overrideSchema,
+  oneTimeSchema,
+  updateEntryAmountSchema,
+  incomeNameSchema,
+  type CreateSourceInput,
+  type RaiseInput,
+  type OverrideInput,
+  type OneTimeInput,
+  type UpdateEntryAmountInput,
+} from "@/lib/schemas/income";
 
-const amountSchema = z.number().min(0).max(999_999_999);
-const nameSchema = z.string().min(1).max(100);
-const noteSchema = z.string().max(500).optional().nullable();
-
-const monthInputSchema = z.object({
-  year: yearSchema,
-  month: monthSchema,
-});
+export type { CreateSourceInput, RaiseInput, OverrideInput, OneTimeInput };
 
 function revalidateIncome() {
   revalidatePath("/income");
@@ -37,18 +44,6 @@ function isUniqueViolation(e: unknown) {
     e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002"
   );
 }
-
-const createSourceSchema = z.object({
-  name: nameSchema,
-  amount: amountSchema,
-  year: yearSchema,
-  month: monthSchema,
-  note: noteSchema,
-  endYear: yearSchema.optional().nullable(),
-  endMonth: monthSchema.optional().nullable(),
-});
-
-export type CreateSourceInput = z.infer<typeof createSourceSchema>;
 
 /** Create a recurring income source with its first FIXED amount. */
 export async function createIncomeSource(input: CreateSourceInput) {
@@ -84,7 +79,7 @@ export async function createIncomeSource(input: CreateSourceInput) {
 export async function renameIncomeSource(id: string, name: string) {
   const { householdId } = await requireUser();
   idSchema.parse(id);
-  name = nameSchema.parse(name);
+  name = incomeNameSchema.parse(name);
   try {
     const { count } = await prisma.incomeSource.updateMany({
       where: { id, householdId },
@@ -98,15 +93,6 @@ export async function renameIncomeSource(id: string, name: string) {
   revalidateIncome();
   return { ok: true as const };
 }
-
-const raiseSchema = z.object({
-  year: yearSchema,
-  month: monthSchema,
-  amount: amountSchema,
-  note: noteSchema,
-});
-
-export type RaiseInput = z.infer<typeof raiseSchema>;
 
 /** Set a new FIXED amount from a given month onward (a raise). */
 export async function addRaise(sourceId: string, input: RaiseInput) {
@@ -137,15 +123,6 @@ export async function addRaise(sourceId: string, input: RaiseInput) {
   revalidateIncome();
   return { ok: true as const };
 }
-
-const overrideSchema = z.object({
-  year: yearSchema,
-  month: monthSchema,
-  amount: amountSchema,
-  note: noteSchema,
-});
-
-export type OverrideInput = z.infer<typeof overrideSchema>;
 
 /** Replace a source's amount for exactly one month. */
 export async function setMonthOverride(sourceId: string, input: OverrideInput) {
@@ -228,16 +205,6 @@ export async function deleteIncomeSource(id: string) {
   return { ok: true as const };
 }
 
-const oneTimeSchema = z.object({
-  name: nameSchema,
-  year: yearSchema,
-  month: monthSchema,
-  amount: amountSchema,
-  note: noteSchema,
-});
-
-export type OneTimeInput = z.infer<typeof oneTimeSchema>;
-
 /** A standalone income for one month (tax refund, gift...). */
 export async function createOneTimeIncome(input: OneTimeInput) {
   const { householdId } = await requireUser();
@@ -281,15 +248,10 @@ export async function updateOneTimeIncome(
   return { ok: true as const };
 }
 
-const updateEntryAmountSchema = z.object({
-  amount: amountSchema,
-  note: noteSchema,
-});
-
 /** Edit the amount/note of an existing FIXED or OVERRIDE entry in place. */
 export async function updateIncomeEntryAmount(
   id: string,
-  input: z.infer<typeof updateEntryAmountSchema>,
+  input: UpdateEntryAmountInput,
 ) {
   const { householdId } = await requireUser();
   idSchema.parse(id);

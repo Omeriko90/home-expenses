@@ -12,11 +12,7 @@ export const View = {
 } as const;
 export type ViewMode = (typeof View)[keyof typeof View];
 
-export const IncomeType = {
-  Fixed: "FIXED",
-  OneTime: "ONE_TIME",
-} as const;
-export type IncomeTypeValue = (typeof IncomeType)[keyof typeof IncomeType];
+export { IncomeTypes as IncomeType, type IncomeTypeValue } from "@/lib/schemas/income";
 
 export type SourceStatus =
   | { kind: "active" }
