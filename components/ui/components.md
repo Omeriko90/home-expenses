@@ -112,9 +112,9 @@ react-hook-form + zod building blocks. Forms define a zod schema, create methods
 | `TextField` | `@/components/ui/form/text-field` | `Input` via `register` |
 | `TextareaField` | `@/components/ui/form/textarea-field` | native `<textarea>`, `Input` styling |
 | `MoneyField` | `@/components/ui/form/money-field` | `MoneyInput` via `Controller` (empty → `undefined`) |
-| `SelectField` | `@/components/ui/form/select-field` | `Select` via `Controller`; optional `onValueChange` passthrough |
+| `SelectField` | `@/components/ui/form/select-field` | `Select` via `Controller`; optional `onValueChange` passthrough; validates on change (popover never blurs) |
 | `DateField` | `@/components/ui/form/date-field` | `DatePicker` via `Controller` (`Date \| undefined`) |
-| `AutocompleteField` | `@/components/ui/form/autocomplete-field` | `Autocomplete` via `Controller` |
+| `AutocompleteField` | `@/components/ui/form/autocomplete-field` | `Autocomplete` via `Controller`; validates on change (popover never blurs) |
 | `CheckboxField` | `@/components/ui/form/checkbox-field` | `Checkbox` via `Controller`, inline label |
 
 ```tsx
