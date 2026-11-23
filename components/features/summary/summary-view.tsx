@@ -127,7 +127,7 @@ export function SummaryView({
                   ? t.summary.chartSpendPieDescMoney
                   : t.summary.chartSpendPieDescPercent
               }
-              contentClassName="h-auto"
+              contentClassName="h-auto lg:h-72"
             >
               <SharePieChart
                 data={spend
@@ -160,7 +160,7 @@ export function SummaryView({
                     : t.summary.chartMonthlyByCategoryDescPercent
                 }
                 className="lg:col-span-2"
-                contentClassName="h-auto"
+                contentClassName="h-auto lg:h-72"
               >
                 <CategoryMonthlyLineChart monthly={monthly} mode={mode} />
               </ChartCard>

@@ -26,8 +26,8 @@ export function SharePieChart({
   const shown = expanded ? data : data.slice(0, MAX_LEGEND_ITEMS);
 
   return (
-    <div className="flex flex-col gap-2">
-      <div className="h-64 sm:h-72">
+    <div className="flex flex-col gap-2 lg:h-full lg:flex-row lg:items-stretch lg:gap-4">
+      <div className="h-64 sm:h-72 lg:h-auto lg:min-h-0 lg:flex-1">
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>
             <Pie
@@ -65,14 +65,19 @@ export function SharePieChart({
           </PieChart>
         </ResponsiveContainer>
       </div>
-      <ul className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
+      <ul className="flex flex-wrap items-center gap-x-3 gap-y-1.5 lg:w-36 lg:shrink-0 lg:flex-col lg:flex-nowrap lg:items-start lg:gap-y-1.5 lg:overflow-y-auto">
         {shown.map((d, i) => (
-          <li key={d.name} className="flex items-center gap-1.5 text-xs">
+          <li
+            key={d.name}
+            className="flex items-center gap-1.5 text-xs lg:min-w-0 lg:shrink-0"
+          >
             <span
               className="inline-block size-2 shrink-0 rounded-full"
               style={{ backgroundColor: colorFor(d.color, i) }}
             />
-            <span dir="auto">{d.name}</span>
+            <span dir="auto" className="lg:min-w-0 lg:break-words">
+              {d.name}
+            </span>
           </li>
         ))}
         {collapsible && (

@@ -73,8 +73,8 @@ export function CategoryMonthlyLineChart({
   }
 
   return (
-    <div className="flex flex-col gap-2">
-      <div className="h-64 sm:h-72">
+    <div className="flex flex-col gap-2 lg:h-full lg:flex-row lg:items-stretch lg:gap-4">
+      <div className="h-64 sm:h-72 lg:h-auto lg:min-h-0 lg:flex-1">
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={data} margin={{ top: 4, left: 12, right: 12 }}>
             <CartesianGrid strokeDasharray="3 3" stroke={GRID_COLOR} vertical={false} />
@@ -103,7 +103,7 @@ export function CategoryMonthlyLineChart({
           </LineChart>
         </ResponsiveContainer>
       </div>
-      <ul className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
+      <ul className="flex flex-wrap items-center gap-x-3 gap-y-1.5 lg:w-48 lg:shrink-0 lg:flex-col lg:flex-nowrap lg:items-start lg:gap-y-1.5 lg:overflow-y-auto">
         {shown.map((c, i) => {
           const hidden = !visible.has(c.categoryId);
           return (
