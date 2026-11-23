@@ -1,18 +1,19 @@
 "use client";
 
-import * as React from "react";
+import { useMemo, useTransition } from "react";
 import { toast } from "sonner";
 import { useI18n } from "@/lib/i18n/context";
 import type { PortfolioSummary } from "@/lib/summary";
 import { upsertHolding } from "@/app/actions/investments";
+import type { AutocompleteOption } from "@/components/shared/autocomplete";
 import {
-  Autocomplete,
-  type AutocompleteOption,
-} from "@/components/shared/autocomplete";
-import { FormDialog } from "@/components/shared/form-dialog";
-import { Field } from "@/components/shared/field";
-import { MoneyInput } from "@/components/shared/money-input";
-import { Input } from "@/components/ui/input";
+  createHoldingFormSchema,
+  type HoldingFormValues,
+} from "@/lib/schemas/investments";
+import { FormDialog } from "@/components/ui/form/form-dialog";
+import { TextField } from "@/components/ui/form/text-field";
+import { MoneyField } from "@/components/ui/form/money-field";
+import { AutocompleteField } from "@/components/ui/form/autocomplete-field";
 
 export type Holding = PortfolioSummary["holdings"][number];
 
@@ -32,29 +33,20 @@ export function HoldingForm({
   typeOptions: AutocompleteOption[];
 }) {
   const { t } = useI18n();
-  const [pending, startTransition] = React.useTransition();
-  const [instrument, setInstrument] = React.useState(editing?.instrument ?? "");
-  const [house, setHouse] = React.useState(editing?.house ?? "");
-  const [channel, setChannel] = React.useState(editing?.channel ?? "");
-  const [type, setType] = React.useState(editing?.type ?? "");
-  const [value, setValue] = React.useState<number | "">(editing?.value ?? "");
+  const [pending, startTransition] = useTransition();
+  const schema = useMemo(() => createHoldingFormSchema(t), [t]);
 
-  function submit(e: React.FormEvent) {
-    e.preventDefault();
-    if (!instrument.trim() || value === "") {
-      toast.error(t.common.noData);
-      return;
-    }
+  function handleSubmit(values: HoldingFormValues) {
     startTransition(async () => {
       await upsertHolding({
         portfolioId,
         holdingId: editing?.id ?? null,
-        instrument: instrument.trim(),
-        house: house.trim(),
-        channel: channel.trim(),
-        type: type.trim(),
+        instrument: values.instrument,
+        house: values.house.trim(),
+        channel: values.channel.trim(),
+        type: values.type.trim(),
         year,
-        value: Number(value),
+        value: values.value,
       });
       toast.success(t.common.save);
       onClose();
@@ -66,45 +58,33 @@ export function HoldingForm({
       open={open}
       onClose={onClose}
       title={editing ? t.investments.editHolding : t.investments.addHolding}
-      onSubmit={submit}
+      schema={schema}
+      defaultValues={{
+        instrument: editing?.instrument ?? "",
+        type: editing?.type ?? "",
+        house: editing?.house ?? "",
+        channel: editing?.channel ?? "",
+        value: editing?.value ?? undefined,
+      }}
+      onSubmit={handleSubmit}
       pending={pending}
     >
-      <Field label={t.investments.instrument} htmlFor="h-inst" required>
-        <Input
-          id="h-inst"
-          value={instrument}
-          onChange={(e) => setInstrument(e.target.value)}
-          required
-        />
-      </Field>
-      <Field label={t.common.type} htmlFor="h-type">
-        <Autocomplete
-          id="h-type"
-          options={typeOptions}
-          value={type || null}
-          onChange={setType}
-          customValueLabel={t.common.addCustom}
-        />
-      </Field>
+      <TextField name="instrument" label={t.investments.instrument} required />
+      <AutocompleteField
+        name="type"
+        label={t.common.type}
+        options={typeOptions}
+        customValueLabel={t.common.addCustom}
+      />
       <div className="grid grid-cols-2 gap-4">
-        <Field label={t.investments.house} htmlFor="h-house">
-          <Input
-            id="h-house"
-            value={house}
-            onChange={(e) => setHouse(e.target.value)}
-          />
-        </Field>
-        <Field label={t.investments.channel} htmlFor="h-chan">
-          <Input
-            id="h-chan"
-            value={channel}
-            onChange={(e) => setChannel(e.target.value)}
-          />
-        </Field>
+        <TextField name="house" label={t.investments.house} />
+        <TextField name="channel" label={t.investments.channel} />
       </div>
-      <Field label={`${t.investments.value} (${year})`} required>
-        <MoneyInput value={value} onValueChange={setValue} />
-      </Field>
+      <MoneyField
+        name="value"
+        label={`${t.investments.value} (${year})`}
+        required
+      />
     </FormDialog>
   );
 }

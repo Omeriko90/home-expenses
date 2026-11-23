@@ -13,18 +13,23 @@ import { idSchema } from "@/lib/validate";
 import { isRateLimited, recordAttempt, clearAttempts } from "@/lib/rate-limit";
 import { LOCALE_COOKIE } from "@/lib/i18n/server";
 import { dictionaries, LOCALES, type Locale } from "@/lib/i18n/dictionaries";
+import {
+  profileSchema,
+  passwordSchema,
+  inviteSchema,
+  InviteErrors,
+  type ProfileInput,
+  type PasswordInput,
+  type InviteInput,
+} from "@/lib/schemas/settings";
 
 const INVITE_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
 
 // ------------------------------------------------------------------ //
 // Profile
 // ------------------------------------------------------------------ //
-const profileSchema = z.object({
-  name: z.string().min(1).max(80),
-  locale: z.enum(["he", "en"]),
-});
 
-export async function updateProfile(input: z.infer<typeof profileSchema>) {
+export async function updateProfile(input: ProfileInput) {
   const user = await requireUser();
   const { name, locale } = profileSchema.parse(input);
 
@@ -52,12 +57,7 @@ export async function updateProfile(input: z.infer<typeof profileSchema>) {
 // ------------------------------------------------------------------ //
 // Password
 // ------------------------------------------------------------------ //
-const passwordSchema = z.object({
-  currentPassword: z.string().min(1),
-  newPassword: z.string().min(8),
-});
-
-export async function changePassword(input: z.infer<typeof passwordSchema>) {
+export async function changePassword(input: PasswordInput) {
   const user = await requireUser();
   const { currentPassword, newPassword } = passwordSchema.parse(input);
 
@@ -106,11 +106,6 @@ export async function updateHousehold(name: string) {
 // ------------------------------------------------------------------ //
 // Invitations
 // ------------------------------------------------------------------ //
-const inviteSchema = z.object({
-  email: z.email(),
-  role: z.enum(["ADMIN", "MEMBER"]),
-});
-
 async function baseUrl() {
   if (process.env.APP_URL) return process.env.APP_URL.replace(/\/$/, "");
   const h = await headers();
@@ -145,14 +140,14 @@ async function sendInvitation(invitation: {
   return { delivered, inviteUrl };
 }
 
-export async function createInvitation(input: z.infer<typeof inviteSchema>) {
+export async function createInvitation(input: InviteInput) {
   const admin = await requireAdmin();
   const { role } = inviteSchema.parse(input);
   const email = inviteSchema.parse(input).email.toLowerCase();
 
   // Already a user anywhere — email is the global login key.
   const existingUser = await prisma.user.findUnique({ where: { email } });
-  if (existingUser) return { error: "emailExists" as const };
+  if (existingUser) return { error: InviteErrors.EmailExists };
 
   const existingInvite = await prisma.invitation.findUnique({
     where: {
@@ -164,7 +159,7 @@ export async function createInvitation(input: z.infer<typeof inviteSchema>) {
     !existingInvite.acceptedAt &&
     existingInvite.expiresAt > new Date()
   ) {
-    return { error: "alreadyInvited" as const };
+    return { error: InviteErrors.AlreadyInvited };
   }
 
   const token = generateToken();

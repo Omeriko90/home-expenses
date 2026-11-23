@@ -1,30 +1,33 @@
 "use client";
 
-import * as React from "react";
-import { useTransition } from "react";
+import { useMemo, useTransition } from "react";
 import { toast } from "sonner";
 import { updateProfile } from "@/app/actions/settings";
 import { useI18n } from "@/lib/i18n/context";
+import { dir, type Locale } from "@/lib/i18n/dictionaries";
+import {
+  createProfileSchema,
+  type ProfileInput,
+} from "@/lib/schemas/settings";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
-import { Select } from "@/components/ui/select/Select";
 import { Field } from "@/components/shared/field";
+import { Form } from "@/components/ui/form/form";
+import { TextField } from "@/components/ui/form/text-field";
+import { SelectField } from "@/components/ui/form/select-field";
 import type { SettingsUser } from "./settings-view";
 
 export function ProfileForm({ user }: { user: SettingsUser }) {
   const { t } = useI18n();
   const [pending, startTransition] = useTransition();
-  const [name, setName] = React.useState(user.name);
-  const [locale, setLocale] = React.useState(user.locale);
+  const schema = useMemo(() => createProfileSchema(t), [t]);
 
-  function submit(e: React.FormEvent) {
-    e.preventDefault();
-    if (!name.trim()) return;
+  function handleSubmit(values: ProfileInput) {
     startTransition(async () => {
-      await updateProfile({ name: name.trim(), locale: locale as "he" | "en" });
-      document.documentElement.lang = locale;
-      document.documentElement.dir = locale === "he" ? "rtl" : "ltr";
+      await updateProfile(values);
+      document.documentElement.lang = values.locale;
+      document.documentElement.dir = dir(values.locale);
       toast.success(t.settings.saved);
     });
   }
@@ -32,34 +35,30 @@ export function ProfileForm({ user }: { user: SettingsUser }) {
   return (
     <Card>
       <CardContent className="pt-6">
-        <form onSubmit={submit} className="flex max-w-md flex-col gap-4">
+        <Form
+          schema={schema}
+          defaultValues={{ name: user.name, locale: user.locale as Locale }}
+          onSubmit={handleSubmit}
+          className="max-w-md"
+        >
           <Field label={t.auth.email}>
             <Input value={user.email} disabled readOnly />
           </Field>
-          <Field label={t.auth.name} htmlFor="profile-name" required>
-            <Input
-              id="profile-name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              required
-            />
-          </Field>
-          <Field label={t.settings.language}>
-            <Select
-              value={locale}
-              onValueChange={setLocale}
-              options={[
-                { value: "he", label: t.settings.hebrew },
-                { value: "en", label: t.settings.english },
-              ]}
-            />
-          </Field>
+          <TextField name="name" label={t.auth.name} required />
+          <SelectField
+            name="locale"
+            label={t.settings.language}
+            options={[
+              { value: "he", label: t.settings.hebrew },
+              { value: "en", label: t.settings.english },
+            ]}
+          />
           <div>
             <Button type="submit" disabled={pending}>
               {pending ? t.common.loading : t.common.save}
             </Button>
           </div>
-        </form>
+        </Form>
       </CardContent>
     </Card>
   );

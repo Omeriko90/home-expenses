@@ -100,11 +100,54 @@ Dialogs are always mounted conditionally by the parent (`{open && <Dialog open o
 | Tabs (+ List/Trigger/Content) | `@/components/ui/tabs` | `@radix-ui/react-tabs` |
 | Tooltip | `@/components/ui/tooltip` | `@radix-ui/react-tooltip` |
 
+## Form components (`components/ui/form/`)
+
+react-hook-form + zod building blocks. `Form` and `FormDialog` own the form state: they take `schema` + `defaultValues`, create the form internally via `useZodForm`, and render children inside a `FormProvider`. `onSubmit(values, form)` receives the parsed values plus the form instance for `setError`/`reset`. Field components read form state from context by `name` and render label/hint/error through the shared `Field` wrapper — no per-field `useState` or manual validation. Fields that need `useWatch`/`setValue` (conditional sections) live in a separate `*-fields.tsx` component rendered as the dialog's children.
+
+| Component | Import path | Wraps |
+| --- | --- | --- |
+| `useZodForm` | `@/components/ui/form/use-zod-form` | `useForm` + `zodResolver`, `mode: "onBlur"` |
+| `Form` | `@/components/ui/form/form` | owns the form (`schema` + `defaultValues`); `FormProvider` + `<form>` for inline/page forms |
+| `FormDialog` | `@/components/ui/form/form-dialog` | owns the form (`schema` + `defaultValues`); Dialog + Cancel/Save footer; typed `onSubmit(values, form)` |
+| `TextField` | `@/components/ui/form/text-field` | `Input` via `register` |
+| `TextareaField` | `@/components/ui/form/textarea-field` | native `<textarea>`, `Input` styling |
+| `MoneyField` | `@/components/ui/form/money-field` | `MoneyInput` via `Controller` (empty → `undefined`) |
+| `SelectField` | `@/components/ui/form/select-field` | `Select` via `Controller`; optional `onValueChange` passthrough; validates on change (popover never blurs) |
+| `DateField` | `@/components/ui/form/date-field` | `DatePicker` via `Controller` (`Date \| undefined`) |
+| `AutocompleteField` | `@/components/ui/form/autocomplete-field` | `Autocomplete` via `Controller`; validates on change (popover never blurs) |
+| `CheckboxField` | `@/components/ui/form/checkbox-field` | `Checkbox` via `Controller`, inline label |
+| `NumberField` | `@/components/ui/form/number-field` | `Input type="number"` via `Controller` (empty → `undefined`, else `Number`) |
+| `MonthYearField` | `@/components/ui/form/month-year-field` | shared month-year popover via `Controller`; object value `{ year, month }` (`monthYearSchema`), validates on pick |
+
+```tsx
+const schema = z.object({
+  title: z.string().min(1, t.errors.required),
+  amount: z.number({ error: t.errors.required }).positive(),
+});
+type Values = z.infer<typeof schema>;
+
+{open && (
+  <FormDialog
+    open
+    onClose={onClose}
+    title={t.x.title}
+    schema={schema}
+    defaultValues={{ title: editing?.title ?? "" }}
+    onSubmit={handleSubmit}
+    pending={pending}
+  >
+    <TextField name="title" label={t.x.name} required />
+    <MoneyField name="amount" label={t.x.amount} required />
+  </FormDialog>
+)}
+```
+
+All forms use these building blocks; there is no non-RHF form dialog.
+
 ## Shared app components (`components/shared/`)
 
 Higher-level reusable pieces built on the primitives:
 
-- `FormDialog` (`@/components/shared/form-dialog`) — Dialog + title + `<form>` + Cancel/Save footer; wrap form fields as children. Takes `onClose`. Mount conditionally: `{open && <FormDialog open onClose={...} />}`.
 - `ConfirmDialog` (`@/components/shared/confirm-dialog`) — confirm/cancel prompt, takes `onClose`.
 - `EditDeleteActions` (`@/components/shared/edit-delete-actions`) — hover-revealed pencil/trash row actions.
 - `TotalsFooterRow` (`@/components/shared/totals-footer-row`) — table-card totals footer strip.

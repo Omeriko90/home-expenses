@@ -1,19 +1,20 @@
 "use client";
 
-import * as React from "react";
+import { useMemo, useTransition } from "react";
+import { Controller, type UseFormReturn } from "react-hook-form";
 import { toast } from "sonner";
 import { useI18n } from "@/lib/i18n/context";
 import { cn } from "@/lib/utils";
+import { createCategory, updateCategory } from "@/app/actions/categories";
 import {
-  createCategory,
-  updateCategory,
-  type CategoryInput,
-} from "@/app/actions/categories";
+  createCategoryFormSchema,
+  type CategoryFormValues,
+} from "@/lib/schemas/categories";
 import { CHART_COLORS } from "@/components/shared/charts/chart-palette";
-import { FormDialog } from "@/components/shared/form-dialog";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/shared/field";
-import { Input } from "@/components/ui/input";
+import { FormDialog } from "@/components/ui/form/form-dialog";
+import { TextField } from "@/components/ui/form/text-field";
 import type { Category } from "./category-manager";
 
 export function CategoryForm({
@@ -28,28 +29,28 @@ export function CategoryForm({
   defaultType: "EXPENSE" | "INVESTMENT";
 }) {
   const { t } = useI18n();
-  const [pending, startTransition] = React.useTransition();
-  const [name, setName] = React.useState(editing?.name ?? "");
-  const [description, setDescription] = React.useState(
-    editing?.description ?? "",
-  );
-  const [color, setColor] = React.useState<string | null>(editing?.color ?? null);
+  const [pending, startTransition] = useTransition();
+  const schema = useMemo(() => createCategoryFormSchema(t), [t]);
 
-  function submit(e: React.FormEvent) {
-    e.preventDefault();
-    const input: CategoryInput = {
-      name: name.trim(),
-      description: description.trim() || null,
+  function handleSubmit(
+    values: CategoryFormValues,
+    form: UseFormReturn<CategoryFormValues, unknown, CategoryFormValues>,
+  ) {
+    const input = {
+      name: values.name,
+      description: values.description.trim() || null,
       type: editing?.type ?? defaultType,
-      color,
+      color: values.color,
     };
-    if (!input.name) return;
     startTransition(async () => {
       const res = editing
         ? await updateCategory(editing.id, input)
         : await createCategory(input);
       if ("error" in res && res.error === "duplicate") {
-        toast.error(t.categories.duplicate);
+        form.setError("name", {
+          type: "server",
+          message: t.categories.duplicate,
+        });
         return;
       }
       toast.success(t.common.save);
@@ -62,55 +63,57 @@ export function CategoryForm({
       open={open}
       onClose={onClose}
       title={editing ? t.categories.edit : t.categories.add}
-      onSubmit={submit}
+      schema={schema}
+      defaultValues={{
+        name: editing?.name ?? "",
+        description: editing?.description ?? "",
+        color: editing?.color ?? null,
+      }}
+      onSubmit={handleSubmit}
       pending={pending}
     >
-      <Field label={t.common.name} htmlFor="cat-name" required>
-        <Input
-          id="cat-name"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          placeholder={t.categories.nameHint}
-          autoFocus
-          required
-        />
-      </Field>
-      <Field label={t.common.description} htmlFor="cat-desc">
-        <Input
-          id="cat-desc"
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-        />
-      </Field>
-      <Field label={t.categories.color}>
-        <div className="flex flex-wrap items-center gap-2">
-          <Button
-            type="button"
-            variant="ghost"
-            aria-label={t.categories.noColor}
-            title={t.categories.noColor}
-            onClick={() => setColor(null)}
-            className={cn(
-              "h-6 w-6 rounded-full border-2 border-dashed border-border-strong p-0",
-              color === null && "ring-2 ring-ring ring-offset-2",
-            )}
-          />
-          {CHART_COLORS.map((hex) => (
-            <Button
-              key={hex}
-              type="button"
-              variant="ghost"
-              aria-label={hex}
-              onClick={() => setColor(hex)}
-              className={cn(
-                "h-6 w-6 rounded-full p-0",
-                color === hex && "ring-2 ring-ring ring-offset-2",
-              )}
-              style={{ backgroundColor: hex }}
-            />
-          ))}
-        </div>
-      </Field>
+      <TextField
+        name="name"
+        label={t.common.name}
+        placeholder={t.categories.nameHint}
+        autoFocus
+        required
+      />
+      <TextField name="description" label={t.common.description} />
+      <Controller
+        name="color"
+        render={({ field }) => (
+          <Field label={t.categories.color}>
+            <div className="flex flex-wrap items-center gap-2">
+              <Button
+                type="button"
+                variant="ghost"
+                aria-label={t.categories.noColor}
+                title={t.categories.noColor}
+                onClick={() => field.onChange(null)}
+                className={cn(
+                  "h-6 w-6 rounded-full border-2 border-dashed border-border-strong p-0",
+                  { "ring-2 ring-ring ring-offset-2": field.value === null },
+                )}
+              />
+              {CHART_COLORS.map((hex) => (
+                <Button
+                  key={hex}
+                  type="button"
+                  variant="ghost"
+                  aria-label={hex}
+                  onClick={() => field.onChange(hex)}
+                  className={cn(
+                    "h-6 w-6 rounded-full p-0",
+                    { "ring-2 ring-ring ring-offset-2": field.value === hex },
+                  )}
+                  style={{ backgroundColor: hex }}
+                />
+              ))}
+            </div>
+          </Field>
+        )}
+      />
     </FormDialog>
   );
 }

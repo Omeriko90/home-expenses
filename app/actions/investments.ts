@@ -5,19 +5,11 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { requireUser } from "@/lib/session";
 import { idSchema, yearSchema } from "@/lib/validate";
+import { holdingSchema, type HoldingInput } from "@/lib/schemas/investments";
 
-const holdingSchema = z.object({
-  portfolioId: z.string().min(1),
-  holdingId: z.string().optional().nullable(),
-  channel: z.string().max(80),
-  instrument: z.string().min(1).max(120),
-  house: z.string().max(120),
-  type: z.string().max(120),
-  year: z.number().int(),
-  value: z.number().min(0),
-});
+export type { HoldingInput };
 
-export async function upsertHolding(input: z.infer<typeof holdingSchema>) {
+export async function upsertHolding(input: HoldingInput) {
   const { householdId } = await requireUser();
   const d = holdingSchema.parse(input);
   // Holdings are scoped through their portfolio.

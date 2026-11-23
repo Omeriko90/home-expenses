@@ -6,3 +6,4 @@ import { z } from "zod";
 // scalar argument before it reaches a query.
 export const idSchema = z.string().min(1).max(64);
 export const yearSchema = z.number().int().min(1970).max(2200);
+export const monthSchema = z.number().int().min(1).max(12);

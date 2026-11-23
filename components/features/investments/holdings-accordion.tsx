@@ -57,18 +57,27 @@ export function HoldingsAccordion({
   return (
     <Accordion
       type="multiple"
+      className="flex flex-col gap-3"
       items={groups.map((g) => ({
         value: g.type || "__none__",
-        triggerClassName: "px-4 py-3",
+        itemClassName:
+          "overflow-hidden rounded-xl border border-border bg-surface shadow-sm shadow-black/[0.03] last:border",
+        triggerClassName:
+          "px-5 py-5 rounded-t-xl data-[state=closed]:rounded-xl",
         trigger: (
           <>
-            <span className="flex flex-1 items-center gap-2">
+            <span className="flex flex-1 flex-col gap-0.5">
               <span className="font-medium">{g.type || t.common.none}</span>
               <span className="text-sm text-muted-foreground">
-                · {g.items.length}
+                {g.items.length} {t.investments.holdings}
               </span>
             </span>
-            <span className="tnum font-medium">{formatMoney(g.sum)}</span>
+            <span className="flex flex-col items-end gap-0.5 text-end">
+              <span className="text-xs text-muted-foreground">
+                {t.investments.totalValue}
+              </span>
+              <span className="tnum font-medium">{formatMoney(g.sum)}</span>
+            </span>
           </>
         ),
         contentClassName: "border-t border-border bg-surface-muted/30",

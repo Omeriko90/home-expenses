@@ -29,9 +29,9 @@ export async function getPortfolioSummaries(
 ): Promise<PortfolioSummary[]> {
   const portfolios = await prisma.portfolio.findMany({
     where: { archived: false, householdId },
-    orderBy: [{ group: "asc" }, { sortOrder: "asc" }],
+    orderBy: [{ group: "asc" }, { createdAt: "asc" }],
     include: {
-      holdings: { include: { snapshots: true }, orderBy: { sortOrder: "asc" } },
+      holdings: { include: { snapshots: true }, orderBy: { createdAt: "asc" } },
       years: true,
     },
   });
