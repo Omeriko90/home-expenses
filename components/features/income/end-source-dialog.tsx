@@ -8,7 +8,6 @@ import {
   createEndSourceFormSchema,
   type EndSourceFormValues,
 } from "@/lib/schemas/income";
-import { useZodForm } from "@/components/ui/form/use-zod-form";
 import { FormDialog } from "@/components/ui/form/form-dialog";
 import { MonthYearField } from "@/components/ui/form/month-year-field";
 import type { IncomeSourceData } from "./types";
@@ -27,9 +26,6 @@ export function EndSourceDialog({
   const { t } = useI18n();
   const [pending, startTransition] = useTransition();
   const schema = useMemo(() => createEndSourceFormSchema(), []);
-  const methods = useZodForm(schema, {
-    defaultValues: { end: { year: defaultYear, month: defaultMonth } },
-  });
 
   function handleSubmit(values: EndSourceFormValues) {
     startTransition(async () => {
@@ -44,7 +40,8 @@ export function EndSourceDialog({
       open
       onClose={onClose}
       title={`${t.income.end} — ${source.name}`}
-      methods={methods}
+      schema={schema}
+      defaultValues={{ end: { year: defaultYear, month: defaultMonth } }}
       onSubmit={handleSubmit}
       pending={pending}
       submitLabel={t.income.end}

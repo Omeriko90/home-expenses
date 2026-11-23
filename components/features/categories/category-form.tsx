@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useTransition } from "react";
-import { Controller } from "react-hook-form";
+import { Controller, type UseFormReturn } from "react-hook-form";
 import { toast } from "sonner";
 import { useI18n } from "@/lib/i18n/context";
 import { cn } from "@/lib/utils";
@@ -13,7 +13,6 @@ import {
 import { CHART_COLORS } from "@/components/shared/charts/chart-palette";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/shared/field";
-import { useZodForm } from "@/components/ui/form/use-zod-form";
 import { FormDialog } from "@/components/ui/form/form-dialog";
 import { TextField } from "@/components/ui/form/text-field";
 import type { Category } from "./category-manager";
@@ -32,15 +31,11 @@ export function CategoryForm({
   const { t } = useI18n();
   const [pending, startTransition] = useTransition();
   const schema = useMemo(() => createCategoryFormSchema(t), [t]);
-  const methods = useZodForm(schema, {
-    defaultValues: {
-      name: editing?.name ?? "",
-      description: editing?.description ?? "",
-      color: editing?.color ?? null,
-    },
-  });
 
-  function handleSubmit(values: CategoryFormValues) {
+  function handleSubmit(
+    values: CategoryFormValues,
+    form: UseFormReturn<CategoryFormValues, unknown, CategoryFormValues>,
+  ) {
     const input = {
       name: values.name,
       description: values.description.trim() || null,
@@ -52,7 +47,7 @@ export function CategoryForm({
         ? await updateCategory(editing.id, input)
         : await createCategory(input);
       if ("error" in res && res.error === "duplicate") {
-        methods.setError("name", {
+        form.setError("name", {
           type: "server",
           message: t.categories.duplicate,
         });
@@ -68,7 +63,12 @@ export function CategoryForm({
       open={open}
       onClose={onClose}
       title={editing ? t.categories.edit : t.categories.add}
-      methods={methods}
+      schema={schema}
+      defaultValues={{
+        name: editing?.name ?? "",
+        description: editing?.description ?? "",
+        color: editing?.color ?? null,
+      }}
       onSubmit={handleSubmit}
       pending={pending}
     >
@@ -82,7 +82,6 @@ export function CategoryForm({
       <TextField name="description" label={t.common.description} />
       <Controller
         name="color"
-        control={methods.control}
         render={({ field }) => (
           <Field label={t.categories.color}>
             <div className="flex flex-wrap items-center gap-2">

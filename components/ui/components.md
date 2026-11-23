@@ -102,13 +102,13 @@ Dialogs are always mounted conditionally by the parent (`{open && <Dialog open o
 
 ## Form components (`components/ui/form/`)
 
-react-hook-form + zod building blocks. Forms define a zod schema, create methods with `useZodForm(schema, { defaultValues })`, and render fields inside `Form` or `FormDialog` (both provide `FormProvider`). Field components read form state from context by `name` and render label/hint/error through the shared `Field` wrapper — no per-field `useState` or manual validation.
+react-hook-form + zod building blocks. `Form` and `FormDialog` own the form state: they take `schema` + `defaultValues`, create the form internally via `useZodForm`, and render children inside a `FormProvider`. `onSubmit(values, form)` receives the parsed values plus the form instance for `setError`/`reset`. Field components read form state from context by `name` and render label/hint/error through the shared `Field` wrapper — no per-field `useState` or manual validation. Fields that need `useWatch`/`setValue` (conditional sections) live in a separate `*-fields.tsx` component rendered as the dialog's children.
 
 | Component | Import path | Wraps |
 | --- | --- | --- |
 | `useZodForm` | `@/components/ui/form/use-zod-form` | `useForm` + `zodResolver`, `mode: "onBlur"` |
-| `Form` | `@/components/ui/form/form` | `FormProvider` + `<form>` for inline/page forms |
-| `FormDialog` | `@/components/ui/form/form-dialog` | RHF dialog form (Dialog + Cancel/Save footer); takes `methods` + typed `onSubmit(values)` |
+| `Form` | `@/components/ui/form/form` | owns the form (`schema` + `defaultValues`); `FormProvider` + `<form>` for inline/page forms |
+| `FormDialog` | `@/components/ui/form/form-dialog` | owns the form (`schema` + `defaultValues`); Dialog + Cancel/Save footer; typed `onSubmit(values, form)` |
 | `TextField` | `@/components/ui/form/text-field` | `Input` via `register` |
 | `TextareaField` | `@/components/ui/form/textarea-field` | native `<textarea>`, `Input` styling |
 | `MoneyField` | `@/components/ui/form/money-field` | `MoneyInput` via `Controller` (empty → `undefined`) |
@@ -126,10 +126,16 @@ const schema = z.object({
 });
 type Values = z.infer<typeof schema>;
 
-const methods = useZodForm(schema, { defaultValues: { title: editing?.title ?? "" } });
-
 {open && (
-  <FormDialog open onClose={onClose} title={t.x.title} methods={methods} onSubmit={handleSubmit} pending={pending}>
+  <FormDialog
+    open
+    onClose={onClose}
+    title={t.x.title}
+    schema={schema}
+    defaultValues={{ title: editing?.title ?? "" }}
+    onSubmit={handleSubmit}
+    pending={pending}
+  >
     <TextField name="title" label={t.x.name} required />
     <MoneyField name="amount" label={t.x.amount} required />
   </FormDialog>

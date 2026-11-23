@@ -3,11 +3,13 @@
 import type { ReactNode } from "react";
 import {
   FormProvider,
+  type DefaultValues,
   type FieldValues,
-  type SubmitHandler,
   type UseFormReturn,
 } from "react-hook-form";
+import type { z } from "zod";
 import { useI18n } from "@/lib/i18n/context";
+import { useZodForm } from "@/components/ui/form/use-zod-form";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -24,7 +26,8 @@ export function FormDialog<
   open,
   onClose,
   title,
-  methods,
+  schema,
+  defaultValues,
   onSubmit,
   pending = false,
   submitLabel,
@@ -34,14 +37,19 @@ export function FormDialog<
   open: boolean;
   onClose: () => void;
   title: ReactNode;
-  methods: UseFormReturn<TInput, unknown, TOutput>;
-  onSubmit: SubmitHandler<TOutput>;
+  schema: z.ZodType<TOutput, TInput>;
+  defaultValues?: DefaultValues<TInput>;
+  onSubmit: (
+    values: TOutput,
+    form: UseFormReturn<TInput, unknown, TOutput>,
+  ) => void;
   pending?: boolean;
   submitLabel?: ReactNode;
   contentClassName?: string;
   children: ReactNode;
 }) {
   const { t } = useI18n();
+  const methods = useZodForm(schema, { defaultValues });
   return (
     <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
       <DialogContent className={contentClassName}>
@@ -50,7 +58,9 @@ export function FormDialog<
         </DialogHeader>
         <FormProvider {...methods}>
           <form
-            onSubmit={methods.handleSubmit(onSubmit)}
+            onSubmit={methods.handleSubmit((values) =>
+              onSubmit(values, methods),
+            )}
             className="flex flex-col gap-4"
             noValidate
           >

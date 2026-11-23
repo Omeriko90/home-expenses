@@ -8,7 +8,6 @@ import {
   createOverrideFormSchema,
   type OverrideFormValues,
 } from "@/lib/schemas/income";
-import { useZodForm } from "@/components/ui/form/use-zod-form";
 import { FormDialog } from "@/components/ui/form/form-dialog";
 import { MoneyField } from "@/components/ui/form/money-field";
 import { Button } from "@/components/ui/button";
@@ -32,11 +31,6 @@ export function OverrideDialog({
   const { t } = useI18n();
   const [pending, startTransition] = useTransition();
   const schema = useMemo(() => createOverrideFormSchema(t), [t]);
-  const methods = useZodForm(schema, {
-    defaultValues: {
-      amount: existingOverride?.amount ?? currentAmount ?? undefined,
-    },
-  });
 
   function handleSubmit(values: OverrideFormValues) {
     startTransition(async () => {
@@ -64,7 +58,10 @@ export function OverrideDialog({
       open
       onClose={onClose}
       title={`${source.name} — ${t.months[month - 1]} ${year}`}
-      methods={methods}
+      schema={schema}
+      defaultValues={{
+        amount: existingOverride?.amount ?? currentAmount ?? undefined,
+      }}
       onSubmit={handleSubmit}
       pending={pending}
     >

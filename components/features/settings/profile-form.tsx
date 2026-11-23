@@ -13,7 +13,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Field } from "@/components/shared/field";
-import { useZodForm } from "@/components/ui/form/use-zod-form";
 import { Form } from "@/components/ui/form/form";
 import { TextField } from "@/components/ui/form/text-field";
 import { SelectField } from "@/components/ui/form/select-field";
@@ -23,9 +22,6 @@ export function ProfileForm({ user }: { user: SettingsUser }) {
   const { t } = useI18n();
   const [pending, startTransition] = useTransition();
   const schema = useMemo(() => createProfileSchema(t), [t]);
-  const methods = useZodForm(schema, {
-    defaultValues: { name: user.name, locale: user.locale as Locale },
-  });
 
   function handleSubmit(values: ProfileInput) {
     startTransition(async () => {
@@ -40,7 +36,8 @@ export function ProfileForm({ user }: { user: SettingsUser }) {
     <Card>
       <CardContent className="pt-6">
         <Form
-          methods={methods}
+          schema={schema}
+          defaultValues={{ name: user.name, locale: user.locale as Locale }}
           onSubmit={handleSubmit}
           className="max-w-md"
         >
