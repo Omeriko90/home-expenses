@@ -1,6 +1,6 @@
 export type Locale = "he" | "en";
 
-export const LOCALES: Locale[] = ["he", "en"];
+export const LOCALES = ["he", "en"] as const satisfies readonly Locale[];
 export const DEFAULT_LOCALE: Locale = "he";
 
 export function dir(locale: Locale): "rtl" | "ltr" {
