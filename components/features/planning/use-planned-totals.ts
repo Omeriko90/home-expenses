@@ -4,10 +4,8 @@ import { useMemo } from "react";
 import type { ForecastData, MonthKey } from "./types";
 
 export type PlannedTotals = {
-  /** Sum of the included items' impact per range month. */
   planned: number[];
   totalPlanned: number;
-  /** The month with the lowest net (income − baseline − planned). */
   worstMonth: MonthKey;
   worstMonthSpend: number;
 };

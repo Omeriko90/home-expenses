@@ -9,8 +9,6 @@ import { PlannedItemStatuses, PlannedItemTypes } from "@/lib/forecast";
 
 const monthSchema = z.number().int().min(1).max(12);
 
-// Absolute month index — lets start/end pairs that cross year boundaries be
-// compared chronologically as plain numbers.
 function toMonthIndex(year: number, month: number): number {
   return year * 12 + month;
 }

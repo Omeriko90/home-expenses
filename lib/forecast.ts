@@ -6,7 +6,6 @@ export const VERDICT_FITS_MAX = 0.85;
 export const VERDICT_TIGHT_MAX = 1.0;
 
 export const PlannedItemTypes = {
-  // Values must match the Prisma `PlannedItemType` enum.
   OneTime: "ONE_TIME",
   Recurring: "RECURRING",
   Installments: "INSTALLMENTS",
@@ -15,7 +14,6 @@ export type PlannedItemType =
   (typeof PlannedItemTypes)[keyof typeof PlannedItemTypes];
 
 export const PlannedItemStatuses = {
-  // Values must match the Prisma `PlannedItemStatus` enum.
   Active: "ACTIVE",
   Done: "DONE",
   Cancelled: "CANCELLED",
@@ -23,7 +21,6 @@ export const PlannedItemStatuses = {
 export type PlannedItemStatus =
   (typeof PlannedItemStatuses)[keyof typeof PlannedItemStatuses];
 
-/** Forecast range in months, rolling from the current month. */
 export type RangeMonths = 6 | 12 | 24;
 
 export type MonthKey = { year: number; month: number };
@@ -71,13 +68,10 @@ export type ForecastData = {
   items: ForecastItem[];
 };
 
-// Months are compared and iterated as a single absolute index
-// (year * 12 + zero-based month) so ranges can cross year boundaries.
 function toMonthIndex(key: MonthKey): number {
   return key.year * 12 + (key.month - 1);
 }
 
-/** Consecutive months starting at `from`, e.g. 11/26, 12/26, 01/27, … */
 export function buildMonthRange(from: MonthKey, length: number): MonthKey[] {
   const start = toMonthIndex(from);
   return Array.from({ length }, (_, offset) => {
@@ -86,7 +80,6 @@ export function buildMonthRange(from: MonthKey, length: number): MonthKey[] {
   });
 }
 
-/** Monthly cost series of one planned item across the range months. */
 export function expandItemImpact(
   item: PlannedItemSpec,
   months: MonthKey[],
@@ -96,11 +89,8 @@ export function expandItemImpact(
     const index = toMonthIndex(month);
     switch (item.type) {
       case PlannedItemTypes.OneTime:
-        // The full amount lands once, in the start month.
         return index === start ? item.amount : 0;
       case PlannedItemTypes.Recurring: {
-        // The monthly amount applies from the start month through the end
-        // month (inclusive); with no end it runs through the whole range.
         if (index < start) return 0;
         if (item.endYear != null && item.endMonth != null) {
           const end = item.endYear * 12 + (item.endMonth - 1);
@@ -109,9 +99,6 @@ export function expandItemImpact(
         return item.amount;
       }
       case PlannedItemTypes.Installments: {
-        // `amount` is the TOTAL, split into `installments` equal monthly
-        // payments rounded to cents; the last payment absorbs the rounding
-        // remainder so the series sums exactly to the total.
         const count = item.installments ?? 1;
         const offset = index - start;
         if (offset < 0 || offset >= count) return 0;
@@ -126,8 +113,6 @@ export function expandItemImpact(
   });
 }
 
-/** The last N fully completed months (the current partial month is excluded
- *  because it would drag the average down). */
 function completedWindowMonths(current: MonthKey): MonthKey[] {
   const firstWindowMonth = {
     year:
@@ -144,9 +129,6 @@ type WindowRow = {
   _sum: { amount: unknown };
 };
 
-/** Average monthly spend per category over the window. The divisor is the
- *  count of window months that have any transactions (not a flat N), so a
- *  household with little history still gets a sane average. */
 function computeBaseline(
   windowRows: WindowRow[],
   expenseCategoryIds: Set<string>,
@@ -184,7 +166,6 @@ type BudgetRow = { categoryId: string; year: number; monthlyAmount: unknown };
 type BudgetIndex = {
   budgetsByCategoryYear: Map<string, Map<number, number>>;
   totalBudgetByYear: Record<number, number>;
-  /** Baseline spend summed over budgeted categories only, per year. */
   budgetedBaselineByYear: Record<number, number>;
 };
 
@@ -212,12 +193,6 @@ function indexBudgets(
   return { budgetsByCategoryYear, totalBudgetByYear, budgetedBaselineByYear };
 }
 
-/** Spending headroom per range month, or null when the month is
- *  unmeasurable. Uses real income headroom once income exists; until then,
- *  budget headroom — budgets vs baseline restricted to budgeted categories
- *  (comparing against the total baseline would punish households that budget
- *  only some categories). Years without budgets are unmeasurable, not
- *  negative. */
 function computeMonthlyCapacity(
   months: MonthKey[],
   income: number[],
@@ -234,10 +209,6 @@ function computeMonthlyCapacity(
   });
 }
 
-/** Verdict for one item, judged against the JOINT load of all active items
- *  (an item that fits alone may not fit alongside the others). `unknown`
- *  when the item has no in-range impact or none of its months are
- *  measurable. */
 function resolveVerdict(
   itemImpact: number[],
   totalPlanned: number[],
@@ -258,8 +229,6 @@ function resolveVerdict(
   return "over";
 }
 
-/** Per affected month: how the item's planned spend stacks on the category's
- *  average spend against that year's monthly budget. */
 function buildBudgetImpact(
   categoryId: string,
   months: MonthKey[],

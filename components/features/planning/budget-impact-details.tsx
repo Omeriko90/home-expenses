@@ -5,7 +5,6 @@ import { formatMoney } from "@/lib/utils";
 import { ProgressBar } from "@/components/shared/progress-bar";
 import { formatMonthKey, type ForecastItem } from "./types";
 
-// Rendered only when the item has budget-impact months — the parent checks.
 export function BudgetImpactDetails({ item }: { item: ForecastItem }) {
   const { t } = useI18n();
 

@@ -14,7 +14,6 @@ import {
   type ArchivedItem,
 } from "./types";
 
-// Rendered only when there are archived items — the parent checks.
 export function ArchivedItems({
   items,
   onRestore,
