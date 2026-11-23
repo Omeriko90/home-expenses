@@ -56,16 +56,27 @@ export function PlannedItemRow({
 
   const hasBudgetImpact = !!item.budgetImpact && item.budgetImpact.length > 0;
 
+  function handleRowClick() {
+    if (hasBudgetImpact) setExpanded((wasExpanded) => !wasExpanded);
+  }
+
   return (
     <div className="flex flex-col gap-2 px-4 py-3">
-      <div className="flex items-center gap-3">
-        <Tooltip content={t.planning.include}>
-          <Checkbox
-            checked={included}
-            onCheckedChange={(checked) => onIncludedChange(checked === true)}
-            aria-label={t.planning.include}
-          />
-        </Tooltip>
+      <div
+        className={cn("flex items-center gap-3", {
+          "cursor-pointer": hasBudgetImpact,
+        })}
+        onClick={handleRowClick}
+      >
+        <span onClick={(event) => event.stopPropagation()}>
+          <Tooltip content={t.planning.include}>
+            <Checkbox
+              checked={included}
+              onCheckedChange={(checked) => onIncludedChange(checked === true)}
+              aria-label={t.planning.include}
+            />
+          </Tooltip>
+        </span>
         <div
           className={cn("flex min-w-0 flex-1 flex-col gap-0.5", {
             "opacity-50": !included,
@@ -89,16 +100,15 @@ export function PlannedItemRow({
         </div>
         <div className="flex shrink-0 items-center gap-2">
           <VerdictBadge verdict={item.verdict} />
-          <PlannedItemActionsMenu
-            onEdit={onEdit}
-            onDelete={onDelete}
-            onSetStatus={onSetStatus}
-          />
+          <span onClick={(event) => event.stopPropagation()}>
+            <PlannedItemActionsMenu
+              onEdit={onEdit}
+              onDelete={onDelete}
+              onSetStatus={onSetStatus}
+            />
+          </span>
           {hasBudgetImpact && (
-            <IconButton
-              label={t.planning.budgetImpact}
-              onClick={() => setExpanded((wasExpanded) => !wasExpanded)}
-            >
+            <IconButton label={t.planning.budgetImpact}>
               <ChevronDown
                 className={cn("transition-transform", expanded && "rotate-180")}
               />

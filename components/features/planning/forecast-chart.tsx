@@ -64,7 +64,12 @@ export function ForecastChart({
           width={56}
         />
         <Tooltip
-          content={<ChartTooltip />}
+          content={
+            <ChartTooltip
+              totalLabel={t.common.total}
+              totalKeys={["baseline", "planned"]}
+            />
+          }
           shared
           cursor={{ fill: GRID_COLOR, opacity: 0.4 }}
         />
