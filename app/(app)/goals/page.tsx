@@ -19,7 +19,8 @@ export default async function GoalsPage({
       where: { year, householdId },
       orderBy: { createdAt: "asc" },
       include: {
-        milestones: { orderBy: { sortOrder: "asc" } },
+        // id tie-breaks bulk-created milestones that share a createdAt timestamp
+        milestones: { orderBy: [{ createdAt: "asc" }, { id: "asc" }] },
         linkCategory: { select: { id: true, name: true } },
       },
     }),

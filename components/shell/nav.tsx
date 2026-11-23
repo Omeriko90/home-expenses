@@ -5,9 +5,11 @@ import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
   Receipt,
+  Banknote,
   Tags,
   Wallet,
   Target,
+  CalendarClock,
   TrendingUp,
   Settings,
 } from "lucide-react";
@@ -17,9 +19,11 @@ import { cn } from "@/lib/utils";
 const items = [
   { href: "/dashboard", key: "dashboard", icon: LayoutDashboard },
   { href: "/transactions", key: "transactions", icon: Receipt },
+  { href: "/income", key: "income", icon: Banknote },
   { href: "/categories", key: "categories", icon: Tags },
   { href: "/budgets", key: "budgets", icon: Wallet },
   { href: "/goals", key: "goals", icon: Target },
+  { href: "/planning", key: "planning", icon: CalendarClock },
   { href: "/investments", key: "investments", icon: TrendingUp },
   { href: "/settings", key: "settings", icon: Settings },
 ] as const;

@@ -13,7 +13,8 @@
     "db:generate": "prisma generate",
     "db:studio": "prisma studio",
     "seed": "tsx prisma/seed.ts",
-    "create-user": "tsx scripts/create-user.ts"
+    "create-user": "tsx scripts/create-user.ts",
+    "test": "vitest run"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
@@ -68,6 +69,7 @@
     "prisma": "^6.19.3",
     "tailwindcss": "4.3.3",
     "tsx": "^4.23.15",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^3.2.7"
   }
 }

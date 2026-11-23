@@ -15,13 +15,26 @@ export function ChartTooltip({
   payload,
   label,
   formatter = formatMoney,
+  totalLabel,
+  totalKeys,
 }: {
   active?: boolean;
   payload?: TooltipEntry[];
   label?: string | number;
   formatter?: (value: number) => string;
+  totalLabel?: string;
+  totalKeys?: string[];
 }) {
   if (!active || !payload?.length) return null;
+  const totalEntries = totalKeys
+    ? payload.filter(
+        (entry) => entry.dataKey != null && totalKeys.includes(String(entry.dataKey)),
+      )
+    : payload;
+  const total = totalEntries.reduce(
+    (sum, entry) => sum + (entry.value == null ? 0 : Number(entry.value)),
+    0,
+  );
   return (
     <div
       dir="rtl"
@@ -45,6 +58,12 @@ export function ChartTooltip({
             </span>
           </li>
         ))}
+        {totalLabel && (
+          <li className="mt-1 flex items-center justify-between gap-4 border-t border-border pt-1">
+            <span className="font-medium">{totalLabel}</span>
+            <span className="tnum font-semibold">{formatter(total)}</span>
+          </li>
+        )}
       </ul>
     </div>
   );
