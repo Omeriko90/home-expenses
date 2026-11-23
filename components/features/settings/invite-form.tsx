@@ -11,7 +11,7 @@ import {
   type InviteInput,
 } from "@/lib/schemas/settings";
 import { useZodForm } from "@/components/ui/form/use-zod-form";
-import { RhfFormDialog } from "@/components/ui/form/form-dialog";
+import { FormDialog } from "@/components/ui/form/form-dialog";
 import { TextField } from "@/components/ui/form/text-field";
 import { SelectField } from "@/components/ui/form/select-field";
 
@@ -64,7 +64,7 @@ export function InviteForm({
   }
 
   return (
-    <RhfFormDialog
+    <FormDialog
       open={open}
       onClose={onClose}
       title={t.settings.inviteTitle}
@@ -89,6 +89,6 @@ export function InviteForm({
           { value: UserRoles.Admin, label: t.settings.admin },
         ]}
       />
-    </RhfFormDialog>
+    </FormDialog>
   );
 }

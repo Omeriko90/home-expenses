@@ -9,7 +9,7 @@ import {
   type OverrideFormValues,
 } from "@/lib/schemas/income";
 import { useZodForm } from "@/components/ui/form/use-zod-form";
-import { RhfFormDialog } from "@/components/ui/form/form-dialog";
+import { FormDialog } from "@/components/ui/form/form-dialog";
 import { MoneyField } from "@/components/ui/form/money-field";
 import { Button } from "@/components/ui/button";
 import type { IncomeEntryData, IncomeSourceData } from "./types";
@@ -60,7 +60,7 @@ export function OverrideDialog({
   }
 
   return (
-    <RhfFormDialog
+    <FormDialog
       open
       onClose={onClose}
       title={`${source.name} — ${t.months[month - 1]} ${year}`}
@@ -85,6 +85,6 @@ export function OverrideDialog({
           {t.income.clearOverride}
         </Button>
       )}
-    </RhfFormDialog>
+    </FormDialog>
   );
 }

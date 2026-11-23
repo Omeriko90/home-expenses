@@ -16,7 +16,7 @@ import {
 import { formatMoney } from "@/lib/utils";
 import { EndSelections } from "@/lib/schemas/common";
 import { useZodForm } from "@/components/ui/form/use-zod-form";
-import { RhfFormDialog } from "@/components/ui/form/form-dialog";
+import { FormDialog } from "@/components/ui/form/form-dialog";
 import { TextField } from "@/components/ui/form/text-field";
 import { MoneyField } from "@/components/ui/form/money-field";
 import { NumberField } from "@/components/ui/form/number-field";
@@ -148,7 +148,7 @@ export function PlannedItemForm({
   }
 
   return (
-    <RhfFormDialog
+    <FormDialog
       open={open}
       onClose={onClose}
       title={editing ? t.planning.edit : t.planning.add}
@@ -232,6 +232,6 @@ export function PlannedItemForm({
       />
 
       <TextField name="note" label={t.transactions.note} />
-    </RhfFormDialog>
+    </FormDialog>
   );
 }

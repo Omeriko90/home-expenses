@@ -9,7 +9,7 @@ import {
   type DepositsFormValues,
 } from "@/lib/schemas/investments";
 import { useZodForm } from "@/components/ui/form/use-zod-form";
-import { RhfFormDialog } from "@/components/ui/form/form-dialog";
+import { FormDialog } from "@/components/ui/form/form-dialog";
 import { MoneyField } from "@/components/ui/form/money-field";
 
 export function DepositsForm({
@@ -41,7 +41,7 @@ export function DepositsForm({
   }
 
   return (
-    <RhfFormDialog
+    <FormDialog
       open={open}
       onClose={onClose}
       title={`${t.investments.setDeposits} (${year})`}
@@ -51,6 +51,6 @@ export function DepositsForm({
       contentClassName="max-w-sm"
     >
       <MoneyField name="value" label={t.investments.deposits} required />
-    </RhfFormDialog>
+    </FormDialog>
   );
 }

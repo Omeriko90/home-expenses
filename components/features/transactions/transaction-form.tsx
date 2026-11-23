@@ -11,7 +11,7 @@ import {
 } from "@/lib/schemas/transactions";
 import type { AutocompleteOption } from "@/components/shared/autocomplete";
 import { useZodForm } from "@/components/ui/form/use-zod-form";
-import { RhfFormDialog } from "@/components/ui/form/form-dialog";
+import { FormDialog } from "@/components/ui/form/form-dialog";
 import { TextField } from "@/components/ui/form/text-field";
 import { MoneyField } from "@/components/ui/form/money-field";
 import { DateField } from "@/components/ui/form/date-field";
@@ -103,7 +103,7 @@ export function TransactionForm({
   }, [categories, editing, t]);
 
   return (
-    <RhfFormDialog
+    <FormDialog
       open={open}
       onClose={onClose}
       title={editing ? t.transactions.edit : t.transactions.add}
@@ -132,6 +132,6 @@ export function TransactionForm({
         ]}
       />
       <TextField name="note" label={t.transactions.note} />
-    </RhfFormDialog>
+    </FormDialog>
   );
 }

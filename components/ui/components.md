@@ -102,13 +102,13 @@ Dialogs are always mounted conditionally by the parent (`{open && <Dialog open o
 
 ## Form components (`components/ui/form/`)
 
-react-hook-form + zod building blocks. Forms define a zod schema, create methods with `useZodForm(schema, { defaultValues })`, and render fields inside `Form` or `RhfFormDialog` (both provide `FormProvider`). Field components read form state from context by `name` and render label/hint/error through the shared `Field` wrapper — no per-field `useState` or manual validation.
+react-hook-form + zod building blocks. Forms define a zod schema, create methods with `useZodForm(schema, { defaultValues })`, and render fields inside `Form` or `FormDialog` (both provide `FormProvider`). Field components read form state from context by `name` and render label/hint/error through the shared `Field` wrapper — no per-field `useState` or manual validation.
 
 | Component | Import path | Wraps |
 | --- | --- | --- |
 | `useZodForm` | `@/components/ui/form/use-zod-form` | `useForm` + `zodResolver`, `mode: "onBlur"` |
 | `Form` | `@/components/ui/form/form` | `FormProvider` + `<form>` for inline/page forms |
-| `RhfFormDialog` | `@/components/ui/form/form-dialog` | RHF-aware `FormDialog` twin (Dialog + Cancel/Save footer); takes `methods` + typed `onSubmit(values)` |
+| `FormDialog` | `@/components/ui/form/form-dialog` | RHF dialog form (Dialog + Cancel/Save footer); takes `methods` + typed `onSubmit(values)` |
 | `TextField` | `@/components/ui/form/text-field` | `Input` via `register` |
 | `TextareaField` | `@/components/ui/form/textarea-field` | native `<textarea>`, `Input` styling |
 | `MoneyField` | `@/components/ui/form/money-field` | `MoneyInput` via `Controller` (empty → `undefined`) |
@@ -129,20 +129,19 @@ type Values = z.infer<typeof schema>;
 const methods = useZodForm(schema, { defaultValues: { title: editing?.title ?? "" } });
 
 {open && (
-  <RhfFormDialog open onClose={onClose} title={t.x.title} methods={methods} onSubmit={handleSubmit} pending={pending}>
+  <FormDialog open onClose={onClose} title={t.x.title} methods={methods} onSubmit={handleSubmit} pending={pending}>
     <TextField name="title" label={t.x.name} required />
     <MoneyField name="amount" label={t.x.amount} required />
-  </RhfFormDialog>
+  </FormDialog>
 )}
 ```
 
-Legacy `FormDialog`/manual-`useState` forms migrate to these incrementally; new forms should use them from the start.
+All forms use these building blocks; there is no non-RHF form dialog.
 
 ## Shared app components (`components/shared/`)
 
 Higher-level reusable pieces built on the primitives:
 
-- `FormDialog` (`@/components/shared/form-dialog`) — Dialog + title + `<form>` + Cancel/Save footer; wrap form fields as children. Takes `onClose`. Mount conditionally: `{open && <FormDialog open onClose={...} />}`.
 - `ConfirmDialog` (`@/components/shared/confirm-dialog`) — confirm/cancel prompt, takes `onClose`.
 - `EditDeleteActions` (`@/components/shared/edit-delete-actions`) — hover-revealed pencil/trash row actions.
 - `TotalsFooterRow` (`@/components/shared/totals-footer-row`) — table-card totals footer strip.
