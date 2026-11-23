@@ -116,6 +116,8 @@ react-hook-form + zod building blocks. Forms define a zod schema, create methods
 | `DateField` | `@/components/ui/form/date-field` | `DatePicker` via `Controller` (`Date \| undefined`) |
 | `AutocompleteField` | `@/components/ui/form/autocomplete-field` | `Autocomplete` via `Controller`; validates on change (popover never blurs) |
 | `CheckboxField` | `@/components/ui/form/checkbox-field` | `Checkbox` via `Controller`, inline label |
+| `NumberField` | `@/components/ui/form/number-field` | `Input type="number"` via `Controller` (empty → `undefined`, else `Number`) |
+| `MonthYearField` | `@/components/ui/form/month-year-field` | shared month-year popover via `Controller`; object value `{ year, month }` (`monthYearSchema`), validates on pick |
 
 ```tsx
 const schema = z.object({

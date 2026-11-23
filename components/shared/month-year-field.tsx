@@ -37,6 +37,7 @@ export function MonthYearField({
       <PopoverTrigger asChild>
         <Button
           id={id}
+          type="button"
           variant="outline"
           className="w-full justify-start gap-2 bg-surface font-normal shadow-sm"
         >
