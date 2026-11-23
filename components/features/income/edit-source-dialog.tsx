@@ -5,6 +5,8 @@ import { toast } from "sonner";
 import { useI18n } from "@/lib/i18n/context";
 import {
   addRaise,
+  endIncomeSource,
+  reactivateIncomeSource,
   renameIncomeSource,
   setMonthOverride,
 } from "@/app/actions/income";
@@ -39,9 +41,16 @@ export function EditSourceDialog({
   const [applyMode, setApplyMode] = useState<ApplyMode>("permanent");
   const [fromYear, setFromYear] = useState(year);
   const [fromMonth, setFromMonth] = useState(month);
+  const [hasEnd, setHasEnd] = useState(source.endYear !== null);
+  const [endYear, setEndYear] = useState(source.endYear ?? year);
+  const [endMonth, setEndMonth] = useState(source.endMonth ?? month);
 
   const amountChanged =
     typeof amount === "number" && amount !== currentAmount;
+  const endChanged =
+    hasEnd !== (source.endYear !== null) ||
+    (hasEnd &&
+      (endYear !== source.endYear || endMonth !== source.endMonth));
 
   function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -71,6 +80,13 @@ export function EditSourceDialog({
             amount,
             note: null,
           });
+        }
+      }
+      if (endChanged) {
+        if (hasEnd) {
+          await endIncomeSource(source.id, { year: endYear, month: endMonth });
+        } else {
+          await reactivateIncomeSource(source.id);
         }
       }
       toast.success(t.common.save);
@@ -131,6 +147,34 @@ export function EditSourceDialog({
           )}
         </>
       )}
+
+      <Field label={t.income.endMonth}>
+        <div className="flex flex-col gap-2">
+          <Select
+            value={hasEnd ? "custom" : "none"}
+            onValueChange={(v) => setHasEnd(v === "custom")}
+            options={[
+              { value: "none", label: t.income.noEnd },
+              { value: "custom", label: t.income.pickEndMonth },
+            ]}
+          />
+          {hasEnd && (
+            <>
+              <MonthYearField
+                year={endYear}
+                month={endMonth}
+                onChange={(y, m) => {
+                  setEndYear(y);
+                  setEndMonth(m);
+                }}
+              />
+              <p className="text-sm text-muted-foreground">
+                {t.income.endHint}
+              </p>
+            </>
+          )}
+        </div>
+      </Field>
     </FormDialog>
   );
 }
