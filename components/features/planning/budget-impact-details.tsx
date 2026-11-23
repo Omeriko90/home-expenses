@@ -37,9 +37,8 @@ export function BudgetImpactDetails({ item }: { item: ForecastItem }) {
                 </span>
                 <span className="text-muted-foreground">
                   {" "}
-                  {t.planning.vsBudget} (
-                  {impactMonth.budget > 0 ? formatMoney(impactMonth.budget) : "—"}
-                  )
+                  {t.planning.vsBudget}{" "}
+                  {`(${impactMonth.budget > 0 ? formatMoney(impactMonth.budget) : "—"})`}
                 </span>
               </span>
             </div>
