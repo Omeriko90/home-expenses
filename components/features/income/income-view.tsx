@@ -128,7 +128,7 @@ export function IncomeView({
     <div className="flex flex-col gap-6">
       <PageHeader
         actions={
-          <div className="flex w-full flex-wrap items-center gap-2">
+          <div className="flex w-full items-center gap-2">
             <ViewToggle view={view} />
             {view === View.Month ? (
               <MonthYearPicker year={year} month={month} />
@@ -136,8 +136,13 @@ export function IncomeView({
               <YearPicker year={year} />
             )}
             <div className="ms-auto">
-              <Button onClick={() => setAddOpen(true)}>
-                <Plus /> {t.income.add}
+              <Button
+                onClick={() => setAddOpen(true)}
+                aria-label={t.income.add}
+                className="px-3 sm:px-4"
+              >
+                <Plus />
+                <span className="hidden sm:inline">{t.income.add}</span>
               </Button>
             </div>
           </div>
@@ -156,8 +161,13 @@ export function IncomeView({
           accent="expense"
         />
         <StatCard
-          label={t.income.leftOver}
+          label={
+            view === View.Month ? t.income.remaining : t.income.remainingYear
+          }
           value={formatMoney(income - expenses)}
+          valueClassName={
+            income - expenses >= 0 ? "text-success" : "text-danger"
+          }
           accent="primary"
         />
       </div>

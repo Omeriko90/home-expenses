@@ -61,7 +61,7 @@ export function SummaryView({
             accent="income"
             sub={
               <span className="text-muted-foreground">
-                {t.income.leftOver}: {formatMoney(income - totals.current)}
+                {t.income.remainingYear}: {formatMoney(income - totals.current)}
               </span>
             }
           />
@@ -127,6 +127,7 @@ export function SummaryView({
                   ? t.summary.chartSpendPieDescMoney
                   : t.summary.chartSpendPieDescPercent
               }
+              contentClassName="h-auto"
             >
               <SharePieChart
                 data={spend
@@ -159,6 +160,7 @@ export function SummaryView({
                     : t.summary.chartMonthlyByCategoryDescPercent
                 }
                 className="lg:col-span-2"
+                contentClassName="h-auto"
               >
                 <CategoryMonthlyLineChart monthly={monthly} mode={mode} />
               </ChartCard>
