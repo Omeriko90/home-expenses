@@ -31,7 +31,7 @@ export async function createGoal(input: GoalInput) {
           ? {
               create: d.milestones
                 .filter((m) => m.trim())
-                .map((title, i) => ({ title: title.trim(), sortOrder: i })),
+                .map((title) => ({ title: title.trim() })),
             }
           : undefined,
     },
@@ -92,9 +92,8 @@ export async function addMilestone(goalId: string, title: string) {
     select: { id: true },
   });
   if (!goal) return { error: "notFound" as const };
-  const count = await prisma.goalMilestone.count({ where: { goalId } });
   await prisma.goalMilestone.create({
-    data: { goalId, title, sortOrder: count },
+    data: { goalId, title },
   });
   revalidatePath("/goals");
   return { ok: true as const };

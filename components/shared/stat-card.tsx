@@ -5,11 +5,13 @@ import { cn } from "@/lib/utils";
 export function StatCard({
   label,
   value,
+  valueClassName,
   sub,
   accent,
 }: {
   label: React.ReactNode;
   value: string;
+  valueClassName?: string;
   sub?: React.ReactNode;
   accent?: "investment" | "expense" | "income" | "primary";
 }) {
@@ -26,7 +28,14 @@ export function StatCard({
       <div className={cn("absolute inset-y-0 start-0 w-1", bar)} />
       <div className="flex flex-col gap-1 ps-2">
         <span className="text-sm text-muted-foreground">{label}</span>
-        <span className="text-2xl font-semibold tnum tracking-tight">{value}</span>
+        <span
+          className={cn(
+            "text-2xl font-semibold tnum tracking-tight",
+            valueClassName,
+          )}
+        >
+          {value}
+        </span>
         {sub && <div className="text-sm">{sub}</div>}
       </div>
     </Card>
