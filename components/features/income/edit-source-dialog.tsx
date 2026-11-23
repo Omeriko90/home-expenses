@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useTransition, type FormEvent } from "react";
+import { useMemo, useTransition } from "react";
+import { useWatch } from "react-hook-form";
 import { toast } from "sonner";
 import { useI18n } from "@/lib/i18n/context";
 import {
@@ -10,15 +11,19 @@ import {
   renameIncomeSource,
   setMonthOverride,
 } from "@/app/actions/income";
-import { FormDialog } from "@/components/shared/form-dialog";
-import { Field } from "@/components/shared/field";
-import { MoneyInput } from "@/components/shared/money-input";
-import { MonthYearField } from "@/components/shared/month-year-field";
-import { Input } from "@/components/ui/input";
-import { Select } from "@/components/ui/select/Select";
+import {
+  ApplyModes,
+  createEditSourceFormSchema,
+  type EditSourceFormValues,
+} from "@/lib/schemas/income";
+import { EndSelections } from "@/lib/schemas/common";
+import { useZodForm } from "@/components/ui/form/use-zod-form";
+import { RhfFormDialog } from "@/components/ui/form/form-dialog";
+import { TextField } from "@/components/ui/form/text-field";
+import { MoneyField } from "@/components/ui/form/money-field";
+import { SelectField } from "@/components/ui/form/select-field";
+import { MonthYearField } from "@/components/ui/form/month-year-field";
 import type { IncomeSourceData } from "./types";
-
-type ApplyMode = "month" | "permanent";
 
 export function EditSourceDialog({
   source,
@@ -36,55 +41,66 @@ export function EditSourceDialog({
 }) {
   const { t } = useI18n();
   const [pending, startTransition] = useTransition();
-  const [name, setName] = useState(source.name);
-  const [amount, setAmount] = useState<number | "">(currentAmount ?? "");
-  const [applyMode, setApplyMode] = useState<ApplyMode>("permanent");
-  const [fromYear, setFromYear] = useState(year);
-  const [fromMonth, setFromMonth] = useState(month);
-  const [hasEnd, setHasEnd] = useState(source.endYear !== null);
-  const [endYear, setEndYear] = useState(source.endYear ?? year);
-  const [endMonth, setEndMonth] = useState(source.endMonth ?? month);
+  const schema = useMemo(() => createEditSourceFormSchema(t), [t]);
+  const methods = useZodForm(schema, {
+    defaultValues: {
+      name: source.name,
+      amount: currentAmount ?? undefined,
+      applyMode: ApplyModes.Permanent,
+      from: { year, month },
+      hasEnd: source.endYear !== null ? EndSelections.Custom : EndSelections.None,
+      end: {
+        year: source.endYear ?? year,
+        month: source.endMonth ?? month,
+      },
+    },
+  });
+  const amount = useWatch({ control: methods.control, name: "amount" });
+  const applyMode = useWatch({ control: methods.control, name: "applyMode" });
+  const hasEnd = useWatch({ control: methods.control, name: "hasEnd" });
+  const amountChanged = typeof amount === "number" && amount !== currentAmount;
 
-  const amountChanged =
-    typeof amount === "number" && amount !== currentAmount;
-  const endChanged =
-    hasEnd !== (source.endYear !== null) ||
-    (hasEnd &&
-      (endYear !== source.endYear || endMonth !== source.endMonth));
-
-  function handleSubmit(e: FormEvent) {
-    e.preventDefault();
-    if (!name.trim() || typeof amount !== "number") {
-      toast.error(t.common.noData);
-      return;
-    }
+  function handleSubmit(values: EditSourceFormValues) {
+    const endChanged =
+      (values.hasEnd === EndSelections.Custom) !== (source.endYear !== null) ||
+      (values.hasEnd === EndSelections.Custom &&
+        (values.end.year !== source.endYear ||
+          values.end.month !== source.endMonth));
     startTransition(async () => {
-      if (name.trim() !== source.name) {
-        const result = await renameIncomeSource(source.id, name.trim());
+      if (values.name !== source.name) {
+        const result = await renameIncomeSource(source.id, values.name);
         if ("error" in result) {
-          toast.error(
-            result.error === "duplicateName"
-              ? t.income.duplicate
-              : t.common.noData,
-          );
+          if (result.error === "duplicateName") {
+            methods.setError("name", {
+              type: "server",
+              message: t.income.duplicate,
+            });
+          } else {
+            toast.error(t.common.noData);
+          }
           return;
         }
       }
-      if (amountChanged) {
-        if (applyMode === "month") {
-          await setMonthOverride(source.id, { year, month, amount, note: null });
+      if (values.amount !== currentAmount) {
+        if (values.applyMode === ApplyModes.Month) {
+          await setMonthOverride(source.id, {
+            year,
+            month,
+            amount: values.amount,
+            note: null,
+          });
         } else {
           await addRaise(source.id, {
-            year: fromYear,
-            month: fromMonth,
-            amount,
+            year: values.from.year,
+            month: values.from.month,
+            amount: values.amount,
             note: null,
           });
         }
       }
       if (endChanged) {
-        if (hasEnd) {
-          await endIncomeSource(source.id, { year: endYear, month: endMonth });
+        if (values.hasEnd === EndSelections.Custom) {
+          await endIncomeSource(source.id, values.end);
         } else {
           await reactivateIncomeSource(source.id);
         }
@@ -95,51 +111,31 @@ export function EditSourceDialog({
   }
 
   return (
-    <FormDialog
+    <RhfFormDialog
       open
       onClose={onClose}
       title={`${t.income.edit} — ${source.name}`}
+      methods={methods}
       onSubmit={handleSubmit}
       pending={pending}
     >
-      <Field label={t.common.name} htmlFor="edit-source-name" required>
-        <Input
-          id="edit-source-name"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          required
-        />
-      </Field>
+      <TextField name="name" label={t.common.name} required />
 
-      <Field label={t.common.amount} required>
-        <MoneyInput value={amount} onValueChange={setAmount} />
-      </Field>
+      <MoneyField name="amount" label={t.common.amount} required />
 
       {amountChanged && (
         <>
-          <Field label={t.income.amountApply}>
-            <Select
-              value={applyMode}
-              onValueChange={(v) => setApplyMode(v as ApplyMode)}
-              options={[
-                { value: "permanent", label: t.income.applyPermanent },
-                { value: "month", label: t.income.applyThisMonth },
-              ]}
-            />
-          </Field>
-          {applyMode === "permanent" && (
+          <SelectField
+            name="applyMode"
+            label={t.income.amountApply}
+            options={[
+              { value: ApplyModes.Permanent, label: t.income.applyPermanent },
+              { value: ApplyModes.Month, label: t.income.applyThisMonth },
+            ]}
+          />
+          {applyMode === ApplyModes.Permanent && (
             <>
-              <Field label={t.income.startMonth} htmlFor="edit-source-from">
-                <MonthYearField
-                  id="edit-source-from"
-                  year={fromYear}
-                  month={fromMonth}
-                  onChange={(y, m) => {
-                    setFromYear(y);
-                    setFromMonth(m);
-                  }}
-                />
-              </Field>
+              <MonthYearField name="from" label={t.income.startMonth} />
               <p className="text-sm text-muted-foreground">
                 {t.income.raiseHint}
               </p>
@@ -148,33 +144,20 @@ export function EditSourceDialog({
         </>
       )}
 
-      <Field label={t.income.endMonth}>
-        <div className="flex flex-col gap-2">
-          <Select
-            value={hasEnd ? "custom" : "none"}
-            onValueChange={(v) => setHasEnd(v === "custom")}
-            options={[
-              { value: "none", label: t.income.noEnd },
-              { value: "custom", label: t.income.pickEndMonth },
-            ]}
-          />
-          {hasEnd && (
-            <>
-              <MonthYearField
-                year={endYear}
-                month={endMonth}
-                onChange={(y, m) => {
-                  setEndYear(y);
-                  setEndMonth(m);
-                }}
-              />
-              <p className="text-sm text-muted-foreground">
-                {t.income.endHint}
-              </p>
-            </>
-          )}
-        </div>
-      </Field>
-    </FormDialog>
+      <SelectField
+        name="hasEnd"
+        label={t.income.endMonth}
+        options={[
+          { value: EndSelections.None, label: t.income.noEnd },
+          { value: EndSelections.Custom, label: t.income.pickEndMonth },
+        ]}
+      />
+      {hasEnd === EndSelections.Custom && (
+        <>
+          <MonthYearField name="end" />
+          <p className="text-sm text-muted-foreground">{t.income.endHint}</p>
+        </>
+      )}
+    </RhfFormDialog>
   );
 }
