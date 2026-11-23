@@ -21,7 +21,7 @@ export function ArchivedItems({
   onDelete,
 }: {
   items: ArchivedItem[];
-  onRestore: (id: string) => void;
+  onRestore: (item: ArchivedItem) => void;
   onDelete: (item: ArchivedItem) => void;
 }) {
   const { t } = useI18n();
@@ -69,7 +69,7 @@ export function ArchivedItems({
               </div>
               <IconButton
                 label={t.planning.restore}
-                onClick={() => onRestore(item.id)}
+                onClick={() => onRestore(item)}
               >
                 <RotateCcw />
               </IconButton>

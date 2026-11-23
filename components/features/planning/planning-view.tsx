@@ -7,7 +7,8 @@ import { useI18n } from "@/lib/i18n/context";
 import { formatMoney } from "@/lib/utils";
 import {
   deletePlannedItem,
-  setPlannedItemStatus,
+  updatePlannedItem,
+  type PlannedItemInput,
 } from "@/app/actions/planned-items";
 import { PageHeader } from "@/components/shared/page-header";
 import { EmptyState } from "@/components/shared/empty-state";
@@ -76,9 +77,25 @@ export function PlanningView({
     });
   }
 
-  function handleSetStatus(id: string, status: PlannedItemStatus) {
+  function handleSetStatus(
+    item: ForecastItem | ArchivedItem,
+    status: PlannedItemStatus,
+  ) {
+    const plannedItemInput: PlannedItemInput = {
+      title: item.title,
+      type: item.type,
+      status,
+      amount: item.amount,
+      installments: item.installments,
+      startYear: item.startYear,
+      startMonth: item.startMonth,
+      endYear: item.endYear,
+      endMonth: item.endMonth,
+      note: item.note,
+      categoryId: item.categoryId,
+    };
     startTransition(async () => {
-      await setPlannedItemStatus(id, status);
+      await updatePlannedItem(item.id, plannedItemInput);
       toast.success(t.common.save);
     });
   }
@@ -161,7 +178,7 @@ export function PlanningView({
                 setFormOpen(true);
               }}
               onDelete={() => setToDelete({ id: item.id, title: item.title })}
-              onSetStatus={(status) => handleSetStatus(item.id, status)}
+              onSetStatus={(status) => handleSetStatus(item, status)}
             />
           ))}
         </Card>
@@ -170,7 +187,7 @@ export function PlanningView({
       {archived.length > 0 && (
         <ArchivedItems
           items={archived}
-          onRestore={(id) => handleSetStatus(id, PlannedItemStatuses.Active)}
+          onRestore={(item) => handleSetStatus(item, PlannedItemStatuses.Active)}
           onDelete={(item) => setToDelete({ id: item.id, title: item.title })}
         />
       )}

@@ -15,6 +15,12 @@ function toMonthIndex(year: number, month: number): number {
   return year * 12 + month;
 }
 
+const statusSchema = z.enum([
+  PlannedItemStatuses.Active,
+  PlannedItemStatuses.Done,
+  PlannedItemStatuses.Cancelled,
+]);
+
 const plannedItemSchema = z
   .object({
     title: z.string().min(1).max(200),
@@ -23,6 +29,7 @@ const plannedItemSchema = z
       PlannedItemTypes.Recurring,
       PlannedItemTypes.Installments,
     ]),
+    status: statusSchema.optional(),
     amount: z.number().positive(),
     installments: z.number().int().min(2).max(120).optional().nullable(),
     startYear: yearSchema,
@@ -57,12 +64,6 @@ const plannedItemSchema = z
 
 export type PlannedItemInput = z.infer<typeof plannedItemSchema>;
 
-const statusSchema = z.enum([
-  PlannedItemStatuses.Active,
-  PlannedItemStatuses.Done,
-  PlannedItemStatuses.Cancelled,
-]);
-
 async function assertCategoryInHousehold(
   categoryId: string,
   householdId: string,
@@ -78,6 +79,7 @@ function mapInputToPlannedItemData(input: PlannedItemInput) {
   const isRecurring = input.type === PlannedItemTypes.Recurring;
   return {
     title: input.title,
+    status: input.status ?? PlannedItemStatuses.Active,
     type: input.type,
     amount: input.amount,
     installments:
@@ -121,21 +123,6 @@ export async function deletePlannedItem(id: string) {
   const { householdId } = await requireUser();
   idSchema.parse(id);
   await prisma.plannedItem.delete({ where: { id, householdId } });
-  revalidatePath("/planning");
-  return { ok: true as const };
-}
-
-export async function setPlannedItemStatus(
-  id: string,
-  status: z.infer<typeof statusSchema>,
-) {
-  const { householdId } = await requireUser();
-  idSchema.parse(id);
-  statusSchema.parse(status);
-  await prisma.plannedItem.update({
-    where: { id, householdId },
-    data: { status },
-  });
   revalidatePath("/planning");
   return { ok: true as const };
 }
