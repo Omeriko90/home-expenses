@@ -61,7 +61,7 @@ export function PlannedItemRow({
   }
 
   return (
-    <div className="flex flex-col gap-2 px-4 py-3">
+    <div className="flex flex-col px-4 py-3">
       <div
         className={cn("flex items-center gap-3", {
           "cursor-pointer": hasBudgetImpact,
@@ -116,7 +116,20 @@ export function PlannedItemRow({
           )}
         </div>
       </div>
-      {expanded && hasBudgetImpact && <BudgetImpactDetails item={item} />}
+      {hasBudgetImpact && (
+        <div
+          className={cn(
+            "grid transition-[grid-template-rows] duration-300 ease-in-out",
+            expanded ? "grid-rows-[1fr]" : "grid-rows-[0fr]",
+          )}
+        >
+          <div className="overflow-hidden">
+            <div className="pt-2">
+              <BudgetImpactDetails item={item} />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
