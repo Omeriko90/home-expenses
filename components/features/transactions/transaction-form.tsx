@@ -1,23 +1,22 @@
 "use client";
 
-import * as React from "react";
+import { useMemo, useTransition } from "react";
 import { toast } from "sonner";
 import { useI18n } from "@/lib/i18n/context";
+import { createTransaction, updateTransaction } from "@/app/actions/transactions";
 import {
-  createTransaction,
-  updateTransaction,
-  type TransactionInput,
-} from "@/app/actions/transactions";
-import { FormDialog } from "@/components/shared/form-dialog";
-import { Field } from "@/components/shared/field";
-import { MoneyInput } from "@/components/shared/money-input";
-import { DatePicker } from "@/components/shared/date-picker";
-import {
-  Autocomplete,
-  type AutocompleteOption,
-} from "@/components/shared/autocomplete";
-import { Input } from "@/components/ui/input";
-import { Select } from "@/components/ui/select/Select";
+  createTransactionFormSchema,
+  TransactionKinds,
+  type TransactionFormValues,
+} from "@/lib/schemas/transactions";
+import type { AutocompleteOption } from "@/components/shared/autocomplete";
+import { useZodForm } from "@/components/ui/form/use-zod-form";
+import { RhfFormDialog } from "@/components/ui/form/form-dialog";
+import { TextField } from "@/components/ui/form/text-field";
+import { MoneyField } from "@/components/ui/form/money-field";
+import { DateField } from "@/components/ui/form/date-field";
+import { SelectField } from "@/components/ui/form/select-field";
+import { AutocompleteField } from "@/components/ui/form/autocomplete-field";
 
 export type TxCategory = {
   id: string;
@@ -54,35 +53,31 @@ export function TransactionForm({
   month: number;
 }) {
   const { t } = useI18n();
-  const [pending, startTransition] = React.useTransition();
-  const [date, setDate] = React.useState<Date | undefined>(() =>
-    editing ? new Date(editing.date) : new Date(Date.UTC(year, month - 1, 1)),
-  );
-  const [business, setBusiness] = React.useState(editing?.businessName ?? "");
-  const [amount, setAmount] = React.useState<number | "">(editing?.amount ?? "");
-  const [categoryId, setCategoryId] = React.useState<string | null>(
-    editing?.categoryId ?? null,
-  );
-  const [kind, setKind] = React.useState<"FIXED" | "VARIABLE">(
-    editing?.kind ?? "VARIABLE",
-  );
-  const [note, setNote] = React.useState(editing?.note ?? "");
+  const [pending, startTransition] = useTransition();
+  const schema = useMemo(() => createTransactionFormSchema(t), [t]);
+  const methods = useZodForm(schema, {
+    defaultValues: {
+      date: editing
+        ? new Date(editing.date)
+        : new Date(Date.UTC(year, month - 1, 1)),
+      businessName: editing?.businessName ?? "",
+      amount: editing?.amount ?? undefined,
+      categoryId: editing?.categoryId ?? "",
+      kind: editing?.kind ?? TransactionKinds.Variable,
+      note: editing?.note ?? "",
+    },
+  });
 
-  function submit(e: React.FormEvent) {
-    e.preventDefault();
-    if (!date || !business.trim() || amount === "" || !categoryId) {
-      toast.error(t.common.noData);
-      return;
-    }
-    const input: TransactionInput = {
-      date: date.toISOString(),
-      businessName: business.trim(),
-      amount: Number(amount),
-      categoryId,
-      kind,
-      note: note.trim() || null,
-    };
+  function handleSubmit(values: TransactionFormValues) {
     startTransition(async () => {
+      const input = {
+        date: values.date.toISOString(),
+        businessName: values.businessName,
+        amount: values.amount,
+        categoryId: values.categoryId,
+        kind: values.kind,
+        note: values.note.trim() || null,
+      };
       if (editing) await updateTransaction(editing.id, input);
       else await createTransaction(input);
       toast.success(t.common.save);
@@ -90,12 +85,12 @@ export function TransactionForm({
     });
   }
 
-  const options = React.useMemo(() => {
+  const options = useMemo(() => {
     const opts: AutocompleteOption[] = categories
-      .filter((c) => !c.archived)
-      .map((c) => ({ value: c.id, label: c.name }));
+      .filter((category) => !category.archived)
+      .map((category) => ({ value: category.id, label: category.name }));
     if (editing) {
-      const current = categories.find((c) => c.id === editing.categoryId);
+      const current = categories.find((category) => category.id === editing.categoryId);
       if (current?.archived) {
         opts.push({
           value: current.id,
@@ -108,54 +103,35 @@ export function TransactionForm({
   }, [categories, editing, t]);
 
   return (
-    <FormDialog
+    <RhfFormDialog
       open={open}
       onClose={onClose}
       title={editing ? t.transactions.edit : t.transactions.add}
-      onSubmit={submit}
+      methods={methods}
+      onSubmit={handleSubmit}
       pending={pending}
     >
       <div className="grid grid-cols-2 gap-4">
-        <Field label={t.transactions.date} required>
-          <DatePicker value={date} onChange={setDate} />
-        </Field>
-        <Field label={t.common.amount} required>
-          <MoneyInput value={amount} onValueChange={setAmount} />
-        </Field>
+        <DateField name="date" label={t.transactions.date} required />
+        <MoneyField name="amount" label={t.common.amount} required />
       </div>
-      <Field label={t.transactions.business} htmlFor="tx-biz" required>
-        <Input
-          id="tx-biz"
-          value={business}
-          onChange={(e) => setBusiness(e.target.value)}
-          required
-        />
-      </Field>
-      <Field label={t.common.category} required>
-        <Autocomplete
-          options={options}
-          value={categoryId}
-          onChange={setCategoryId}
-          placeholder={t.common.category}
-        />
-      </Field>
-      <Field label={t.transactions.kind}>
-        <Select
-          value={kind}
-          onValueChange={(v) => setKind(v as "FIXED" | "VARIABLE")}
-          options={[
-            { value: "VARIABLE", label: t.transactions.variable },
-            { value: "FIXED", label: t.transactions.fixed },
-          ]}
-        />
-      </Field>
-      <Field label={t.transactions.note} htmlFor="tx-note">
-        <Input
-          id="tx-note"
-          value={note}
-          onChange={(e) => setNote(e.target.value)}
-        />
-      </Field>
-    </FormDialog>
+      <TextField name="businessName" label={t.transactions.business} required />
+      <AutocompleteField
+        name="categoryId"
+        label={t.common.category}
+        options={options}
+        placeholder={t.common.category}
+        required
+      />
+      <SelectField
+        name="kind"
+        label={t.transactions.kind}
+        options={[
+          { value: TransactionKinds.Variable, label: t.transactions.variable },
+          { value: TransactionKinds.Fixed, label: t.transactions.fixed },
+        ]}
+      />
+      <TextField name="note" label={t.transactions.note} />
+    </RhfFormDialog>
   );
 }
