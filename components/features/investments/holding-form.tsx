@@ -10,7 +10,6 @@ import {
   createHoldingFormSchema,
   type HoldingFormValues,
 } from "@/lib/schemas/investments";
-import { useZodForm } from "@/components/ui/form/use-zod-form";
 import { FormDialog } from "@/components/ui/form/form-dialog";
 import { TextField } from "@/components/ui/form/text-field";
 import { MoneyField } from "@/components/ui/form/money-field";
@@ -36,15 +35,6 @@ export function HoldingForm({
   const { t } = useI18n();
   const [pending, startTransition] = useTransition();
   const schema = useMemo(() => createHoldingFormSchema(t), [t]);
-  const methods = useZodForm(schema, {
-    defaultValues: {
-      instrument: editing?.instrument ?? "",
-      type: editing?.type ?? "",
-      house: editing?.house ?? "",
-      channel: editing?.channel ?? "",
-      value: editing?.value ?? undefined,
-    },
-  });
 
   function handleSubmit(values: HoldingFormValues) {
     startTransition(async () => {
@@ -68,7 +58,14 @@ export function HoldingForm({
       open={open}
       onClose={onClose}
       title={editing ? t.investments.editHolding : t.investments.addHolding}
-      methods={methods}
+      schema={schema}
+      defaultValues={{
+        instrument: editing?.instrument ?? "",
+        type: editing?.type ?? "",
+        house: editing?.house ?? "",
+        channel: editing?.channel ?? "",
+        value: editing?.value ?? undefined,
+      }}
       onSubmit={handleSubmit}
       pending={pending}
     >

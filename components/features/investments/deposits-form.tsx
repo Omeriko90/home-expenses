@@ -8,7 +8,6 @@ import {
   createDepositsFormSchema,
   type DepositsFormValues,
 } from "@/lib/schemas/investments";
-import { useZodForm } from "@/components/ui/form/use-zod-form";
 import { FormDialog } from "@/components/ui/form/form-dialog";
 import { MoneyField } from "@/components/ui/form/money-field";
 
@@ -28,9 +27,6 @@ export function DepositsForm({
   const { t } = useI18n();
   const [pending, startTransition] = useTransition();
   const schema = useMemo(() => createDepositsFormSchema(), []);
-  const methods = useZodForm(schema, {
-    defaultValues: { value: current || undefined },
-  });
 
   function handleSubmit(values: DepositsFormValues) {
     startTransition(async () => {
@@ -45,7 +41,8 @@ export function DepositsForm({
       open={open}
       onClose={onClose}
       title={`${t.investments.setDeposits} (${year})`}
-      methods={methods}
+      schema={schema}
+      defaultValues={{ value: current || undefined }}
       onSubmit={handleSubmit}
       pending={pending}
       contentClassName="max-w-sm"

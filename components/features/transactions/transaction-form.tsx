@@ -10,7 +10,6 @@ import {
   type TransactionFormValues,
 } from "@/lib/schemas/transactions";
 import type { AutocompleteOption } from "@/components/shared/autocomplete";
-import { useZodForm } from "@/components/ui/form/use-zod-form";
 import { FormDialog } from "@/components/ui/form/form-dialog";
 import { TextField } from "@/components/ui/form/text-field";
 import { MoneyField } from "@/components/ui/form/money-field";
@@ -55,18 +54,6 @@ export function TransactionForm({
   const { t } = useI18n();
   const [pending, startTransition] = useTransition();
   const schema = useMemo(() => createTransactionFormSchema(t), [t]);
-  const methods = useZodForm(schema, {
-    defaultValues: {
-      date: editing
-        ? new Date(editing.date)
-        : new Date(Date.UTC(year, month - 1, 1)),
-      businessName: editing?.businessName ?? "",
-      amount: editing?.amount ?? undefined,
-      categoryId: editing?.categoryId ?? "",
-      kind: editing?.kind ?? TransactionKinds.Variable,
-      note: editing?.note ?? "",
-    },
-  });
 
   function handleSubmit(values: TransactionFormValues) {
     startTransition(async () => {
@@ -107,7 +94,17 @@ export function TransactionForm({
       open={open}
       onClose={onClose}
       title={editing ? t.transactions.edit : t.transactions.add}
-      methods={methods}
+      schema={schema}
+      defaultValues={{
+        date: editing
+          ? new Date(editing.date)
+          : new Date(Date.UTC(year, month - 1, 1)),
+        businessName: editing?.businessName ?? "",
+        amount: editing?.amount ?? undefined,
+        categoryId: editing?.categoryId ?? "",
+        kind: editing?.kind ?? TransactionKinds.Variable,
+        note: editing?.note ?? "",
+      }}
       onSubmit={handleSubmit}
       pending={pending}
     >

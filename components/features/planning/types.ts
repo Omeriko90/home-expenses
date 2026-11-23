@@ -22,6 +22,8 @@ export type {
 };
 export { PlannedItemStatuses, PlannedItemTypes };
 
+export const DURATION_PRESETS = [3, 6, 9, 12];
+
 export type ArchivedItem = {
   id: string;
   title: string;
