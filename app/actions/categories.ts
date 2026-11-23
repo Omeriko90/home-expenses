@@ -1,24 +1,16 @@
 "use server";
 
-import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { requireUser } from "@/lib/session";
 import { idSchema } from "@/lib/validate";
+import { categorySchema, type CategoryInput } from "@/lib/schemas/categories";
 
-const schema = z.object({
-  name: z.string().min(1).max(80),
-  nameEn: z.string().max(80).optional().nullable(),
-  description: z.string().max(200).optional().nullable(),
-  type: z.enum(["EXPENSE", "INVESTMENT"]),
-  color: z.string().max(20).optional().nullable(),
-});
-
-export type CategoryInput = z.infer<typeof schema>;
+export type { CategoryInput };
 
 export async function createCategory(input: CategoryInput) {
   const { householdId } = await requireUser();
-  const data = schema.parse(input);
+  const data = categorySchema.parse(input);
   const existing = await prisma.category.findUnique({
     where: { householdId_name: { householdId, name: data.name } },
   });
@@ -31,7 +23,7 @@ export async function createCategory(input: CategoryInput) {
 export async function updateCategory(id: string, input: CategoryInput) {
   const { householdId } = await requireUser();
   idSchema.parse(id);
-  const data = schema.parse(input);
+  const data = categorySchema.parse(input);
   await prisma.category.update({ where: { id, householdId }, data });
   revalidatePath("/categories");
   return { ok: true as const };

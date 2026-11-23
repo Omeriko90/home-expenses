@@ -1,21 +1,15 @@
 "use server";
 
-import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { requireUser } from "@/lib/session";
 import { idSchema } from "@/lib/validate";
+import {
+  transactionSchema,
+  type TransactionInput,
+} from "@/lib/schemas/transactions";
 
-const schema = z.object({
-  date: z.string().min(1), // ISO date
-  businessName: z.string().min(1).max(200),
-  amount: z.number(),
-  categoryId: z.string().min(1),
-  kind: z.enum(["FIXED", "VARIABLE"]),
-  note: z.string().max(500).optional().nullable(),
-});
-
-export type TransactionInput = z.infer<typeof schema>;
+export type { TransactionInput };
 
 // The category FK is not household-scoped at the DB level — verify ownership
 // before writing, as in upsertBudget.
@@ -32,7 +26,7 @@ async function assertCategoryInHousehold(
 
 export async function createTransaction(input: TransactionInput) {
   const user = await requireUser();
-  const data = schema.parse(input);
+  const data = transactionSchema.parse(input);
   await assertCategoryInHousehold(data.categoryId, user.householdId);
   const date = new Date(data.date);
   await prisma.transaction.create({
@@ -56,7 +50,7 @@ export async function createTransaction(input: TransactionInput) {
 export async function updateTransaction(id: string, input: TransactionInput) {
   const { householdId } = await requireUser();
   idSchema.parse(id);
-  const data = schema.parse(input);
+  const data = transactionSchema.parse(input);
   await assertCategoryInHousehold(data.categoryId, householdId);
   const date = new Date(data.date);
   await prisma.transaction.update({

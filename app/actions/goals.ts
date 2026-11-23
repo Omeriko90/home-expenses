@@ -5,20 +5,9 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { requireUser } from "@/lib/session";
 import { idSchema } from "@/lib/validate";
+import { goalSchema, type GoalInput } from "@/lib/schemas/goals";
 
-const goalSchema = z.object({
-  title: z.string().min(1).max(200),
-  year: z.number().int(),
-  type: z.enum(["NUMERIC", "CHECKLIST"]),
-  note: z.string().max(500).optional().nullable(),
-  targetAmount: z.number().optional().nullable(),
-  currentAmount: z.number().optional().nullable(),
-  linkKind: z.enum(["NONE", "CATEGORY", "INVESTMENT_TOTAL"]).default("NONE"),
-  linkCategoryId: z.string().optional().nullable(),
-  milestones: z.array(z.string()).optional(),
-});
-
-export type GoalInput = z.infer<typeof goalSchema>;
+export type { GoalInput };
 
 export async function createGoal(input: GoalInput) {
   const { householdId } = await requireUser();
