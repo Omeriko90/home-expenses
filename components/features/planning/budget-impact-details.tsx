@@ -38,7 +38,13 @@ export function BudgetImpactDetails({ item }: { item: ForecastItem }) {
                 <span className="text-muted-foreground">
                   {" "}
                   {t.planning.vsBudget}{" "}
-                  {`(${impactMonth.budget > 0 ? formatMoney(impactMonth.budget) : "—"})`}
+                  <span dir="ltr" className="inline-block">
+                    {`(${
+                      impactMonth.budget > 0
+                        ? formatMoney(impactMonth.budget).replace(/[‎‏]/g, "")
+                        : "—"
+                    })`}
+                  </span>
                 </span>
               </span>
             </div>
