@@ -192,7 +192,8 @@ export function TransactionsView({
               <TransactionFilters layout="xs" {...filterProps} />
               {activeFilters > 0 && (
                 <Button variant="ghost" size="sm" onClick={clearFilters}>
-                  <X /> {t.common.clearFilters}
+                  <X />
+                  {t.common.clearFilters}
                 </Button>
               )}
             </PopoverContent>
@@ -239,7 +240,8 @@ export function TransactionsView({
           <TransactionFilters layout="sm" {...filterProps} />
           {activeFilters > 0 && (
             <Button variant="ghost" size="sm" onClick={clearFilters}>
-              <X /> {t.common.clearFilters}
+              <X />
+              {t.common.clearFilters}
             </Button>
           )}
         </div>
