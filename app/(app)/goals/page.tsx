@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/db";
-import { getYears, resolveYear } from "@/lib/years";
+import { getPlanningYear, getYears, resolveYear, withYear } from "@/lib/years";
 import { getInvestmentTotal } from "@/lib/summary";
 import { requireUser } from "@/lib/session";
 import { GoalsView } from "@/components/features/goals/goals-view";
@@ -11,7 +11,8 @@ export default async function GoalsPage({
 }) {
   const sp = await searchParams;
   const { householdId } = await requireUser();
-  const years = await getYears(householdId);
+  const planningYear = getPlanningYear();
+  const years = withYear(await getYears(householdId), planningYear);
   const year = resolveYear(years, sp.year);
 
   const [goals, categories] = await Promise.all([
@@ -66,6 +67,12 @@ export default async function GoalsPage({
   );
 
   return (
-    <GoalsView year={year} years={years} goals={rows} categories={categories} />
+    <GoalsView
+      year={year}
+      years={years}
+      planningYear={planningYear}
+      goals={rows}
+      categories={categories}
+    />
   );
 }

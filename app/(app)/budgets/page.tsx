@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/db";
 import { getDictionary } from "@/lib/i18n/server";
-import { getYears, resolveYear } from "@/lib/years";
+import { getPlanningYear, getYears, resolveYear, withYear } from "@/lib/years";
 import { getBudgetActuals } from "@/lib/summary";
 import { requireUser } from "@/lib/session";
 import { BudgetEditor } from "@/components/features/budgets/budget-editor";
@@ -13,7 +13,8 @@ export default async function BudgetsPage({
   const sp = await searchParams;
   await getDictionary();
   const { householdId } = await requireUser();
-  const years = await getYears(householdId);
+  const planningYear = getPlanningYear();
+  const years = withYear(await getYears(householdId), planningYear);
   const year = resolveYear(years, sp.year);
 
   const [categories, budgets, actuals] = await Promise.all([
@@ -40,6 +41,7 @@ export default async function BudgetsPage({
     <BudgetEditor
       year={year}
       years={years}
+      planningYear={planningYear}
       rows={rows}
       mode={actuals.mode}
       month={actuals.month}
