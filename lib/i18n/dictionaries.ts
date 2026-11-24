@@ -235,8 +235,6 @@ const he = {
       budgetImpact: "השפעה על התקציב",
       projected: "צפוי",
       vsBudget: "מול התקציב",
-      verdictTightCategoryHint:
-        "בגבולות היכולת הכוללת, אך חורג מתקציב הקטגוריה",
       overInMonths: "חריגה ב-{n} חודשים",
       overInOneMonth: "חריגה בחודש אחד",
       withinAllMonths: "בתקציב בכל התקופה",
@@ -640,8 +638,6 @@ const en: Dictionary = {
       budgetImpact: "Budget impact",
       projected: "Projected",
       vsBudget: "vs budget",
-      verdictTightCategoryHint:
-        "Within overall capacity, but exceeds the category budget",
       overInMonths: "Over budget in {n} months",
       overInOneMonth: "Over budget in one month",
       withinAllMonths: "Within budget for the whole range",

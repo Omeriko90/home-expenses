@@ -5,13 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tooltip } from "@/components/ui/tooltip";
 import type { Verdict } from "./types";
 
-export function VerdictBadge({
-  verdict,
-  categoryOverBudget = false,
-}: {
-  verdict: Verdict;
-  categoryOverBudget?: boolean;
-}) {
+export function VerdictBadge({ verdict }: { verdict: Verdict }) {
   const { t } = useI18n();
 
   if (verdict === "unknown") {
@@ -28,12 +22,5 @@ export function VerdictBadge({
     tight: t.planning.verdictTight,
     over: t.planning.verdictOver,
   };
-  const badge = <Badge variant={variant[verdict]}>{label[verdict]}</Badge>;
-
-  if (verdict === "tight" && categoryOverBudget) {
-    return (
-      <Tooltip content={t.planning.verdictTightCategoryHint}>{badge}</Tooltip>
-    );
-  }
-  return badge;
+  return <Badge variant={variant[verdict]}>{label[verdict]}</Badge>;
 }
