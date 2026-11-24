@@ -16,6 +16,7 @@ import {
 } from "@/app/actions/budgets";
 import { PageHeader } from "@/components/shared/page-header";
 import { EmptyState } from "@/components/shared/empty-state";
+import { PlanNextYearBanner } from "@/components/shared/plan-next-year-banner";
 import { YearSelect } from "@/components/shared/year-select";
 import { MoneyInput } from "@/components/shared/money-input";
 import { ProgressBar } from "@/components/shared/progress-bar";
@@ -32,12 +33,14 @@ type Row = { categoryId: string; name: string; monthly: number; actual: number }
 export function BudgetEditor({
   year,
   years,
+  planningYear,
   rows,
   mode,
   month,
 }: {
   year: number;
   years: number[];
+  planningYear: number | null;
   rows: Row[];
   mode: "month" | "average";
   month: number;
@@ -249,6 +252,13 @@ export function BudgetEditor({
           </div>
         }
       />
+
+      {planningYear !== null && year < planningYear && (
+        <PlanNextYearBanner
+          planningYear={planningYear}
+          text={t.budgets.planNextYear.replace("{year}", String(planningYear))}
+        />
+      )}
 
       <div className="grid gap-4 sm:grid-cols-3">
         <StatCard
