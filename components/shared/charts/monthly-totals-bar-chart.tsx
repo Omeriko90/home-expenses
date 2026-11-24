@@ -20,6 +20,7 @@ import {
 } from "@/lib/utils";
 import { ChartTooltip } from "./chart-tooltip";
 import { EXPENSE_COLOR, NEUTRAL_COLOR, GRID_COLOR } from "./chart-palette";
+import { useChartDirection } from "./use-chart-direction";
 
 export function MonthlyTotalsBarChart({
   year,
@@ -33,6 +34,7 @@ export function MonthlyTotalsBarChart({
   mode: "money" | "percent";
 }) {
   const { t, locale } = useI18n();
+  const { xAxisReversed, yAxisOrientation } = useChartDirection();
   const percent = mode === "percent";
   const data = shortMonths(locale).map((month, i) => ({
     month,
@@ -45,8 +47,9 @@ export function MonthlyTotalsBarChart({
     <ResponsiveContainer width="100%" height="100%">
       <BarChart data={data} margin={{ top: 4, left: 4, right: 4 }}>
         <CartesianGrid strokeDasharray="3 3" stroke={GRID_COLOR} vertical={false} />
-        <XAxis dataKey="month" interval={0} tick={{ fontSize: 10 }} tickMargin={4} tickLine={false} />
+        <XAxis dataKey="month" reversed={xAxisReversed} interval={0} tick={{ fontSize: 10 }} tickMargin={4} tickLine={false} />
         <YAxis
+          orientation={yAxisOrientation}
           tickFormatter={percent ? formatPercentCompact : formatMoneyCompact}
           tick={{ fontSize: 11 }}
           tickLine={false}

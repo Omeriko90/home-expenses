@@ -13,6 +13,7 @@ import { useI18n } from "@/lib/i18n/context";
 import { formatMoneyCompact } from "@/lib/utils";
 import { ChartTooltip } from "./chart-tooltip";
 import { INVESTMENT_COLOR, GRID_COLOR } from "./chart-palette";
+import { useChartDirection } from "./use-chart-direction";
 
 export function InvestmentGrowthLineChart({
   totals,
@@ -20,12 +21,14 @@ export function InvestmentGrowthLineChart({
   totals: { year: number; total: number }[];
 }) {
   const { t } = useI18n();
+  const { xAxisReversed, yAxisOrientation } = useChartDirection();
   return (
     <ResponsiveContainer width="100%" height="100%">
       <LineChart data={totals} margin={{ top: 4, left: 4, right: 16 }}>
         <CartesianGrid strokeDasharray="3 3" stroke={GRID_COLOR} vertical={false} />
-        <XAxis dataKey="year" tick={{ fontSize: 11 }} tickLine={false} />
+        <XAxis dataKey="year" reversed={xAxisReversed} tick={{ fontSize: 11 }} tickLine={false} />
         <YAxis
+          orientation={yAxisOrientation}
           tickFormatter={formatMoneyCompact}
           tick={{ fontSize: 11 }}
           tickLine={false}

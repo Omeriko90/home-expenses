@@ -1,6 +1,7 @@
 "use client";
 
 import { formatMoney } from "@/lib/utils";
+import { useChartDirection } from "./use-chart-direction";
 
 type TooltipEntry = {
   dataKey?: string | number;
@@ -25,6 +26,7 @@ export function ChartTooltip({
   totalLabel?: string;
   totalKeys?: string[];
 }) {
+  const { isRtl } = useChartDirection();
   if (!active || !payload?.length) return null;
   const totalEntries = totalKeys
     ? payload.filter(
@@ -37,7 +39,7 @@ export function ChartTooltip({
   );
   return (
     <div
-      dir="rtl"
+      dir={isRtl ? "rtl" : "ltr"}
       className="rounded-md border border-border bg-surface px-3 py-2 text-sm shadow-sm"
     >
       {label !== undefined && label !== "" && (
