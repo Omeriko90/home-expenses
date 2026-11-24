@@ -9,8 +9,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Tooltip } from "@/components/ui/tooltip";
 import { IconButton } from "@/components/shared/icon-button";
 import { BudgetImpactDetails } from "./budget-impact-details";
+import { CategoryBudgetBadge } from "./category-budget-badge";
 import { PlannedItemActionsMenu } from "./planned-item-actions-menu";
-import { VerdictBadge } from "./verdict-badge";
 import {
   formatMonthKey,
   PlannedItemTypes,
@@ -97,16 +97,21 @@ export function PlannedItemRow({
             <span className="hidden shrink-0 items-center gap-2 sm:flex">
               <Badge variant="info">{typeLabel}</Badge>
               {item.categoryName && (
-                <Badge variant="default">{item.categoryName}</Badge>
+                <CategoryBudgetBadge
+                  name={item.categoryName}
+                  verdict={item.verdict}
+                />
               )}
             </span>
           </div>
           <div className="flex flex-wrap items-center gap-1.5 sm:hidden">
             <Badge variant="info">{typeLabel}</Badge>
             {item.categoryName && (
-              <Badge variant="default">{item.categoryName}</Badge>
+              <CategoryBudgetBadge
+                name={item.categoryName}
+                verdict={item.verdict}
+              />
             )}
-            <VerdictBadge verdict={item.verdict} source={item.verdictSource} />
           </div>
           <span className="flex flex-wrap gap-x-1 text-xs text-muted-foreground tnum">
             {metaParts.map((part, index) => (
@@ -118,9 +123,6 @@ export function PlannedItemRow({
           </span>
         </div>
         <div className="flex shrink-0 items-center gap-2">
-          <span className="hidden sm:inline-flex">
-            <VerdictBadge verdict={item.verdict} source={item.verdictSource} />
-          </span>
           <span onClick={(event) => event.stopPropagation()}>
             <PlannedItemActionsMenu
               onEdit={onEdit}

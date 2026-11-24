@@ -55,11 +55,8 @@ export type ForecastItem = PlannedItemSpec & {
   categoryName: string | null;
   impact: number[];
   verdict: Verdict;
-  verdictSource: VerdictSource;
   budgetImpact: BudgetImpactMonth[] | null;
 };
-
-export type VerdictSource = "budget" | "capacity";
 
 export type ForecastData = {
   months: MonthKey[];
@@ -196,49 +193,13 @@ function indexBudgets(
   return { budgetsByCategoryYear, totalBudgetByYear, budgetedBaselineByYear };
 }
 
-function computeMonthlyCapacity(
-  months: MonthKey[],
-  income: number[],
-  baselineTotal: number[],
-  budgetIndex: BudgetIndex,
-): (number | null)[] {
-  return months.map((month, index) => {
-    if (income[index] > 0) return income[index] - baselineTotal[index];
-    if (budgetIndex.totalBudgetByYear[month.year] === undefined) return null;
-    return (
-      budgetIndex.totalBudgetByYear[month.year] -
-      (budgetIndex.budgetedBaselineByYear[month.year] ?? 0)
-    );
-  });
-}
-
-function resolveVerdict(
-  itemImpact: number[],
-  totalPlanned: number[],
-  capacity: (number | null)[],
-): Verdict {
-  let worstRatio: number | null = null;
-  for (let index = 0; index < itemImpact.length; index++) {
-    if (itemImpact[index] === 0) continue;
-    const monthCapacity = capacity[index];
-    if (monthCapacity === null) continue;
-    if (monthCapacity <= 0) return "over";
-    const ratio = totalPlanned[index] / monthCapacity;
-    if (worstRatio === null || ratio > worstRatio) worstRatio = ratio;
-  }
-  if (worstRatio === null) return "unknown";
-  if (worstRatio <= VERDICT_FITS_MAX) return "fits";
-  if (worstRatio <= VERDICT_TIGHT_MAX) return "tight";
-  return "over";
-}
-
 function resolveCategoryVerdict(
   budgetImpact: BudgetImpactMonth[] | null,
-): Verdict | null {
+): Verdict {
   const budgetedMonths = (budgetImpact ?? []).filter(
     (impactMonth) => impactMonth.budget > 0,
   );
-  if (budgetedMonths.length === 0) return null;
+  if (budgetedMonths.length === 0) return "unknown";
   let worstRatio = 0;
   for (const impactMonth of budgetedMonths) {
     const ratio = impactMonth.projected / impactMonth.budget;
@@ -326,18 +287,9 @@ export async function getForecast(
   );
 
   const budgetIndex = indexBudgets(budgets, baselineByCategory);
-  const capacity = computeMonthlyCapacity(
-    months,
-    income,
-    baselineTotal,
-    budgetIndex,
-  );
 
   const specs = dbItems.map((item) => ({ ...item, amount: Number(item.amount) }));
   const impacts = specs.map((item) => expandItemImpact(item, months));
-  const totalPlanned = months.map((_, index) =>
-    impacts.reduce((sum, impact) => sum + impact[index], 0),
-  );
 
   const items: ForecastItem[] = specs.map((item, itemIndex) => {
     const impact = impacts[itemIndex];
@@ -352,7 +304,6 @@ export async function getForecast(
           budgetIndex.budgetsByCategoryYear,
         )
       : null;
-    const categoryVerdict = resolveCategoryVerdict(budgetImpact);
     return {
       id: item.id,
       title: item.title,
@@ -370,9 +321,7 @@ export async function getForecast(
         ? (categoryNames.get(item.categoryId) ?? null)
         : null,
       impact,
-      verdict:
-        categoryVerdict ?? resolveVerdict(impact, totalPlanned, capacity),
-      verdictSource: categoryVerdict ? "budget" : "capacity",
+      verdict: resolveCategoryVerdict(budgetImpact),
       budgetImpact,
     };
   });
