@@ -70,11 +70,6 @@ export function BudgetImpactDetails({ item }: { item: ForecastItem }) {
                   impactMonth={impactMonth}
                 />
               ))}
-              {item.verdict === "tight" && (
-                <span className="text-xs text-muted-foreground">
-                  {t.planning.verdictTightCategoryHint}
-                </span>
-              )}
             </>
           ) : (
             budgetedMonths.length > 0 && (
