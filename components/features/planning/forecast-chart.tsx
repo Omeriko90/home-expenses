@@ -14,6 +14,7 @@ import {
 import { useI18n } from "@/lib/i18n/context";
 import { formatMoneyCompact } from "@/lib/utils";
 import { ChartTooltip } from "@/components/shared/charts/chart-tooltip";
+import { useChartDirection } from "@/components/shared/charts/use-chart-direction";
 import {
   EXPENSE_COLOR,
   GRID_COLOR,
@@ -36,6 +37,7 @@ export function ForecastChart({
   income: number[];
 }) {
   const { t } = useI18n();
+  const { xAxisReversed, yAxisOrientation } = useChartDirection();
   const hasIncome = income.some((v) => v > 0);
   const data = months.map((m, i) => ({
     month: formatMonthKey(m.year, m.month),
@@ -51,12 +53,14 @@ export function ForecastChart({
         <CartesianGrid strokeDasharray="3 3" stroke={GRID_COLOR} vertical={false} />
         <XAxis
           dataKey="month"
+          reversed={xAxisReversed}
           interval="preserveStartEnd"
           tick={{ fontSize: 10 }}
           tickMargin={4}
           tickLine={false}
         />
         <YAxis
+          orientation={yAxisOrientation}
           tickFormatter={formatMoneyCompact}
           tick={{ fontSize: 11 }}
           tickLine={false}

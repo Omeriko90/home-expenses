@@ -21,6 +21,7 @@ import {
 import type { MonthlyCategorySpend } from "@/lib/summary";
 import { colorFor, DISABLED_COLOR, GRID_COLOR } from "./chart-palette";
 import { ChartTooltip } from "./chart-tooltip";
+import { useChartDirection } from "./use-chart-direction";
 
 const DEFAULT_VISIBLE = 6;
 const MAX_LEGEND_ITEMS = 8;
@@ -33,6 +34,7 @@ export function CategoryMonthlyLineChart({
   mode: "money" | "percent";
 }) {
   const { t, locale } = useI18n();
+  const { xAxisReversed, yAxisOrientation } = useChartDirection();
   const [expanded, setExpanded] = React.useState(false);
   const [visible, setVisible] = React.useState<Set<string>>(
     () =>
@@ -78,8 +80,9 @@ export function CategoryMonthlyLineChart({
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={data} margin={{ top: 4, left: 12, right: 12 }}>
             <CartesianGrid strokeDasharray="3 3" stroke={GRID_COLOR} vertical={false} />
-            <XAxis dataKey="month" interval={0} tick={{ fontSize: 10 }} tickMargin={4} tickLine={false} />
+            <XAxis dataKey="month" reversed={xAxisReversed} interval={0} tick={{ fontSize: 10 }} tickMargin={4} tickLine={false} />
             <YAxis
+              orientation={yAxisOrientation}
               tickFormatter={percent ? formatPercentCompact : formatMoneyCompact}
               tick={{ fontSize: 11 }}
               tickLine={false}
