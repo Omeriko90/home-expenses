@@ -18,6 +18,7 @@ import { ChartCard } from "@/components/shared/charts/chart-card";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { ForecastChart } from "./forecast-chart";
+import { PlanStatusStrip } from "./plan-status-strip";
 import { RangeSelect } from "./range-select";
 import { PlannedItemRow } from "./planned-item-row";
 import { PlannedItemForm } from "./planned-item-form";
@@ -160,6 +161,16 @@ export function PlanningView({
           income={income}
         />
       </ChartCard>
+
+      {items.length > 0 && (
+        <PlanStatusStrip
+          months={months}
+          baselineTotal={baselineTotal}
+          planned={planned}
+          income={income}
+          totalBudgetByYear={forecast.totalBudgetByYear}
+        />
+      )}
 
       {items.length === 0 ? (
         <EmptyState icon={<CalendarClock />} title={t.planning.empty} />
