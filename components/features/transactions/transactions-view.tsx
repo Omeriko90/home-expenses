@@ -7,7 +7,6 @@ import {
   Search,
   SlidersHorizontal,
   Upload,
-  X,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useI18n } from "@/lib/i18n/context";
@@ -191,8 +190,7 @@ export function TransactionsView({
             <PopoverContent align="end" className="flex flex-col gap-3 p-4">
               <TransactionFilters layout="xs" {...filterProps} />
               {activeFilters > 0 && (
-                <Button variant="ghost" size="sm" onClick={clearFilters}>
-                  <X />
+                <Button variant="ghost" onClick={clearFilters}>
                   {t.common.clearFilters}
                 </Button>
               )}
@@ -239,8 +237,7 @@ export function TransactionsView({
         <div className="hidden flex-wrap items-center gap-3 sm:flex">
           <TransactionFilters layout="sm" {...filterProps} />
           {activeFilters > 0 && (
-            <Button variant="ghost" size="sm" onClick={clearFilters}>
-              <X />
+            <Button variant="ghost" onClick={clearFilters}>
               {t.common.clearFilters}
             </Button>
           )}
