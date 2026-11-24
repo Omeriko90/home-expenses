@@ -28,16 +28,23 @@ DialogOverlay.displayName = "DialogOverlay";
 
 export const DialogContent = React.forwardRef<
   React.ComponentRef<typeof DialogPrimitive.Content>,
-  React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content>
->(({ className, children, ...props }, ref) => (
+  React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content> & {
+    fullScreen?: boolean;
+  }
+>(({ className, children, fullScreen = false, ...props }, ref) => (
   <DialogPortal>
     <DialogOverlay />
     <DialogPrimitive.Content
       ref={ref}
       className={cn(
-        "fixed left-1/2 top-1/2 z-50 w-[calc(100%-2rem)] max-w-lg -translate-x-1/2 -translate-y-1/2",
-        "bg-surface border border-border rounded-xl shadow-xl p-6",
-        "data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95",
+        "fixed z-50 bg-surface p-6 shadow-xl",
+        "data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
+        fullScreen
+          ? cn(
+              "inset-0 flex h-dvh w-full flex-col overflow-y-auto data-[state=open]:slide-in-from-bottom-4",
+              "sm:inset-auto sm:left-1/2 sm:top-1/2 sm:h-auto sm:w-[calc(100%-2rem)] sm:max-w-lg sm:-translate-x-1/2 sm:-translate-y-1/2 sm:overflow-visible sm:rounded-xl sm:border sm:border-border sm:data-[state=open]:zoom-in-95 sm:data-[state=open]:slide-in-from-bottom-0",
+            )
+          : "left-1/2 top-1/2 w-[calc(100%-2rem)] max-w-lg -translate-x-1/2 -translate-y-1/2 rounded-xl border border-border data-[state=open]:zoom-in-95",
         className,
       )}
       {...props}
@@ -64,7 +71,7 @@ export function DialogHeader({ className, ...props }: React.ComponentProps<"div"
 export function DialogFooter({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
-      className={cn("flex flex-col-reverse gap-2 sm:flex-row sm:justify-end mt-6", className)}
+      className={cn("mt-auto flex flex-col-reverse gap-2 pt-6 sm:flex-row sm:justify-end", className)}
       {...props}
     />
   );
