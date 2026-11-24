@@ -36,7 +36,8 @@ export function TransactionFilters({
         values={cats}
         onValuesChange={onCatsChange}
         placeholder={t.transactions.allCategories}
-        className={layout === "sm" ? "w-44" : "w-full"}
+        removeLabel={t.common.delete}
+        className={layout === "sm" ? "w-56" : "w-full"}
         options={categories.map((c) => ({
           value: c.id,
           label: (
