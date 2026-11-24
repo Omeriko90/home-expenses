@@ -229,7 +229,7 @@ export function BudgetEditor({
   ];
 
   return (
-    <div className="flex min-h-0 flex-col gap-6 sm:h-[calc(100dvh-7rem-1px)]">
+    <div className="flex flex-col gap-6">
       <PageHeader
         actions={
           <div className="flex w-full items-center gap-2 sm:w-auto">
@@ -314,7 +314,7 @@ export function BudgetEditor({
         />
       </div>
 
-      <Card className="flex min-h-0 flex-col overflow-hidden">
+      <Card className="flex flex-col overflow-hidden">
         {visibleRows.length === 0 ? (
           <EmptyState title={t.common.noData} className="m-4 border-none" />
         ) : (
@@ -322,7 +322,7 @@ export function BudgetEditor({
             columns={columns}
             data={visibleRows}
             rowKey={(r) => r.categoryId}
-            containerClassName="min-h-0 flex-1 overflow-y-auto"
+            containerClassName="max-h-[min(550px,100dvh)] min-h-0 flex-1 overflow-y-auto"
             headerClassName="shadow-divider"
           />
         )}
