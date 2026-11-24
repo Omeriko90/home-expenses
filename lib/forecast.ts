@@ -55,7 +55,6 @@ export type ForecastItem = PlannedItemSpec & {
   categoryName: string | null;
   impact: number[];
   verdict: Verdict;
-  categoryOverBudget: boolean;
   budgetImpact: BudgetImpactMonth[] | null;
 };
 
@@ -230,6 +229,23 @@ function resolveVerdict(
   return "over";
 }
 
+function resolveCategoryVerdict(
+  budgetImpact: BudgetImpactMonth[] | null,
+): Verdict | null {
+  const budgetedMonths = (budgetImpact ?? []).filter(
+    (impactMonth) => impactMonth.budget > 0,
+  );
+  if (budgetedMonths.length === 0) return null;
+  let worstRatio = 0;
+  for (const impactMonth of budgetedMonths) {
+    const ratio = impactMonth.projected / impactMonth.budget;
+    if (ratio > worstRatio) worstRatio = ratio;
+  }
+  if (worstRatio <= VERDICT_FITS_MAX) return "fits";
+  if (worstRatio <= VERDICT_TIGHT_MAX) return "tight";
+  return "over";
+}
+
 function buildBudgetImpact(
   categoryId: string,
   months: MonthKey[],
@@ -333,11 +349,6 @@ export async function getForecast(
           budgetIndex.budgetsByCategoryYear,
         )
       : null;
-    const categoryOverBudget = !!budgetImpact?.some(
-      (impactMonth) =>
-        impactMonth.budget > 0 && impactMonth.projected > impactMonth.budget,
-    );
-    const capacityVerdict = resolveVerdict(impact, totalPlanned, capacity);
     return {
       id: item.id,
       title: item.title,
@@ -356,10 +367,8 @@ export async function getForecast(
         : null,
       impact,
       verdict:
-        capacityVerdict === "fits" && categoryOverBudget
-          ? "tight"
-          : capacityVerdict,
-      categoryOverBudget,
+        resolveCategoryVerdict(budgetImpact) ??
+        resolveVerdict(impact, totalPlanned, capacity),
       budgetImpact,
     };
   });
