@@ -1,56 +1,100 @@
 "use client";
 
+import { useState } from "react";
+import { TriangleAlert } from "lucide-react";
 import { useI18n } from "@/lib/i18n/context";
-import { formatMoney } from "@/lib/utils";
-import { ProgressBar } from "@/components/shared/progress-bar";
+import { MonthImpactRow } from "./month-impact-row";
 import { formatMonthKey, type ForecastItem } from "./types";
 
 export function BudgetImpactDetails({ item }: { item: ForecastItem }) {
   const { t } = useI18n();
+  const [showAll, setShowAll] = useState(false);
+
+  const months = item.budgetImpact ?? [];
+  const overMonths = months.filter(
+    (impactMonth) =>
+      impactMonth.budget > 0 && impactMonth.projected > impactMonth.budget,
+  );
+  const budgetedMonths = months.filter((impactMonth) => impactMonth.budget > 0);
+  const noBudgetMonths = months.filter((impactMonth) => impactMonth.budget <= 0);
+
+  const noBudgetRange =
+    noBudgetMonths.length > 0
+      ? `${formatMonthKey(noBudgetMonths[0].year, noBudgetMonths[0].month)}–${formatMonthKey(
+          noBudgetMonths[noBudgetMonths.length - 1].year,
+          noBudgetMonths[noBudgetMonths.length - 1].month,
+        )}`
+      : "";
+  const noBudgetLabel =
+    noBudgetMonths.length === 1
+      ? t.planning.noBudgetForMonth.replace(
+          "{range}",
+          formatMonthKey(noBudgetMonths[0].year, noBudgetMonths[0].month),
+        )
+      : t.planning.noBudgetForMonths
+          .replace("{n}", String(noBudgetMonths.length))
+          .replace("{range}", noBudgetRange);
 
   return (
     <div className="flex flex-col gap-2 rounded-lg bg-surface-muted/40 p-3">
       <span className="text-xs font-medium text-muted-foreground">
         {t.planning.budgetImpact} · {item.categoryName}
       </span>
-      <div className="flex flex-col gap-1.5">
-        {(item.budgetImpact ?? []).map((impactMonth) => {
-          const over =
-            impactMonth.budget > 0 && impactMonth.projected > impactMonth.budget;
-          return (
-            <div
+
+      {showAll ? (
+        <div className="flex flex-col gap-1.5">
+          {months.map((impactMonth) => (
+            <MonthImpactRow
               key={`${impactMonth.year}-${impactMonth.month}`}
-              className="flex items-center gap-3 text-sm"
-            >
-              <span className="w-12 shrink-0 text-xs text-muted-foreground tnum">
-                {formatMonthKey(impactMonth.year, impactMonth.month)}
+              impactMonth={impactMonth}
+            />
+          ))}
+        </div>
+      ) : (
+        <div className="flex flex-col gap-1.5">
+          {overMonths.length > 0 ? (
+            <>
+              <span className="flex items-center gap-1.5 text-xs font-medium text-danger">
+                <TriangleAlert className="size-3.5 shrink-0" />
+                {overMonths.length === 1
+                  ? t.planning.overInOneMonth
+                  : t.planning.overInMonths.replace(
+                      "{n}",
+                      String(overMonths.length),
+                    )}
               </span>
-              <ProgressBar
-                value={impactMonth.projected}
-                max={impactMonth.budget}
-                over={over}
-                className="h-2 flex-1"
-              />
-              <span className="shrink-0 text-xs tnum">
-                <span className={over ? "font-medium text-danger" : undefined}>
-                  {formatMoney(impactMonth.projected)}
-                </span>
-                <span className="text-muted-foreground">
-                  {" "}
-                  {t.planning.vsBudget}{" "}
-                  <span dir="ltr" className="inline-block">
-                    {`(${
-                      impactMonth.budget > 0
-                        ? formatMoney(impactMonth.budget).replace(/[‎‏]/g, "")
-                        : "—"
-                    })`}
-                  </span>
-                </span>
+              {overMonths.map((impactMonth) => (
+                <MonthImpactRow
+                  key={`${impactMonth.year}-${impactMonth.month}`}
+                  impactMonth={impactMonth}
+                />
+              ))}
+            </>
+          ) : (
+            budgetedMonths.length > 0 && (
+              <span className="text-xs font-medium text-success">
+                {t.planning.withinAllMonths}
               </span>
-            </div>
-          );
-        })}
-      </div>
+            )
+          )}
+          {noBudgetMonths.length > 0 && (
+            <span className="text-xs text-muted-foreground">{noBudgetLabel}</span>
+          )}
+        </div>
+      )}
+
+      <button
+        type="button"
+        onClick={(event) => {
+          event.stopPropagation();
+          setShowAll((wasShowingAll) => !wasShowingAll);
+        }}
+        className="self-start text-xs font-medium text-primary hover:underline"
+      >
+        {showAll
+          ? t.common.showLess
+          : t.common.showAll.replace("{n}", String(months.length))}
+      </button>
     </div>
   );
 }
