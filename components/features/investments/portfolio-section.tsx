@@ -55,6 +55,7 @@ export function PortfolioSection({
           <Button
             variant="outline"
             size="sm"
+            className="bg-surface"
             onClick={() => setDepositsOpen(true)}
           >
             {t.investments.setDeposits}

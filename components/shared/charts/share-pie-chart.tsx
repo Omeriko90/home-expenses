@@ -29,7 +29,7 @@ export function SharePieChart({
     <div className="flex flex-col gap-2 lg:h-full lg:flex-row lg:items-stretch lg:gap-4">
       <div className="h-64 sm:h-72 lg:h-auto lg:min-h-0 lg:flex-1">
         <ResponsiveContainer width="100%" height="100%">
-          <PieChart>
+          <PieChart margin={{ top: 20, bottom: 20, left: 20, right: 20 }}>
             <Pie
               data={data}
               dataKey="value"
