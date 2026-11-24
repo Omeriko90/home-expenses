@@ -45,7 +45,7 @@ export function DepositsForm({
       defaultValues={{ value: current || undefined }}
       onSubmit={handleSubmit}
       pending={pending}
-      contentClassName="max-w-sm"
+      contentClassName="sm:max-w-sm"
     >
       <MoneyField name="value" label={t.investments.deposits} required />
     </FormDialog>
