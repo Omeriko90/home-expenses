@@ -232,7 +232,7 @@ export function TransactionsView({
         <EmptyState
           title={t.transactions.empty}
           action={
-            <Button onClick={openAdd} variant="outline">
+            <Button onClick={openAdd} variant="outline" className="bg-surface">
               <Plus /> {t.transactions.add}
             </Button>
           }
