@@ -229,7 +229,7 @@ export function BudgetEditor({
   ];
 
   return (
-    <div className="flex h-[calc(100dvh-7rem-1px)] min-h-0 flex-col gap-6">
+    <div className="flex min-h-0 flex-col gap-6 sm:h-[calc(100dvh-7rem-1px)]">
       <PageHeader
         actions={
           <div className="flex w-full items-center gap-2 sm:w-auto">
