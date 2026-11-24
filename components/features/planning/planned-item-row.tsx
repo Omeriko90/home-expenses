@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, TriangleAlert } from "lucide-react";
 import { useI18n } from "@/lib/i18n/context";
 import { cn, formatMoney } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
@@ -9,7 +9,6 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Tooltip } from "@/components/ui/tooltip";
 import { IconButton } from "@/components/shared/icon-button";
 import { BudgetImpactDetails } from "./budget-impact-details";
-import { BudgetStatusChip } from "./budget-status-chip";
 import { PlannedItemActionsMenu } from "./planned-item-actions-menu";
 import {
   formatMonthKey,
@@ -94,12 +93,14 @@ export function PlannedItemRow({
         >
           <div className="flex min-w-0 items-center gap-2">
             <span className="truncate font-medium">{item.title}</span>
+            {item.verdict === "over" && (
+              <TriangleAlert className="size-4 shrink-0 text-danger" />
+            )}
             <span className="hidden shrink-0 items-center gap-2 sm:flex">
               <Badge variant="info">{typeLabel}</Badge>
               {item.categoryName && (
                 <Badge variant="default">{item.categoryName}</Badge>
               )}
-              <BudgetStatusChip verdict={item.verdict} />
             </span>
           </div>
           <div className="flex flex-wrap items-center gap-1.5 sm:hidden">
@@ -107,7 +108,6 @@ export function PlannedItemRow({
             {item.categoryName && (
               <Badge variant="default">{item.categoryName}</Badge>
             )}
-            <BudgetStatusChip verdict={item.verdict} />
           </div>
           <span className="flex flex-wrap gap-x-1 text-xs text-muted-foreground tnum">
             {metaParts.map((part, index) => (
