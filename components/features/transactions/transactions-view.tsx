@@ -190,7 +190,7 @@ export function TransactionsView({
             <PopoverContent align="end" className="flex flex-col gap-3 p-4">
               <TransactionFilters layout="xs" {...filterProps} />
               {activeFilters > 0 && (
-                <Button variant="ghost" size="sm" onClick={clearFilters}>
+                <Button variant="ghost" onClick={clearFilters}>
                   {t.common.clearFilters}
                 </Button>
               )}
@@ -237,7 +237,7 @@ export function TransactionsView({
         <div className="hidden flex-wrap items-center gap-3 sm:flex">
           <TransactionFilters layout="sm" {...filterProps} />
           {activeFilters > 0 && (
-            <Button variant="ghost" size="sm" onClick={clearFilters}>
+            <Button variant="ghost" onClick={clearFilters}>
               {t.common.clearFilters}
             </Button>
           )}
