@@ -106,7 +106,7 @@ export function PlannedItemRow({
             {item.categoryName && (
               <Badge variant="default">{item.categoryName}</Badge>
             )}
-            <VerdictBadge verdict={item.verdict} />
+            <VerdictBadge verdict={item.verdict} source={item.verdictSource} />
           </div>
           <span className="flex flex-wrap gap-x-1 text-xs text-muted-foreground tnum">
             {metaParts.map((part, index) => (
@@ -119,7 +119,7 @@ export function PlannedItemRow({
         </div>
         <div className="flex shrink-0 items-center gap-2">
           <span className="hidden sm:inline-flex">
-            <VerdictBadge verdict={item.verdict} />
+            <VerdictBadge verdict={item.verdict} source={item.verdictSource} />
           </span>
           <span onClick={(event) => event.stopPropagation()}>
             <PlannedItemActionsMenu
