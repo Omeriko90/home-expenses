@@ -39,6 +39,18 @@ export async function getYears(householdId: string): Promise<number[]> {
   return [...set].sort((a, b) => b - a);
 }
 
+export function getPlanningYear(): number | null {
+  const now = new Date();
+  return now.getMonth() === 11 && now.getDate() >= 16
+    ? now.getFullYear() + 1
+    : null;
+}
+
+export function withYear(years: number[], extra: number | null): number[] {
+  if (extra === null || years.includes(extra)) return years;
+  return [...years, extra].sort((a, b) => b - a);
+}
+
 export function resolveYear(
   years: number[],
   requested?: string | string[],
@@ -46,7 +58,9 @@ export function resolveYear(
   const raw = Array.isArray(requested) ? requested[0] : requested;
   const parsed = raw ? Number(raw) : NaN;
   if (!Number.isNaN(parsed) && years.includes(parsed)) return parsed;
-  return years[0] ?? new Date().getFullYear();
+  const current = new Date().getFullYear();
+  if (years.includes(current)) return current;
+  return years[0] ?? current;
 }
 
 /** Resolve a year from the URL, accepting any sane value (free navigation). */
