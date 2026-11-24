@@ -235,6 +235,16 @@ const he = {
       budgetImpact: "השפעה על התקציב",
       projected: "צפוי",
       vsBudget: "מול התקציב",
+      planStatusOk: "הסך המתוכנן עומד בתקציב ובהכנסה בכל הטווח",
+      planStatusOverBudgetOne:
+        "בחודש {months} הסך המתוכנן עובר את התקציב החודשי, אך בגבולות ההכנסה",
+      planStatusOverBudget:
+        "ב-{n} חודשים{months} הסך המתוכנן עובר את התקציב החודשי, אך בגבולות ההכנסה",
+      planStatusOverIncomeOne:
+        "בחודש {months} הסך המתוכנן עובר את ההכנסה הצפויה",
+      planStatusOverIncome:
+        "ב-{n} חודשים{months} הסך המתוכנן עובר את ההכנסה הצפויה",
+      planStatusAlsoOverBudget: "וחורג מהתקציב ב-{n} חודשים",
       overInMonths: "חריגה ב-{n} חודשים",
       overInOneMonth: "חריגה בחודש אחד",
       withinAllMonths: "בתקציב בכל התקופה",
@@ -638,6 +648,16 @@ const en: Dictionary = {
       budgetImpact: "Budget impact",
       projected: "Projected",
       vsBudget: "vs budget",
+      planStatusOk: "The planned total stays within budget and income for the whole range",
+      planStatusOverBudgetOne:
+        "In {months} the planned total exceeds the monthly budget, but stays within income",
+      planStatusOverBudget:
+        "In {n} months{months} the planned total exceeds the monthly budget, but stays within income",
+      planStatusOverIncomeOne:
+        "In {months} the planned total exceeds expected income",
+      planStatusOverIncome:
+        "In {n} months{months} the planned total exceeds expected income",
+      planStatusAlsoOverBudget: "and exceeds the budget in {n} months",
       overInMonths: "Over budget in {n} months",
       overInOneMonth: "Over budget in one month",
       withinAllMonths: "Within budget for the whole range",
