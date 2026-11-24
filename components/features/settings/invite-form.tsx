@@ -73,7 +73,7 @@ export function InviteForm({
       onSubmit={handleSubmit}
       pending={pending}
       submitLabel={pending ? t.common.loading : t.settings.invite}
-      contentClassName="max-w-sm"
+      contentClassName="sm:max-w-sm"
     >
       <TextField
         name="email"
