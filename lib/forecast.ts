@@ -55,8 +55,11 @@ export type ForecastItem = PlannedItemSpec & {
   categoryName: string | null;
   impact: number[];
   verdict: Verdict;
+  verdictSource: VerdictSource;
   budgetImpact: BudgetImpactMonth[] | null;
 };
+
+export type VerdictSource = "budget" | "capacity";
 
 export type ForecastData = {
   months: MonthKey[];
@@ -349,6 +352,7 @@ export async function getForecast(
           budgetIndex.budgetsByCategoryYear,
         )
       : null;
+    const categoryVerdict = resolveCategoryVerdict(budgetImpact);
     return {
       id: item.id,
       title: item.title,
@@ -367,8 +371,8 @@ export async function getForecast(
         : null,
       impact,
       verdict:
-        resolveCategoryVerdict(budgetImpact) ??
-        resolveVerdict(impact, totalPlanned, capacity),
+        categoryVerdict ?? resolveVerdict(impact, totalPlanned, capacity),
+      verdictSource: categoryVerdict ? "budget" : "capacity",
       budgetImpact,
     };
   });

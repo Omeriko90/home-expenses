@@ -222,6 +222,9 @@ const he = {
       verdictFits: "מתאים",
       verdictTight: "גבולי",
       verdictOver: "לא מתאים",
+      verdictWithinBudget: "בתקציב",
+      verdictNearBudget: "קרוב לתקציב",
+      verdictOverBudget: "חורג מהתקציב",
       verdictUnknown: "אין מספיק נתונים",
       verdictUnknownHint:
         "אין תקציב או הכנסה צפויה בחודשים הרלוונטיים להשוואה",
@@ -625,6 +628,9 @@ const en: Dictionary = {
       verdictFits: "Fits",
       verdictTight: "Tight",
       verdictOver: "Doesn't fit",
+      verdictWithinBudget: "Within budget",
+      verdictNearBudget: "Near budget",
+      verdictOverBudget: "Over budget",
       verdictUnknown: "Not enough data",
       verdictUnknownHint:
         "No budget or expected income in the affected months to compare against",
