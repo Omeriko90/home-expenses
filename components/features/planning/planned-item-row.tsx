@@ -43,16 +43,26 @@ export function PlannedItemRow({
   }[item.type];
 
   const start = formatMonthKey(item.startYear, item.startMonth);
-  const schedule =
+  const scheduleParts =
     item.type === PlannedItemTypes.OneTime
-      ? start
+      ? [start]
       : item.type === PlannedItemTypes.Installments
-        ? `${formatMoney(item.amount / (item.installments ?? 1))} × ${item.installments} · ${t.planning.from}${start}`
-        : `${t.planning.from}${start}${
-            item.endYear && item.endMonth
-              ? ` ${t.planning.until} ${formatMonthKey(item.endYear, item.endMonth)}`
-              : ""
-          }`;
+        ? [
+            `${formatMoney(item.amount / (item.installments ?? 1))} × ${item.installments}`,
+            `${t.planning.from}${start}`,
+          ]
+        : [
+            `${t.planning.from}${start}`,
+            ...(item.endYear && item.endMonth
+              ? [`${t.planning.until} ${formatMonthKey(item.endYear, item.endMonth)}`]
+              : []),
+          ];
+  const metaParts = [
+    `${formatMoney(item.amount)}${
+      item.type === PlannedItemTypes.Recurring ? ` / ${t.common.month}` : ""
+    }`,
+    ...scheduleParts,
+  ];
 
   const hasBudgetImpact = !!item.budgetImpact && item.budgetImpact.length > 0;
 
@@ -82,24 +92,35 @@ export function PlannedItemRow({
             "opacity-50": !included,
           })}
         >
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex min-w-0 items-center gap-2">
             <span className="truncate font-medium">{item.title}</span>
+            <span className="hidden shrink-0 items-center gap-2 sm:flex">
+              <Badge variant="info">{typeLabel}</Badge>
+              {item.categoryName && (
+                <Badge variant="default">{item.categoryName}</Badge>
+              )}
+            </span>
+          </div>
+          <div className="flex flex-wrap items-center gap-1.5 sm:hidden">
             <Badge variant="info">{typeLabel}</Badge>
             {item.categoryName && (
-              <Badge variant="default" className="hidden sm:inline-flex">
-                {item.categoryName}
-              </Badge>
+              <Badge variant="default">{item.categoryName}</Badge>
             )}
+            <VerdictBadge verdict={item.verdict} />
           </div>
-          <span className="text-xs text-muted-foreground tnum">
-            {formatMoney(item.amount)}
-            {item.type === PlannedItemTypes.Recurring &&
-              ` / ${t.common.month}`}{" "}
-            · {schedule}
+          <span className="flex flex-wrap gap-x-1 text-xs text-muted-foreground tnum">
+            {metaParts.map((part, index) => (
+              <span key={index} className="whitespace-nowrap">
+                {index > 0 && "· "}
+                {part}
+              </span>
+            ))}
           </span>
         </div>
         <div className="flex shrink-0 items-center gap-2">
-          <VerdictBadge verdict={item.verdict} />
+          <span className="hidden sm:inline-flex">
+            <VerdictBadge verdict={item.verdict} />
+          </span>
           <span onClick={(event) => event.stopPropagation()}>
             <PlannedItemActionsMenu
               onEdit={onEdit}
@@ -107,12 +128,14 @@ export function PlannedItemRow({
               onSetStatus={onSetStatus}
             />
           </span>
-          {hasBudgetImpact && (
+          {hasBudgetImpact ? (
             <IconButton label={t.planning.budgetImpact}>
               <ChevronDown
                 className={cn("transition-transform", expanded && "rotate-180")}
               />
             </IconButton>
+          ) : (
+            <span aria-hidden className="size-10 shrink-0" />
           )}
         </div>
       </div>
