@@ -55,6 +55,7 @@ export type ForecastItem = PlannedItemSpec & {
   categoryName: string | null;
   impact: number[];
   verdict: Verdict;
+  categoryOverBudget: boolean;
   budgetImpact: BudgetImpactMonth[] | null;
 };
 
@@ -323,6 +324,20 @@ export async function getForecast(
     const impact = impacts[itemIndex];
     const hasExpenseCategory =
       item.categoryId !== null && categoryNames.has(item.categoryId);
+    const budgetImpact = hasExpenseCategory
+      ? buildBudgetImpact(
+          item.categoryId as string,
+          months,
+          impact,
+          baselineByCategory,
+          budgetIndex.budgetsByCategoryYear,
+        )
+      : null;
+    const categoryOverBudget = !!budgetImpact?.some(
+      (impactMonth) =>
+        impactMonth.budget > 0 && impactMonth.projected > impactMonth.budget,
+    );
+    const capacityVerdict = resolveVerdict(impact, totalPlanned, capacity);
     return {
       id: item.id,
       title: item.title,
@@ -340,16 +355,12 @@ export async function getForecast(
         ? (categoryNames.get(item.categoryId) ?? null)
         : null,
       impact,
-      verdict: resolveVerdict(impact, totalPlanned, capacity),
-      budgetImpact: hasExpenseCategory
-        ? buildBudgetImpact(
-            item.categoryId as string,
-            months,
-            impact,
-            baselineByCategory,
-            budgetIndex.budgetsByCategoryYear,
-          )
-        : null,
+      verdict:
+        capacityVerdict === "fits" && categoryOverBudget
+          ? "tight"
+          : capacityVerdict,
+      categoryOverBudget,
+      budgetImpact,
     };
   });
 
