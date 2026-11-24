@@ -3,11 +3,14 @@
 import * as React from "react";
 import { Check, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { ChipGroup } from "@/components/ui/chip-group/ChipGroup";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+
+const MAX_VISIBLE_CHIPS = 2;
 
 export type MultiSelectOption = {
   value: string;
@@ -19,12 +22,14 @@ export function MultiSelect({
   onValuesChange,
   options,
   placeholder,
+  removeLabel,
   className,
 }: {
   values: string[];
   onValuesChange: (values: string[]) => void;
   options: MultiSelectOption[];
   placeholder: string;
+  removeLabel?: string;
   className?: string;
 }) {
   const selected = options.filter((option) => values.includes(option.value));
@@ -48,18 +53,16 @@ export function MultiSelect({
             className,
           )}
         >
-          <span className="flex min-w-0 items-center truncate">
-            {selected.length === 0
-              ? placeholder
-              : selected.flatMap((option, index) =>
-                  index === 0
-                    ? [<span key={option.value}>{option.label}</span>]
-                    : [
-                        <span key={`sep-${option.value}`}>,&nbsp;</span>,
-                        <span key={option.value}>{option.label}</span>,
-                      ],
-                )}
-          </span>
+          {selected.length === 0 ? (
+            <span className="truncate">{placeholder}</span>
+          ) : (
+            <ChipGroup
+              items={selected}
+              onRemove={toggleValue}
+              removeLabel={removeLabel}
+              max={MAX_VISIBLE_CHIPS}
+            />
+          )}
           <ChevronDown className="size-4 shrink-0 opacity-60" />
         </button>
       </PopoverTrigger>
