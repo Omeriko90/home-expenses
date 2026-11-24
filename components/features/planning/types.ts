@@ -7,6 +7,7 @@ import type {
   PlannedItemType,
   RangeMonths,
   Verdict,
+  VerdictSource,
 } from "@/lib/forecast";
 import { PlannedItemStatuses, PlannedItemTypes } from "@/lib/forecast";
 
@@ -19,6 +20,7 @@ export type {
   PlannedItemType,
   RangeMonths,
   Verdict,
+  VerdictSource,
 };
 export { PlannedItemStatuses, PlannedItemTypes };
 
