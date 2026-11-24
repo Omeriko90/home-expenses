@@ -226,7 +226,7 @@ export function TransactionsView({
       </div>
 
       <div className="flex flex-col gap-3">
-        <div className="relative">
+        <div className="relative sm:max-w-xs">
           <Search className="pointer-events-none absolute inset-y-0 start-3 my-auto size-4 text-muted-foreground" />
           <Input
             value={q}
