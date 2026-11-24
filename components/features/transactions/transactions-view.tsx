@@ -48,7 +48,7 @@ export function TransactionsView({
   rows: TxRow[];
 }) {
   const { t } = useI18n();
-  const [cat, setCat] = React.useState<string>("all");
+  const [cats, setCats] = React.useState<string[]>([]);
   const [kind, setKind] = React.useState<TxKind>("all");
   const [amountMin, setAmountMin] = React.useState<number | "">("");
   const [amountMax, setAmountMax] = React.useState<number | "">("");
@@ -65,7 +65,7 @@ export function TransactionsView({
   const { filtered, total } = React.useMemo(() => {
     const needle = deferredQ.toLowerCase();
     const filtered = rows.filter((r) => {
-      if (cat !== "all" && r.categoryId !== cat) return false;
+      if (cats.length > 0 && !cats.includes(r.categoryId)) return false;
       if (kind !== "all" && r.kind !== kind) return false;
       if (deferredMin !== "" && r.amount < deferredMin) return false;
       if (deferredMax !== "" && r.amount > deferredMax) return false;
@@ -74,18 +74,18 @@ export function TransactionsView({
     });
     const total = filtered.reduce((s, r) => s + r.amount, 0);
     return { filtered, total };
-  }, [rows, cat, kind, deferredMin, deferredMax, deferredQ]);
+  }, [rows, cats, kind, deferredMin, deferredMax, deferredQ]);
 
   const activeFilters =
-    Number(cat !== "all") +
+    Number(cats.length > 0) +
     Number(kind !== "all") +
     Number(amountMin !== "") +
     Number(amountMax !== "");
 
   const filterProps = {
     categories,
-    cat,
-    onCatChange: setCat,
+    cats,
+    onCatsChange: setCats,
     kind,
     onKindChange: setKind,
     amountMin,

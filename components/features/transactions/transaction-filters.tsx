@@ -1,5 +1,6 @@
 import { useI18n } from "@/lib/i18n/context";
 import { MoneyInput } from "@/components/shared/money-input";
+import { MultiSelect } from "@/components/ui/multi-select/MultiSelect";
 import { Select } from "@/components/ui/select/Select";
 import type { TxCategory } from "./transaction-form";
 
@@ -8,8 +9,8 @@ export type TxKind = "all" | "FIXED" | "VARIABLE";
 export function TransactionFilters({
   layout,
   categories,
-  cat,
-  onCatChange,
+  cats,
+  onCatsChange,
   kind,
   onKindChange,
   amountMin,
@@ -19,8 +20,8 @@ export function TransactionFilters({
 }: {
   layout: "xs" | "sm";
   categories: TxCategory[];
-  cat: string;
-  onCatChange: (v: string) => void;
+  cats: string[];
+  onCatsChange: (v: string[]) => void;
   kind: TxKind;
   onKindChange: (v: TxKind) => void;
   amountMin: number | "";
@@ -31,26 +32,24 @@ export function TransactionFilters({
   const { t } = useI18n();
   return (
     <>
-      <Select
-        value={cat}
-        onValueChange={onCatChange}
+      <MultiSelect
+        values={cats}
+        onValuesChange={onCatsChange}
+        placeholder={t.transactions.allCategories}
         className={layout === "sm" ? "w-44" : "w-full"}
-        options={[
-          { value: "all", label: t.transactions.allCategories },
-          ...categories.map((c) => ({
-            value: c.id,
-            label: (
-              <span className="flex items-center gap-1">
-                {c.name}
-                {c.archived && (
-                  <span className="text-xs text-muted-foreground">
-                    ({t.common.archived})
-                  </span>
-                )}
-              </span>
-            ),
-          })),
-        ]}
+        options={categories.map((c) => ({
+          value: c.id,
+          label: (
+            <span className="flex items-center gap-1">
+              {c.name}
+              {c.archived && (
+                <span className="text-xs text-muted-foreground">
+                  ({t.common.archived})
+                </span>
+              )}
+            </span>
+          ),
+        }))}
       />
       <Select
         value={kind}
