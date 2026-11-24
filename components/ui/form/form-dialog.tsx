@@ -52,7 +52,7 @@ export function FormDialog<
   const methods = useZodForm(schema, { defaultValues });
   return (
     <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
-      <DialogContent className={contentClassName}>
+      <DialogContent fullScreen className={contentClassName}>
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
         </DialogHeader>
@@ -61,7 +61,7 @@ export function FormDialog<
             onSubmit={methods.handleSubmit((values) =>
               onSubmit(values, methods),
             )}
-            className="flex flex-col gap-4"
+            className="flex min-h-0 flex-1 flex-col gap-4"
             noValidate
           >
             {children}

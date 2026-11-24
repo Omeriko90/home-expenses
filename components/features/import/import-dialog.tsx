@@ -275,9 +275,10 @@ export function ImportDialog({
       onClose={onClose}
       title={t.import.title}
       description={<StepIndicator step={step} />}
+      fullScreen
       contentClassName={cn(
-        "max-h-[90dvh] overflow-hidden flex flex-col",
-        step === "review" ? "max-w-4xl" : "max-w-lg",
+        "overflow-hidden flex flex-col sm:max-h-[90dvh]",
+        step === "review" ? "sm:max-w-4xl" : "sm:max-w-lg",
       )}
       footerClassName="flex-row justify-between sm:justify-between"
       footer={

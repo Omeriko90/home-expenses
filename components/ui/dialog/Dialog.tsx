@@ -18,6 +18,7 @@ export function Dialog({
   footer,
   footerClassName,
   contentClassName,
+  fullScreen = false,
   children,
 }: {
   open: boolean;
@@ -27,11 +28,12 @@ export function Dialog({
   footer?: React.ReactNode;
   footerClassName?: string;
   contentClassName?: string;
+  fullScreen?: boolean;
   children?: React.ReactNode;
 }) {
   return (
     <DialogRoot open={open} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className={contentClassName}>
+      <DialogContent fullScreen={fullScreen} className={contentClassName}>
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
           {description && <DialogDescription>{description}</DialogDescription>}
