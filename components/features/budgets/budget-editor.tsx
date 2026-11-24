@@ -314,7 +314,7 @@ export function BudgetEditor({
         />
       </div>
 
-      <Card className="overflow-hidden">
+      <Card className="flex flex-col overflow-hidden">
         {visibleRows.length === 0 ? (
           <EmptyState title={t.common.noData} className="m-4 border-none" />
         ) : (
@@ -322,6 +322,8 @@ export function BudgetEditor({
             columns={columns}
             data={visibleRows}
             rowKey={(r) => r.categoryId}
+            containerClassName="max-h-[min(550px,100dvh)] min-h-0 flex-1 overflow-y-auto"
+            headerClassName="shadow-divider"
           />
         )}
         <TotalsFooterRow>
