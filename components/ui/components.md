@@ -9,6 +9,7 @@ These follow the `baseXxxComponents.tsx` + `Xxx.tsx` structure: the base file ho
 | Component | Wrapper import | Base primitives import | Radix dependency |
 | --- | --- | --- | --- |
 | Select | `@/components/ui/select/Select` | `@/components/ui/select/baseSelectComponents` | `@radix-ui/react-select` |
+| MultiSelect | `@/components/ui/multi-select/MultiSelect` | — (composes Popover) | `@radix-ui/react-popover` |
 | Accordion | `@/components/ui/accordion/Accordion` | `@/components/ui/accordion/baseAccordionComponents` | `@radix-ui/react-accordion` |
 | DropdownMenu | `@/components/ui/dropdown-menu/DropdownMenu` | `@/components/ui/dropdown-menu/baseDropdownMenuComponents` | `@radix-ui/react-dropdown-menu` |
 | Dialog | `@/components/ui/dialog/Dialog` | `@/components/ui/dialog/baseDialogComponents` | `@radix-ui/react-dialog` |
@@ -26,6 +27,18 @@ import { Select } from "@/components/ui/select/Select";
     { value: "VARIABLE", label: "Variable" },
     { value: "FIXED", label: "Fixed" },
   ]}
+/>
+```
+
+```tsx
+import { MultiSelect } from "@/components/ui/multi-select/MultiSelect";
+
+<MultiSelect
+  values={selectedIds}            // empty array = no filter
+  onValuesChange={setSelectedIds}
+  placeholder="All categories"    // shown when nothing is selected
+  className="w-44"
+  options={[{ value: "id1", label: "Groceries" }]}
 />
 ```
 
