@@ -7,9 +7,9 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/shared/empty-state";
-import { EditDeleteActions } from "@/components/shared/edit-delete-actions";
 import { IncomeLineRow } from "./income-line-row";
 import { SourceMenu } from "./source-menu";
+import { OneTimeMenu } from "./one-time-menu";
 import type { IncomeEntryData } from "./types";
 
 export function MonthIncomeList({
@@ -83,7 +83,7 @@ export function MonthIncomeList({
           breakdown={entry.taxBreakdown}
           badge={<Badge variant="primary">{t.income.oneTimeBadge}</Badge>}
           actions={
-            <EditDeleteActions
+            <OneTimeMenu
               onEdit={() => onEditOneTime(entry)}
               onDelete={() => onDeleteOneTime(entry)}
             />
