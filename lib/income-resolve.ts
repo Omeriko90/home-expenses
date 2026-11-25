@@ -1,4 +1,5 @@
-import type { IncomeEntryKind } from "@prisma/client";
+import type { IncomeAmountType, IncomeEntryKind } from "@prisma/client";
+import type { TaxBreakdown } from "@/lib/tax/types";
 
 /**
  * Pure income resolution (client-safe — no prisma import). A source's amount
@@ -13,6 +14,10 @@ export type IncomeSourceData = {
   name: string;
   endYear: number | null;
   endMonth: number | null;
+  amountType: IncomeAmountType;
+  creditPoints: number;
+  pensionRate: number | null;
+  hishtalmutRate: number | null;
 };
 
 export type IncomeEntryData = {
@@ -22,6 +27,9 @@ export type IncomeEntryData = {
   year: number;
   month: number;
   amount: number;
+  grossAmount: number | null;
+  taxBreakdown: TaxBreakdown | null;
+  linkedSourceId: string | null;
   note: string | null;
   sourceId: string | null;
 };

@@ -10,6 +10,7 @@ import {
   reactivateIncomeSource,
   renameIncomeSource,
   setMonthOverride,
+  updateIncomeSourceTaxParams,
 } from "@/app/actions/income";
 import {
   ApplyModes,
@@ -19,7 +20,15 @@ import {
 import { EndSelections } from "@/lib/schemas/common";
 import { FormDialog } from "@/components/ui/form/form-dialog";
 import { EditSourceFields } from "./edit-source-fields";
-import type { IncomeSourceData } from "./types";
+import { AmountTypes, type IncomeSourceData } from "./types";
+
+function percentToFraction(percent: number): number | null {
+  return percent > 0 ? percent / 100 : null;
+}
+
+function fractionToPercent(fraction: number | null): number {
+  return fraction === null ? 0 : Math.round(fraction * 10000) / 100;
+}
 
 export function EditSourceDialog({
   source,
@@ -48,6 +57,11 @@ export function EditSourceDialog({
       (values.hasEnd === EndSelections.Custom &&
         (values.end.year !== source.endYear ||
           values.end.month !== source.endMonth));
+    const paramsChanged =
+      source.amountType === AmountTypes.Gross &&
+      (values.creditPoints !== source.creditPoints ||
+        percentToFraction(values.pensionPercent) !== source.pensionRate ||
+        percentToFraction(values.hishtalmutPercent) !== source.hishtalmutRate);
     startTransition(async () => {
       if (values.name !== source.name) {
         const result = await renameIncomeSource(source.id, values.name);
@@ -62,6 +76,13 @@ export function EditSourceDialog({
           }
           return;
         }
+      }
+      if (paramsChanged) {
+        await updateIncomeSourceTaxParams(source.id, {
+          creditPoints: values.creditPoints,
+          pensionRate: percentToFraction(values.pensionPercent),
+          hishtalmutRate: percentToFraction(values.hishtalmutPercent),
+        });
       }
       if (values.amount !== currentAmount) {
         if (values.applyMode === ApplyModes.Month) {
@@ -109,11 +130,14 @@ export function EditSourceDialog({
           year: source.endYear ?? year,
           month: source.endMonth ?? month,
         },
+        creditPoints: source.creditPoints,
+        pensionPercent: fractionToPercent(source.pensionRate),
+        hishtalmutPercent: fractionToPercent(source.hishtalmutRate),
       }}
       onSubmit={handleSubmit}
       pending={pending}
     >
-      <EditSourceFields currentAmount={currentAmount} />
+      <EditSourceFields source={source} currentAmount={currentAmount} />
     </FormDialog>
   );
 }

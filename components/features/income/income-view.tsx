@@ -27,12 +27,14 @@ import { OverrideDialog } from "./override-dialog";
 import { EndSourceDialog } from "./end-source-dialog";
 import { ViewToggle } from "./view-toggle";
 import {
+  governingAmountInputFor,
   overrideFor,
   View,
   type IncomeEntryData,
   type IncomeSourceData,
   type ViewMode,
 } from "./types";
+import type { ResolvedMonthIncome } from "@/lib/income-resolve";
 
 export function IncomeView({
   year,
@@ -86,9 +88,42 @@ export function IncomeView({
   const income = view === View.Month ? monthIncome : yearIncome;
   const expenses = view === View.Month ? monthExpenses : yearExpenses;
 
-  const overrideMonthResolved =
-    overrideTarget &&
-    resolveMonthIncome(sources, entries, year, overrideTarget.month);
+  const entryById = useMemo(
+    () => new Map(entries.map((entry) => [entry.id, entry])),
+    [entries],
+  );
+  const grossIncome = useMemo(() => {
+    const sumMonth = (resolvedMonth: ResolvedMonthIncome) => {
+      let total = 0;
+      let hasGross = false;
+      for (const line of resolvedMonth.sources) {
+        const governing = entryById.get(line.entryId);
+        if (governing?.grossAmount != null) {
+          hasGross = true;
+          total += governing.grossAmount;
+        } else {
+          total += line.amount;
+        }
+      }
+      for (const oneTime of resolvedMonth.oneTimes) {
+        if (oneTime.grossAmount != null) {
+          hasGross = true;
+          total += oneTime.grossAmount;
+        } else {
+          total += oneTime.amount;
+        }
+      }
+      return { total, hasGross };
+    };
+    const monthsToSum = view === View.Month ? [resolved] : grid;
+    return monthsToSum.reduce(
+      (acc, resolvedMonth) => {
+        const { total, hasGross } = sumMonth(resolvedMonth);
+        return { total: acc.total + total, hasGross: acc.hasGross || hasGross };
+      },
+      { total: 0, hasGross: false },
+    );
+  }, [view, resolved, grid, entryById]);
 
   const sourceById = (id: string) => sources.find((s) => s.id === id) ?? null;
 
@@ -154,6 +189,16 @@ export function IncomeView({
           label={t.income.income}
           value={formatMoney(income)}
           accent="income"
+          sub={
+            grossIncome.hasGross ? (
+              <span className="text-muted-foreground tnum">
+                {t.income.grossSub.replace(
+                  "{amount}",
+                  formatMoney(grossIncome.total),
+                )}
+              </span>
+            ) : undefined
+          }
         />
         <StatCard
           label={t.income.expenses}
@@ -176,6 +221,7 @@ export function IncomeView({
         <>
           <MonthIncomeList
             resolved={resolved}
+            entries={entries}
             onAdd={() => setAddOpen(true)}
             onEditSource={handleEditSource}
             onEnd={(id) => setEndFor(sourceById(id))}
@@ -224,6 +270,8 @@ export function IncomeView({
           onClose={() => setAddOpen(false)}
           defaultYear={year}
           defaultMonth={month}
+          sources={sources}
+          entries={entries}
         />
       )}
       {editingOneTime && (
@@ -232,15 +280,20 @@ export function IncomeView({
           defaultYear={year}
           defaultMonth={month}
           editingOneTime={editingOneTime}
+          sources={sources}
+          entries={entries}
         />
       )}
       {editFor && (
         <EditSourceDialog
           source={editFor}
-          currentAmount={
-            resolved.sources.find((s) => s.sourceId === editFor.id)?.amount ??
-            null
-          }
+          currentAmount={governingAmountInputFor(
+            sources,
+            entries,
+            editFor.id,
+            year,
+            month,
+          )}
           year={year}
           month={month}
           onClose={() => setEditFor(null)}
@@ -251,11 +304,13 @@ export function IncomeView({
           source={overrideTarget.source}
           year={year}
           month={overrideTarget.month}
-          currentAmount={
-            overrideMonthResolved?.sources.find(
-              (s) => s.sourceId === overrideTarget.source.id,
-            )?.amount ?? null
-          }
+          currentAmount={governingAmountInputFor(
+            sources,
+            entries,
+            overrideTarget.source.id,
+            year,
+            overrideTarget.month,
+          )}
           existingOverride={overrideFor(
             entries,
             overrideTarget.source.id,

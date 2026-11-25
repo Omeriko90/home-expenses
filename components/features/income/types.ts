@@ -1,5 +1,6 @@
 import {
   monthKey,
+  resolveMonthIncome,
   type IncomeEntryData,
   type IncomeSourceData,
 } from "@/lib/income-resolve";
@@ -12,7 +13,39 @@ export const View = {
 } as const;
 export type ViewMode = (typeof View)[keyof typeof View];
 
-export { IncomeTypes as IncomeType, type IncomeTypeValue } from "@/lib/schemas/income";
+export {
+  IncomeTypes as IncomeType,
+  AmountTypes,
+  type IncomeTypeValue,
+  type AmountTypeValue,
+} from "@/lib/schemas/income";
+
+export function governingEntryFor(
+  sources: IncomeSourceData[],
+  entries: IncomeEntryData[],
+  sourceId: string,
+  year: number,
+  month: number,
+): IncomeEntryData | null {
+  const resolved = resolveMonthIncome(sources, entries, year, month);
+  const line = resolved.sources.find(
+    (resolvedSource) => resolvedSource.sourceId === sourceId,
+  );
+  if (!line) return null;
+  return entries.find((candidate) => candidate.id === line.entryId) ?? null;
+}
+
+export function governingAmountInputFor(
+  sources: IncomeSourceData[],
+  entries: IncomeEntryData[],
+  sourceId: string,
+  year: number,
+  month: number,
+): number | null {
+  const governing = governingEntryFor(sources, entries, sourceId, year, month);
+  if (!governing) return null;
+  return governing.grossAmount ?? governing.amount;
+}
 
 export type SourceStatus =
   | { kind: "active" }

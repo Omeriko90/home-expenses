@@ -6,12 +6,16 @@ import { ApplyModes } from "@/lib/schemas/income";
 import { EndSelections } from "@/lib/schemas/common";
 import { TextField } from "@/components/ui/form/text-field";
 import { MoneyField } from "@/components/ui/form/money-field";
+import { NumberField } from "@/components/ui/form/number-field";
 import { SelectField } from "@/components/ui/form/select-field";
 import { MonthYearField } from "@/components/ui/form/month-year-field";
+import { AmountTypes, type IncomeSourceData } from "./types";
 
 export function EditSourceFields({
+  source,
   currentAmount,
 }: {
+  source: IncomeSourceData;
   currentAmount: number | null;
 }) {
   const { t } = useI18n();
@@ -20,12 +24,47 @@ export function EditSourceFields({
   const applyMode = useWatch({ control, name: "applyMode" });
   const hasEnd = useWatch({ control, name: "hasEnd" });
   const amountChanged = typeof amount === "number" && amount !== currentAmount;
+  const isGross = source.amountType === AmountTypes.Gross;
 
   return (
     <>
       <TextField name="name" label={t.common.name} required />
 
-      <MoneyField name="amount" label={t.common.amount} required />
+      <MoneyField
+        name="amount"
+        label={
+          isGross ? `${t.common.amount} (${t.income.gross})` : t.common.amount
+        }
+        required
+      />
+
+      {isGross && (
+        <>
+          <div className="grid grid-cols-3 gap-3">
+            <NumberField
+              name="creditPoints"
+              label={t.income.creditPoints}
+              min={0}
+              max={20}
+            />
+            <NumberField
+              name="pensionPercent"
+              label={t.income.pensionPercent}
+              min={0}
+              max={20}
+            />
+            <NumberField
+              name="hishtalmutPercent"
+              label={t.income.hishtalmutPercent}
+              min={0}
+              max={20}
+            />
+          </div>
+          <p className="text-sm text-muted-foreground">
+            {t.income.taxParamsHint}
+          </p>
+        </>
+      )}
 
       {amountChanged && (
         <>

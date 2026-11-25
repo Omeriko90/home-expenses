@@ -22,6 +22,21 @@ export const ApplyModes = {
 
 export type ApplyMode = (typeof ApplyModes)[keyof typeof ApplyModes];
 
+export const AmountTypes = {
+  Net: "NET",
+  Gross: "GROSS",
+} as const;
+
+export type AmountTypeValue = (typeof AmountTypes)[keyof typeof AmountTypes];
+
+export const taxParamsSchema = z.object({
+  creditPoints: z.number().min(0).max(20),
+  pensionRate: z.number().min(0).max(0.2).nullable(),
+  hishtalmutRate: z.number().min(0).max(0.2).nullable(),
+});
+
+export type TaxParamsInput = z.infer<typeof taxParamsSchema>;
+
 const amountSchema = z.number().min(0).max(999_999_999);
 export const incomeNameSchema = z.string().min(1).max(100);
 const nameSchema = incomeNameSchema;
@@ -42,6 +57,12 @@ export const createSourceSchema = z.object({
   note: noteSchema,
   endYear: yearSchema.optional().nullable(),
   endMonth: monthSchema.optional().nullable(),
+  amountType: z
+    .enum([AmountTypes.Net, AmountTypes.Gross])
+    .default(AmountTypes.Net),
+  creditPoints: taxParamsSchema.shape.creditPoints.default(2.25),
+  pensionRate: taxParamsSchema.shape.pensionRate.default(null),
+  hishtalmutRate: taxParamsSchema.shape.hishtalmutRate.default(null),
 });
 
 export type CreateSourceInput = z.infer<typeof createSourceSchema>;
@@ -64,13 +85,19 @@ export const overrideSchema = z.object({
 
 export type OverrideInput = z.infer<typeof overrideSchema>;
 
-export const oneTimeSchema = z.object({
-  name: nameSchema,
-  year: yearSchema,
-  month: monthSchema,
-  amount: amountSchema,
-  note: noteSchema,
-});
+export const oneTimeSchema = z
+  .object({
+    name: nameSchema,
+    year: yearSchema,
+    month: monthSchema,
+    amount: amountSchema,
+    note: noteSchema,
+    isGross: z.boolean().default(false),
+    linkedSourceId: z.string().min(1).optional().nullable(),
+  })
+  .refine((v) => v.isGross || !v.linkedSourceId, {
+    path: ["linkedSourceId"],
+  });
 
 export type OneTimeInput = z.infer<typeof oneTimeSchema>;
 
@@ -94,6 +121,11 @@ export function createIncomeFormSchema(t?: Dictionary) {
       hasEnd: z.enum([EndSelections.None, EndSelections.Custom]),
       end: monthYearSchema,
       note: z.string().max(500),
+      amountType: z.enum([AmountTypes.Net, AmountTypes.Gross]),
+      creditPoints: z.number(t?.errors.required).min(0).max(20),
+      pensionPercent: z.number(t?.errors.required).min(0).max(20),
+      hishtalmutPercent: z.number(t?.errors.required).min(0).max(20),
+      linkedSourceId: z.string(),
     })
     .superRefine((v, ctx) => {
       if (
@@ -125,6 +157,9 @@ export function createEditSourceFormSchema(t?: Dictionary) {
     from: monthYearSchema,
     hasEnd: z.enum([EndSelections.None, EndSelections.Custom]),
     end: monthYearSchema,
+    creditPoints: z.number(t?.errors.required).min(0).max(20),
+    pensionPercent: z.number(t?.errors.required).min(0).max(20),
+    hishtalmutPercent: z.number(t?.errors.required).min(0).max(20),
   });
 }
 
