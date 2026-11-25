@@ -2,6 +2,7 @@
 
 import { useState, type ReactNode } from "react";
 import { ChevronDown } from "lucide-react";
+import { useI18n } from "@/lib/i18n/context";
 import { cn, formatMoney } from "@/lib/utils";
 import type { TaxBreakdown } from "@/lib/tax/types";
 import { TaxBreakdownDetails } from "./tax-breakdown-details";
@@ -23,6 +24,7 @@ export function IncomeLineRow({
   actions?: ReactNode;
   breakdown?: TaxBreakdown | null;
 }) {
+  const { t } = useI18n();
   const [expanded, setExpanded] = useState(false);
 
   return (
@@ -54,8 +56,16 @@ export function IncomeLineRow({
           )}
         </div>
         {amount !== undefined && (
-          <span className="shrink-0 font-semibold tnum">
-            {formatMoney(amount)}
+          <span className="flex shrink-0 flex-col items-end leading-tight">
+            <span className="font-semibold tnum">{formatMoney(amount)}</span>
+            {breakdown && (
+              <span className="text-xs text-muted-foreground tnum">
+                {t.income.grossSub.replace(
+                  "{amount}",
+                  formatMoney(breakdown.gross),
+                )}
+              </span>
+            )}
           </span>
         )}
         {actions && (
