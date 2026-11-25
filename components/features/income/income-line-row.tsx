@@ -28,7 +28,7 @@ export function IncomeLineRow({
   return (
     <div className="flex flex-col px-4 py-3">
       <div
-        className={cn("flex items-center gap-3", {
+        className={cn("group/row flex items-center gap-3", {
           "opacity-60": muted,
           "cursor-pointer": !!breakdown,
         })}
