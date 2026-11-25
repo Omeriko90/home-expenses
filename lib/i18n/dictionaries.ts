@@ -148,7 +148,7 @@ const he = {
       pension: "פנסיה",
       hishtalmut: "קרן השתלמות",
       creditPoints: "נקודות זיכוי",
-      pensionPercent: "הפרשה לפנסיה (%)",
+      pensionPercent: "פנסיה (%)",
       hishtalmutPercent: "קרן השתלמות (%)",
       hishtalmutCapped: "השתלמות עד תקרת הפטור",
       hishtalmutCappedHint:
@@ -582,7 +582,7 @@ const en: Dictionary = {
       pension: "Pension",
       hishtalmut: "Study fund",
       creditPoints: "Credit points",
-      pensionPercent: "Pension contribution (%)",
+      pensionPercent: "Pension (%)",
       hishtalmutPercent: "Study fund (%)",
       hishtalmutCapped: "Study fund up to the exempt ceiling",
       hishtalmutCappedHint:
