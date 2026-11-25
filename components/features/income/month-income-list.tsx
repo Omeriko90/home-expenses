@@ -14,6 +14,7 @@ import type { IncomeEntryData } from "./types";
 
 export function MonthIncomeList({
   resolved,
+  entries,
   onAdd,
   onEditSource,
   onEnd,
@@ -22,6 +23,7 @@ export function MonthIncomeList({
   onDeleteOneTime,
 }: {
   resolved: ResolvedMonthIncome;
+  entries: IncomeEntryData[];
   onAdd: () => void;
   onEditSource: (sourceId: string) => void;
   onEnd: (sourceId: string) => void;
@@ -30,6 +32,8 @@ export function MonthIncomeList({
   onDeleteOneTime: (entry: IncomeEntryData) => void;
 }) {
   const { t } = useI18n();
+  const breakdownFor = (entryId: string) =>
+    entries.find((entry) => entry.id === entryId)?.taxBreakdown ?? null;
 
   if (resolved.sources.length === 0 && resolved.oneTimes.length === 0) {
     return (
@@ -53,6 +57,7 @@ export function MonthIncomeList({
           name={line.name}
           amount={line.amount}
           note={line.note}
+          breakdown={breakdownFor(line.entryId)}
           badge={
             line.isOverride ? (
               <Badge variant="info">{t.income.overrideBadge}</Badge>
@@ -75,6 +80,7 @@ export function MonthIncomeList({
           name={entry.name ?? ""}
           amount={entry.amount}
           note={entry.note}
+          breakdown={entry.taxBreakdown}
           badge={<Badge variant="primary">{t.income.oneTimeBadge}</Badge>}
           actions={
             <EditDeleteActions

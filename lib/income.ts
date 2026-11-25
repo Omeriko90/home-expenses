@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/db";
+import type { TaxBreakdown } from "@/lib/tax/types";
 import {
   resolveMonthIncome,
   type IncomeEntryData,
@@ -17,7 +18,16 @@ export async function fetchIncomeData(householdId: string): Promise<{
     prisma.incomeSource.findMany({
       where: { householdId },
       orderBy: { createdAt: "asc" },
-      select: { id: true, name: true, endYear: true, endMonth: true },
+      select: {
+        id: true,
+        name: true,
+        endYear: true,
+        endMonth: true,
+        amountType: true,
+        creditPoints: true,
+        pensionRate: true,
+        hishtalmutRate: true,
+      },
     }),
     prisma.incomeEntry.findMany({
       where: { householdId },
@@ -29,16 +39,29 @@ export async function fetchIncomeData(householdId: string): Promise<{
         year: true,
         month: true,
         amount: true,
+        grossAmount: true,
+        taxBreakdown: true,
+        linkedSourceId: true,
         note: true,
         sourceId: true,
       },
     }),
   ]);
   return {
-    sources,
+    sources: sources.map((source) => ({
+      ...source,
+      creditPoints: Number(source.creditPoints),
+      pensionRate:
+        source.pensionRate === null ? null : Number(source.pensionRate),
+      hishtalmutRate:
+        source.hishtalmutRate === null ? null : Number(source.hishtalmutRate),
+    })),
     entries: entries.map((entry) => ({
       ...entry,
       amount: Number(entry.amount),
+      grossAmount:
+        entry.grossAmount === null ? null : Number(entry.grossAmount),
+      taxBreakdown: entry.taxBreakdown as TaxBreakdown | null,
     })),
   };
 }

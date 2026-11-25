@@ -11,7 +11,11 @@ import {
 import { FormDialog } from "@/components/ui/form/form-dialog";
 import { MoneyField } from "@/components/ui/form/money-field";
 import { Button } from "@/components/ui/button";
-import type { IncomeEntryData, IncomeSourceData } from "./types";
+import {
+  AmountTypes,
+  type IncomeEntryData,
+  type IncomeSourceData,
+} from "./types";
 
 export function OverrideDialog({
   source,
@@ -60,14 +64,22 @@ export function OverrideDialog({
       title={`${source.name} — ${t.months[month - 1]} ${year}`}
       schema={schema}
       defaultValues={{
-        amount: existingOverride?.amount ?? currentAmount ?? undefined,
+        amount:
+          existingOverride?.grossAmount ??
+          existingOverride?.amount ??
+          currentAmount ??
+          undefined,
       }}
       onSubmit={handleSubmit}
       pending={pending}
     >
       <MoneyField
         name="amount"
-        label={t.common.amount}
+        label={
+          source.amountType === AmountTypes.Gross
+            ? `${t.common.amount} (${t.income.gross})`
+            : t.common.amount
+        }
         hint={t.income.overrideHint}
         required
       />
