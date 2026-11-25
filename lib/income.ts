@@ -27,6 +27,7 @@ export async function fetchIncomeData(householdId: string): Promise<{
         creditPoints: true,
         pensionRate: true,
         hishtalmutRate: true,
+        hishtalmutCapped: true,
       },
     }),
     prisma.incomeEntry.findMany({

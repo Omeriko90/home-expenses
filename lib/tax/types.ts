@@ -2,6 +2,7 @@ export type TaxParams = {
   creditPoints: number;
   pensionRate: number | null;
   hishtalmutRate: number | null;
+  hishtalmutCapped?: boolean;
 };
 
 export type TaxBreakdown = {
@@ -42,4 +43,5 @@ export type TaxYearConstants = {
     eligibleRate: number;
     eligibleIncomeCeiling: number;
   };
+  hishtalmutCeiling: number;
 };

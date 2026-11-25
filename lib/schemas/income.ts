@@ -33,6 +33,7 @@ export const taxParamsSchema = z.object({
   creditPoints: z.number().min(0).max(20),
   pensionRate: z.number().min(0).max(0.2).nullable(),
   hishtalmutRate: z.number().min(0).max(0.2).nullable(),
+  hishtalmutCapped: z.boolean().default(true),
 });
 
 export type TaxParamsInput = z.infer<typeof taxParamsSchema>;
@@ -63,6 +64,7 @@ export const createSourceSchema = z.object({
   creditPoints: taxParamsSchema.shape.creditPoints.default(2.25),
   pensionRate: taxParamsSchema.shape.pensionRate.default(null),
   hishtalmutRate: taxParamsSchema.shape.hishtalmutRate.default(null),
+  hishtalmutCapped: taxParamsSchema.shape.hishtalmutCapped,
 });
 
 export type CreateSourceInput = z.infer<typeof createSourceSchema>;
@@ -125,6 +127,7 @@ export function createIncomeFormSchema(t?: Dictionary) {
       creditPoints: z.number(t?.errors.required).min(0).max(20),
       pensionPercent: z.number(t?.errors.required).min(0).max(20),
       hishtalmutPercent: z.number(t?.errors.required).min(0).max(20),
+      hishtalmutCapped: z.boolean(),
       linkedSourceId: z.string(),
     })
     .superRefine((v, ctx) => {
@@ -160,6 +163,7 @@ export function createEditSourceFormSchema(t?: Dictionary) {
     creditPoints: z.number(t?.errors.required).min(0).max(20),
     pensionPercent: z.number(t?.errors.required).min(0).max(20),
     hishtalmutPercent: z.number(t?.errors.required).min(0).max(20),
+    hishtalmutCapped: z.boolean(),
   });
 }
 

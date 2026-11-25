@@ -56,6 +56,7 @@ async function getSourceTaxContext(
       creditPoints: true,
       pensionRate: true,
       hishtalmutRate: true,
+      hishtalmutCapped: true,
     },
   });
   if (!source) throw new Error("Income source not found");
@@ -68,6 +69,7 @@ async function getSourceTaxContext(
         source.pensionRate === null ? null : Number(source.pensionRate),
       hishtalmutRate:
         source.hishtalmutRate === null ? null : Number(source.hishtalmutRate),
+      hishtalmutCapped: source.hishtalmutCapped,
     },
   };
 }
@@ -133,6 +135,7 @@ async function toOneTimeAmounts(
     creditPoints: 0,
     pensionRate: null,
     hishtalmutRate: null,
+    hishtalmutCapped: true,
   };
   if (data.linkedSourceId) {
     const context = await getSourceTaxContext(data.linkedSourceId, householdId);
@@ -172,6 +175,7 @@ export async function createIncomeSource(input: CreateSourceInput) {
         creditPoints: data.creditPoints,
         pensionRate: data.pensionRate,
         hishtalmutRate: data.hishtalmutRate,
+        hishtalmutCapped: data.hishtalmutCapped,
       },
     },
     data.year,
@@ -186,6 +190,7 @@ export async function createIncomeSource(input: CreateSourceInput) {
         creditPoints: data.creditPoints,
         pensionRate: data.pensionRate,
         hishtalmutRate: data.hishtalmutRate,
+        hishtalmutCapped: data.hishtalmutCapped,
         householdId,
         entries: {
           create: {
@@ -438,6 +443,7 @@ export async function updateIncomeSourceTaxParams(
         creditPoints: params.creditPoints,
         pensionRate: params.pensionRate,
         hishtalmutRate: params.hishtalmutRate,
+        hishtalmutCapped: params.hishtalmutCapped,
       },
     });
     if (source.amountType !== AmountTypes.Gross) return;

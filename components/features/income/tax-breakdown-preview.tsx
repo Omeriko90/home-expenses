@@ -35,6 +35,7 @@ export function TaxBreakdownPreview({
   const creditPoints = useWatch({ control, name: "creditPoints" });
   const pensionPercent = useWatch({ control, name: "pensionPercent" });
   const hishtalmutPercent = useWatch({ control, name: "hishtalmutPercent" });
+  const hishtalmutCapped = useWatch({ control, name: "hishtalmutCapped" });
   const linkedSourceId = useWatch({ control, name: "linkedSourceId" });
 
   if (amountType !== AmountTypes.Gross) return null;
@@ -53,8 +54,14 @@ export function TaxBreakdownPreview({
           creditPoints: linked.creditPoints,
           pensionRate: linked.pensionRate,
           hishtalmutRate: linked.hishtalmutRate,
+          hishtalmutCapped: linked.hishtalmutCapped,
         }
-      : { creditPoints: 0, pensionRate: null, hishtalmutRate: null };
+      : {
+          creditPoints: 0,
+          pensionRate: null,
+          hishtalmutRate: null,
+          hishtalmutCapped: true,
+        };
     const baseGross = linked
       ? (governingAmountInputFor(sources, entries, linked.id, year, month) ?? 0)
       : 0;
@@ -66,6 +73,7 @@ export function TaxBreakdownPreview({
         creditPoints: typeof creditPoints === "number" ? creditPoints : 2.25,
         pensionRate: percentToFraction(pensionPercent),
         hishtalmutRate: percentToFraction(hishtalmutPercent),
+        hishtalmutCapped: hishtalmutCapped !== false,
       },
       year,
     );

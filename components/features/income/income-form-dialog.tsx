@@ -79,6 +79,7 @@ export function IncomeFormDialog({
               creditPoints: values.creditPoints,
               pensionRate: percentToFraction(values.pensionPercent),
               hishtalmutRate: percentToFraction(values.hishtalmutPercent),
+              hishtalmutCapped: values.hishtalmutCapped,
             })
           : await createOneTimeIncome(oneTimeInput);
       if ("error" in result) {
@@ -123,6 +124,7 @@ export function IncomeFormDialog({
         creditPoints: 2.25,
         pensionPercent: 6,
         hishtalmutPercent: 0,
+        hishtalmutCapped: true,
         linkedSourceId: editingOneTime?.linkedSourceId ?? "",
       }}
       onSubmit={handleSubmit}

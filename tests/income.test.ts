@@ -33,6 +33,7 @@ function source(partial: Partial<IncomeSourceData>): IncomeSourceData {
     creditPoints: 2.25,
     pensionRate: null,
     hishtalmutRate: null,
+    hishtalmutCapped: true,
     ...partial,
   };
 }

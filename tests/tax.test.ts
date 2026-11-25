@@ -43,10 +43,28 @@ describe("calcNetSalary 2026 fixtures", () => {
     expect(result.net).toBe(27966.59);
   });
 
-  it("applies hishtalmut when enabled", () => {
+  it("computes hishtalmut on the exempt ceiling by default", () => {
     const result = calcNetSalary(20000, { ...standard, hishtalmutRate: 0.025 }, 2026);
+    expect(result.hishtalmut).toBe(392.8);
+    expect(result.net).toBe(13824.39);
+  });
+
+  it("computes hishtalmut on the full gross when uncapped", () => {
+    const result = calcNetSalary(
+      20000,
+      { ...standard, hishtalmutRate: 0.025, hishtalmutCapped: false },
+      2026,
+    );
     expect(result.hishtalmut).toBe(500);
-    expect(result.net).toBe(14217.19 - 500);
+  });
+
+  it("caps hishtalmut only above the ceiling", () => {
+    const below = calcNetSalary(
+      10000,
+      { ...standard, hishtalmutRate: 0.025 },
+      2026,
+    );
+    expect(below.hishtalmut).toBe(250);
   });
 });
 

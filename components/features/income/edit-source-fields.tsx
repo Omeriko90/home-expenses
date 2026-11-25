@@ -8,7 +8,10 @@ import { TextField } from "@/components/ui/form/text-field";
 import { MoneyField } from "@/components/ui/form/money-field";
 import { NumberField } from "@/components/ui/form/number-field";
 import { SelectField } from "@/components/ui/form/select-field";
+import { CheckboxField } from "@/components/ui/form/checkbox-field";
 import { MonthYearField } from "@/components/ui/form/month-year-field";
+import { formatMoney } from "@/lib/utils";
+import { getTaxConstants } from "@/lib/tax/constants";
 import { AmountTypes, type IncomeSourceData } from "./types";
 
 export function EditSourceFields({
@@ -23,6 +26,7 @@ export function EditSourceFields({
   const amount = useWatch({ control, name: "amount" });
   const applyMode = useWatch({ control, name: "applyMode" });
   const hasEnd = useWatch({ control, name: "hasEnd" });
+  const hishtalmutPercent = useWatch({ control, name: "hishtalmutPercent" });
   const amountChanged = typeof amount === "number" && amount !== currentAmount;
   const isGross = source.amountType === AmountTypes.Gross;
 
@@ -60,6 +64,18 @@ export function EditSourceFields({
               max={20}
             />
           </div>
+          {hishtalmutPercent > 0 && (
+            <CheckboxField
+              name="hishtalmutCapped"
+              label={t.income.hishtalmutCapped}
+              hint={t.income.hishtalmutCappedHint.replace(
+                "{amount}",
+                formatMoney(
+                  getTaxConstants(new Date().getFullYear()).hishtalmutCeiling,
+                ),
+              )}
+            />
+          )}
           <p className="text-sm text-muted-foreground">
             {t.income.taxParamsHint}
           </p>

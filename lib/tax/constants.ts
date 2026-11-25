@@ -26,6 +26,7 @@ export const TAX_YEARS: Record<number, TaxYearConstants> = {
       eligibleRate: 0.07,
       eligibleIncomeCeiling: 9700,
     },
+    hishtalmutCeiling: 15712,
   },
 };
 

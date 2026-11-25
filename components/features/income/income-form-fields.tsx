@@ -7,7 +7,10 @@ import { TextField } from "@/components/ui/form/text-field";
 import { MoneyField } from "@/components/ui/form/money-field";
 import { NumberField } from "@/components/ui/form/number-field";
 import { SelectField } from "@/components/ui/form/select-field";
+import { CheckboxField } from "@/components/ui/form/checkbox-field";
 import { MonthYearField } from "@/components/ui/form/month-year-field";
+import { formatMoney } from "@/lib/utils";
+import { getTaxConstants } from "@/lib/tax/constants";
 import { TaxBreakdownPreview } from "./tax-breakdown-preview";
 import {
   AmountTypes,
@@ -30,6 +33,7 @@ export function IncomeFormFields({
   const type = useWatch({ control, name: "type" });
   const hasEnd = useWatch({ control, name: "hasEnd" });
   const amountType = useWatch({ control, name: "amountType" });
+  const hishtalmutPercent = useWatch({ control, name: "hishtalmutPercent" });
   const grossSources = sources.filter(
     (source) => source.amountType === AmountTypes.Gross,
   );
@@ -99,6 +103,18 @@ export function IncomeFormFields({
               max={20}
             />
           </div>
+          {hishtalmutPercent > 0 && (
+            <CheckboxField
+              name="hishtalmutCapped"
+              label={t.income.hishtalmutCapped}
+              hint={t.income.hishtalmutCappedHint.replace(
+                "{amount}",
+                formatMoney(
+                  getTaxConstants(new Date().getFullYear()).hishtalmutCeiling,
+                ),
+              )}
+            />
+          )}
           <p className="text-sm text-muted-foreground">{t.income.grossHint}</p>
         </>
       )}

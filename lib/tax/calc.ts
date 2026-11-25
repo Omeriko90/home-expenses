@@ -25,7 +25,11 @@ export function calcNetSalary(
   const constants = getTaxConstants(year);
 
   const pension = roundAgorot(gross * (params.pensionRate ?? 0));
-  const hishtalmut = roundAgorot(gross * (params.hishtalmutRate ?? 0));
+  const hishtalmutBase =
+    (params.hishtalmutCapped ?? true)
+      ? Math.min(gross, constants.hishtalmutCeiling)
+      : gross;
+  const hishtalmut = roundAgorot(hishtalmutBase * (params.hishtalmutRate ?? 0));
 
   const rawTax = bracketTax(gross, constants.brackets);
   const creditValue = roundAgorot(

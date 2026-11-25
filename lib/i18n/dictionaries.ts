@@ -150,6 +150,9 @@ const he = {
       creditPoints: "נקודות זיכוי",
       pensionPercent: "הפרשה לפנסיה (%)",
       hishtalmutPercent: "קרן השתלמות (%)",
+      hishtalmutCapped: "השתלמות עד תקרת הפטור",
+      hishtalmutCappedHint:
+        "ההפרשה מחושבת עד משכורת של {amount} — התקרה הפטורה ממס; רוב המעסיקים מדווחים כך",
       linkedSource: "צמוד למשכורת",
       standaloneBonus: "ללא הצמדה",
       grossSub: "ברוטו: {amount}",
@@ -581,6 +584,9 @@ const en: Dictionary = {
       creditPoints: "Credit points",
       pensionPercent: "Pension contribution (%)",
       hishtalmutPercent: "Study fund (%)",
+      hishtalmutCapped: "Study fund up to the exempt ceiling",
+      hishtalmutCappedHint:
+        "The contribution is computed up to a salary of {amount} — the tax-exempt ceiling; most employers report it this way",
       linkedSource: "Linked to salary",
       standaloneBonus: "Standalone",
       grossSub: "Gross: {amount}",

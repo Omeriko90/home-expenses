@@ -61,7 +61,8 @@ export function EditSourceDialog({
       source.amountType === AmountTypes.Gross &&
       (values.creditPoints !== source.creditPoints ||
         percentToFraction(values.pensionPercent) !== source.pensionRate ||
-        percentToFraction(values.hishtalmutPercent) !== source.hishtalmutRate);
+        percentToFraction(values.hishtalmutPercent) !== source.hishtalmutRate ||
+        values.hishtalmutCapped !== source.hishtalmutCapped);
     startTransition(async () => {
       if (values.name !== source.name) {
         const result = await renameIncomeSource(source.id, values.name);
@@ -82,6 +83,7 @@ export function EditSourceDialog({
           creditPoints: values.creditPoints,
           pensionRate: percentToFraction(values.pensionPercent),
           hishtalmutRate: percentToFraction(values.hishtalmutPercent),
+          hishtalmutCapped: values.hishtalmutCapped,
         });
       }
       if (values.amount !== currentAmount) {
@@ -133,6 +135,7 @@ export function EditSourceDialog({
         creditPoints: source.creditPoints,
         pensionPercent: fractionToPercent(source.pensionRate),
         hishtalmutPercent: fractionToPercent(source.hishtalmutRate),
+        hishtalmutCapped: source.hishtalmutCapped,
       }}
       onSubmit={handleSubmit}
       pending={pending}

@@ -18,6 +18,7 @@ export type IncomeSourceData = {
   creditPoints: number;
   pensionRate: number | null;
   hishtalmutRate: number | null;
+  hishtalmutCapped: boolean;
 };
 
 export type IncomeEntryData = {

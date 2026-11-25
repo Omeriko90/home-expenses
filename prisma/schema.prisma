@@ -331,10 +331,11 @@ model IncomeSource {
 
   // GROSS sources: entry amounts are entered as gross; the net snapshot is
   // computed with these params and stored on the entry. Rates are fractions.
-  amountType     IncomeAmountType @default(NET)
-  creditPoints   Decimal          @default(2.25) @db.Decimal(5, 2)
-  pensionRate    Decimal?         @db.Decimal(5, 4)
-  hishtalmutRate Decimal?         @db.Decimal(5, 4)
+  amountType       IncomeAmountType @default(NET)
+  creditPoints     Decimal          @default(2.25) @db.Decimal(5, 2)
+  pensionRate      Decimal?         @db.Decimal(5, 4)
+  hishtalmutRate   Decimal?         @db.Decimal(5, 4)
+  hishtalmutCapped Boolean          @default(true)
 
   householdId String
   household   Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
