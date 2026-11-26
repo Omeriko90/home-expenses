@@ -15,6 +15,7 @@ import { FormDialog } from "@/components/ui/form/form-dialog";
 import { TextField } from "@/components/ui/form/text-field";
 import { MoneyField } from "@/components/ui/form/money-field";
 import { DateField } from "@/components/ui/form/date-field";
+import { MonthDateField } from "@/components/ui/form/month-date-field";
 import { SelectField } from "@/components/ui/form/select-field";
 import { AutocompleteField } from "@/components/ui/form/autocomplete-field";
 
@@ -129,7 +130,11 @@ export function TransactionForm({
       pending={pending}
     >
       <div className="grid grid-cols-2 gap-4">
-        <DateField name="date" label={t.transactions.date} required />
+        {isDeposit ? (
+          <MonthDateField name="date" label={t.transactions.date} required />
+        ) : (
+          <DateField name="date" label={t.transactions.date} required />
+        )}
         <MoneyField name="amount" label={t.common.amount} required />
       </div>
       <TextField

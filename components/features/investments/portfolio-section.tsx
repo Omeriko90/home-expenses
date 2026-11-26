@@ -10,9 +10,16 @@ import { deleteHolding, deleteDeposit } from "@/app/actions/investments";
 import type { AutocompleteOption } from "@/components/shared/autocomplete";
 import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 import { EditDeleteActions } from "@/components/shared/edit-delete-actions";
+import { TotalsFooterRow } from "@/components/shared/totals-footer-row";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Table, type TableColumn } from "@/components/ui/table/Table";
+import {
+  Tabs,
+  TabsList,
+  TabsTrigger,
+  TabsContent,
+} from "@/components/ui/tabs";
 import {
   TransactionForm,
   type TxRow,
@@ -53,6 +60,7 @@ export function PortfolioSection({
   const [depositToDelete, setDepositToDelete] = React.useState<TxRow | null>(
     null,
   );
+  const [tab, setTab] = React.useState<"holdings" | "deposits">("holdings");
   const [pending, startTransition] = React.useTransition();
 
   function handleDelete() {
@@ -73,15 +81,23 @@ export function PortfolioSection({
     });
   }
 
+  const depositsTotal = deposits.reduce((sum, d) => sum + d.amount, 0);
+
   const depositColumns: TableColumn<TxRow>[] = [
     {
+      header: t.transactions.date,
       headClassName: "w-28",
-      cellClassName: "tnum text-muted-foreground",
-      cell: (r) => formatDate(r.date),
+      cellClassName: "text-muted-foreground",
+      cell: (r) => `${t.months[r.month - 1]} ${new Date(r.date).getUTCFullYear()}`,
     },
-    { cellClassName: "font-medium", cell: (r) => r.businessName },
-    { cell: (r) => r.categoryName },
     {
+      header: t.investments.depositSource,
+      cellClassName: "font-medium",
+      cell: (r) => r.businessName,
+    },
+    { header: t.common.category, cell: (r) => r.categoryName },
+    {
+      header: t.common.amount,
       headClassName: "w-32 text-end",
       cellClassName: "text-end tnum font-medium",
       cell: (r) => formatMoney(r.amount, { decimals: true }),
@@ -99,49 +115,81 @@ export function PortfolioSection({
 
   return (
     <div className="flex flex-col gap-3">
-      <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold">{p.name}</h2>
-        <div className="flex gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            className="bg-surface"
-            onClick={() => setDepositForm({ open: true, editing: null })}
-          >
-            <Plus /> {t.investments.addDeposit}
-          </Button>
-          <Button
-            size="sm"
-            onClick={() => setHoldingForm({ open: true, editing: null })}
-          >
-            <Plus /> {t.investments.addHolding}
-          </Button>
+      <h2 className="text-lg font-semibold">{p.name}</h2>
+
+      <Tabs value={tab} onValueChange={(v) => setTab(v as typeof tab)}>
+        <div className="flex items-center justify-between gap-2">
+          <TabsList>
+            <TabsTrigger value="holdings">
+              {t.investments.holdings}
+            </TabsTrigger>
+            <TabsTrigger value="deposits">
+              {t.investments.deposits}
+            </TabsTrigger>
+          </TabsList>
+          {tab === "holdings" ? (
+            <Button
+              size="sm"
+              onClick={() => setHoldingForm({ open: true, editing: null })}
+            >
+              <Plus /> {t.investments.addHolding}
+            </Button>
+          ) : (
+            <Button
+              size="sm"
+              onClick={() => setDepositForm({ open: true, editing: null })}
+            >
+              <Plus /> {t.investments.addDeposit}
+            </Button>
+          )}
         </div>
-      </div>
 
-      {holdings.length === 0 ? (
-        <Card>
-          <CardContent className="py-8">
-            <p className="text-center text-sm text-muted-foreground">
-              {t.investments.empty}
-            </p>
-          </CardContent>
-        </Card>
-      ) : (
-        <HoldingsAccordion
-          holdings={holdings}
-          onEdit={(h) => setHoldingForm({ open: true, editing: h })}
-          onDelete={setToDelete}
-        />
-      )}
+        <TabsContent value="holdings" className="mt-3">
+          {holdings.length === 0 ? (
+            <Card>
+              <CardContent className="py-8">
+                <p className="text-center text-sm text-muted-foreground">
+                  {t.investments.empty}
+                </p>
+              </CardContent>
+            </Card>
+          ) : (
+            <HoldingsAccordion
+              holdings={holdings}
+              onEdit={(h) => setHoldingForm({ open: true, editing: h })}
+              onDelete={setToDelete}
+            />
+          )}
+        </TabsContent>
 
-      {deposits.length > 0 && (
-        <Table
-          columns={depositColumns}
-          data={deposits}
-          rowKey={(r) => r.id}
-        />
-      )}
+        <TabsContent value="deposits" className="mt-3">
+          {deposits.length === 0 ? (
+            <Card>
+              <CardContent className="py-8">
+                <p className="text-center text-sm text-muted-foreground">
+                  {t.investments.noDeposits}
+                </p>
+              </CardContent>
+            </Card>
+          ) : (
+            <Card className="overflow-hidden">
+              <Table
+                columns={depositColumns}
+                data={deposits}
+                rowKey={(r) => r.id}
+              />
+              <TotalsFooterRow>
+                <span className="text-muted-foreground">
+                  {deposits.length} {t.investments.deposits}
+                </span>
+                <span className="tnum">
+                  {formatMoney(depositsTotal, { decimals: true })}
+                </span>
+              </TotalsFooterRow>
+            </Card>
+          )}
+        </TabsContent>
+      </Tabs>
 
       {holdingForm.open && (
         <HoldingForm
@@ -187,11 +235,4 @@ export function PortfolioSection({
       )}
     </div>
   );
-}
-
-function formatDate(iso: string): string {
-  const d = new Date(iso);
-  const dd = String(d.getUTCDate()).padStart(2, "0");
-  const mm = String(d.getUTCMonth() + 1).padStart(2, "0");
-  return `${dd}/${mm}/${d.getUTCFullYear()}`;
 }
