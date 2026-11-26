@@ -20,17 +20,17 @@ export function Calendar({
       showOutsideDays={showOutsideDays}
       locale={localeCode === "he" ? he : undefined}
       dir={localeCode === "he" ? "rtl" : "ltr"}
+      navLayout="around"
       className={cn("p-3", className)}
       classNames={{
         months: "flex flex-col gap-4",
         month: "flex flex-col gap-3",
-        month_caption: "flex justify-center items-center h-9 relative",
+        month_caption: "flex items-center justify-between h-9",
         caption_label: "text-sm font-medium",
-        nav: "flex items-center gap-1 absolute inset-x-0 justify-between px-1",
         button_previous:
-          "size-7 inline-flex items-center justify-center rounded-md hover:bg-surface-muted",
+          "size-9 inline-flex items-center justify-center rounded-md hover:bg-surface-muted [&_svg]:size-4",
         button_next:
-          "size-7 inline-flex items-center justify-center rounded-md hover:bg-surface-muted",
+          "size-9 inline-flex items-center justify-center rounded-md hover:bg-surface-muted [&_svg]:size-4",
         month_grid: "w-full border-collapse",
         weekdays: "flex",
         weekday: "text-muted-foreground w-9 text-xs font-normal",

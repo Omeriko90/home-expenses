@@ -4,8 +4,12 @@ import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { requireUser } from "@/lib/session";
-import { idSchema, yearSchema } from "@/lib/validate";
+import { idSchema } from "@/lib/validate";
 import { holdingSchema, type HoldingInput } from "@/lib/schemas/investments";
+import {
+  transactionSchema,
+  type TransactionInput,
+} from "@/lib/schemas/transactions";
 
 export type { HoldingInput };
 
@@ -75,24 +79,86 @@ export async function deleteHolding(holdingId: string) {
   return { ok: true as const };
 }
 
-export async function upsertDeposits(
+// Deposits are regular transactions tagged with an INVESTMENT category and
+// linked to a portfolio; their sum per year is the portfolio's deposits figure.
+async function assertDepositContext(
   portfolioId: string,
-  year: number,
-  deposits: number,
+  categoryId: string,
+  householdId: string,
 ) {
-  const { householdId } = await requireUser();
-  idSchema.parse(portfolioId);
-  yearSchema.parse(year);
-  z.number().min(0).parse(deposits);
   const portfolio = await prisma.portfolio.findFirst({
     where: { id: portfolioId, householdId },
     select: { id: true },
   });
-  if (!portfolio) return { error: "notFound" as const };
-  await prisma.portfolioYear.upsert({
-    where: { portfolioId_year: { portfolioId, year } },
-    update: { deposits },
-    create: { portfolioId, year, deposits },
+  if (!portfolio) throw new Error("Portfolio not found");
+  const category = await prisma.category.findFirst({
+    where: { id: categoryId, householdId, type: "INVESTMENT" },
+    select: { id: true },
+  });
+  if (!category) throw new Error("Investment category not found");
+}
+
+export async function createDeposit(
+  portfolioId: string,
+  input: TransactionInput,
+) {
+  const user = await requireUser();
+  idSchema.parse(portfolioId);
+  const data = transactionSchema.parse(input);
+  await assertDepositContext(portfolioId, data.categoryId, user.householdId);
+  const date = new Date(data.date);
+  await prisma.transaction.create({
+    data: {
+      date,
+      businessName: data.businessName,
+      amount: data.amount,
+      categoryId: data.categoryId,
+      kind: "VARIABLE",
+      note: data.note ?? null,
+      year: date.getUTCFullYear(),
+      month: date.getUTCMonth() + 1,
+      portfolioId,
+      createdByUserId: user.id,
+      householdId: user.householdId,
+    },
+  });
+  revalidatePath("/investments");
+  return { ok: true as const };
+}
+
+export async function updateDeposit(id: string, input: TransactionInput) {
+  const { householdId } = await requireUser();
+  idSchema.parse(id);
+  const data = transactionSchema.parse(input);
+  const existing = await prisma.transaction.findFirst({
+    where: { id, householdId },
+    select: { portfolioId: true },
+  });
+  if (!existing?.portfolioId) return { error: "notFound" as const };
+  await assertDepositContext(existing.portfolioId, data.categoryId, householdId);
+  const date = new Date(data.date);
+  await prisma.transaction.update({
+    where: { id, householdId },
+    data: {
+      date,
+      businessName: data.businessName,
+      amount: data.amount,
+      categoryId: data.categoryId,
+      kind: "VARIABLE",
+      note: data.note ?? null,
+      year: date.getUTCFullYear(),
+      month: date.getUTCMonth() + 1,
+    },
+  });
+  revalidatePath("/investments");
+  return { ok: true as const };
+}
+
+export async function deleteDeposit(id: string) {
+  const { householdId } = await requireUser();
+  idSchema.parse(id);
+  await prisma.transaction.delete({
+    where: { id, householdId, portfolioId: { not: null } },
   });
   revalidatePath("/investments");
   return { ok: true as const };

@@ -176,6 +176,9 @@ model Transaction {
   categoryId String
   category   Category @relation(fields: [categoryId], references: [id])
 
+  portfolioId String?
+  portfolio   Portfolio? @relation(fields: [portfolioId], references: [id], onDelete: Cascade)
+
   createdByUserId String?
   createdBy       User?   @relation(fields: [createdByUserId], references: [id])
 
@@ -186,6 +189,7 @@ model Transaction {
 
   @@index([householdId, year, month])
   @@index([categoryId, year])
+  @@index([portfolioId, year])
 }
 
 // Learned business -> category mappings (the import "learner").
@@ -227,7 +231,7 @@ model Portfolio {
   household   Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
 
   holdings       Holding[]
-  years          PortfolioYear[]
+  transactions   Transaction[]
 
   @@unique([householdId, name, group])
 }
@@ -244,17 +248,6 @@ model Holding {
   portfolio   Portfolio @relation(fields: [portfolioId], references: [id], onDelete: Cascade)
 
   snapshots HoldingSnapshot[]
-}
-
-model PortfolioYear {
-  id       String  @id @default(cuid())
-  year     Int
-  deposits Decimal @db.Decimal(14, 2)
-
-  portfolioId String
-  portfolio   Portfolio @relation(fields: [portfolioId], references: [id], onDelete: Cascade)
-
-  @@unique([portfolioId, year])
 }
 
 model HoldingSnapshot {

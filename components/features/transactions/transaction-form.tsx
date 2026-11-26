@@ -4,6 +4,7 @@ import { useMemo, useTransition } from "react";
 import { toast } from "sonner";
 import { useI18n } from "@/lib/i18n/context";
 import { createTransaction, updateTransaction } from "@/app/actions/transactions";
+import { createDeposit, updateDeposit } from "@/app/actions/investments";
 import {
   createTransactionFormSchema,
   TransactionKinds,
@@ -14,6 +15,7 @@ import { FormDialog } from "@/components/ui/form/form-dialog";
 import { TextField } from "@/components/ui/form/text-field";
 import { MoneyField } from "@/components/ui/form/money-field";
 import { DateField } from "@/components/ui/form/date-field";
+import { MonthDateField } from "@/components/ui/form/month-date-field";
 import { SelectField } from "@/components/ui/form/select-field";
 import { AutocompleteField } from "@/components/ui/form/autocomplete-field";
 
@@ -43,6 +45,8 @@ export function TransactionForm({
   categories,
   year,
   month,
+  mode = "transaction",
+  portfolioId,
 }: {
   open: boolean;
   onClose: () => void;
@@ -50,10 +54,13 @@ export function TransactionForm({
   categories: TxCategory[];
   year: number;
   month: number;
+  mode?: "transaction" | "deposit";
+  portfolioId?: string;
 }) {
   const { t } = useI18n();
   const [pending, startTransition] = useTransition();
   const schema = useMemo(() => createTransactionFormSchema(t), [t]);
+  const isDeposit = mode === "deposit";
 
   function handleSubmit(values: TransactionFormValues) {
     startTransition(async () => {
@@ -65,8 +72,14 @@ export function TransactionForm({
         kind: values.kind,
         note: values.note.trim() || null,
       };
-      if (editing) await updateTransaction(editing.id, input);
-      else await createTransaction(input);
+      if (isDeposit && portfolioId) {
+        if (editing) await updateDeposit(editing.id, input);
+        else await createDeposit(portfolioId, input);
+      } else if (editing) {
+        await updateTransaction(editing.id, input);
+      } else {
+        await createTransaction(input);
+      }
       toast.success(t.common.save);
       onClose();
     });
@@ -93,7 +106,15 @@ export function TransactionForm({
     <FormDialog
       open={open}
       onClose={onClose}
-      title={editing ? t.transactions.edit : t.transactions.add}
+      title={
+        isDeposit
+          ? editing
+            ? t.investments.editDeposit
+            : t.investments.addDeposit
+          : editing
+            ? t.transactions.edit
+            : t.transactions.add
+      }
       schema={schema}
       defaultValues={{
         date: editing
@@ -109,10 +130,18 @@ export function TransactionForm({
       pending={pending}
     >
       <div className="grid grid-cols-2 gap-4">
-        <DateField name="date" label={t.transactions.date} required />
+        {isDeposit ? (
+          <MonthDateField name="date" label={t.transactions.date} required />
+        ) : (
+          <DateField name="date" label={t.transactions.date} required />
+        )}
         <MoneyField name="amount" label={t.common.amount} required />
       </div>
-      <TextField name="businessName" label={t.transactions.business} required />
+      <TextField
+        name="businessName"
+        label={isDeposit ? t.investments.depositSource : t.transactions.business}
+        required
+      />
       <AutocompleteField
         name="categoryId"
         label={t.common.category}
@@ -120,14 +149,19 @@ export function TransactionForm({
         placeholder={t.common.category}
         required
       />
-      <SelectField
-        name="kind"
-        label={t.transactions.kind}
-        options={[
-          { value: TransactionKinds.Variable, label: t.transactions.variable },
-          { value: TransactionKinds.Fixed, label: t.transactions.fixed },
-        ]}
-      />
+      {!isDeposit && (
+        <SelectField
+          name="kind"
+          label={t.transactions.kind}
+          options={[
+            {
+              value: TransactionKinds.Variable,
+              label: t.transactions.variable,
+            },
+            { value: TransactionKinds.Fixed, label: t.transactions.fixed },
+          ]}
+        />
+      )}
       <TextField name="note" label={t.transactions.note} />
     </FormDialog>
   );

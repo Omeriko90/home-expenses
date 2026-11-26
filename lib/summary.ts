@@ -32,9 +32,21 @@ export async function getPortfolioSummaries(
     orderBy: [{ group: "asc" }, { createdAt: "asc" }],
     include: {
       holdings: { include: { snapshots: true }, orderBy: { createdAt: "asc" } },
-      years: true,
     },
   });
+
+  const depositSums = await prisma.transaction.groupBy({
+    by: ["portfolioId"],
+    where: {
+      householdId,
+      year,
+      portfolioId: { in: portfolios.map((p) => p.id) },
+    },
+    _sum: { amount: true },
+  });
+  const depositsByPortfolio = new Map(
+    depositSums.map((row) => [row.portfolioId, Number(row._sum.amount ?? 0)]),
+  );
 
   return portfolios.map((p) => {
     let value = 0;
@@ -54,9 +66,7 @@ export async function getPortfolioSummaries(
         prevValue: prev ? Number(prev.value) : 0,
       };
     });
-    const deposits = Number(
-      p.years.find((y) => y.year === year)?.deposits ?? 0,
-    );
+    const deposits = depositsByPortfolio.get(p.id) ?? 0;
     const change = value - prevValue;
     return {
       id: p.id,

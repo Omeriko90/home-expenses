@@ -27,13 +27,3 @@ export function createHoldingFormSchema(t?: Dictionary) {
 export type HoldingFormValues = z.infer<
   ReturnType<typeof createHoldingFormSchema>
 >;
-
-export function createDepositsFormSchema() {
-  return z.object({
-    value: z.number().optional(),
-  });
-}
-
-export type DepositsFormValues = z.infer<
-  ReturnType<typeof createDepositsFormSchema>
->;

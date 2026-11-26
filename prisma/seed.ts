@@ -406,11 +406,27 @@ async function seedInvestments(wb: XLSX.WorkBook) {
       }
       if (!sawTotal) depositsTotal = bucketSum;
 
-      await prisma.portfolioYear.upsert({
-        where: { portfolioId_year: { portfolioId: portfolio.id, year } },
-        update: { deposits: depositsTotal },
-        create: { portfolioId: portfolio.id, year, deposits: depositsTotal },
+      await prisma.transaction.deleteMany({
+        where: { portfolioId: portfolio.id, year, householdId: HH },
       });
+      if (depositsTotal) {
+        const depositCatId = await ensureCategory("העברה לתיק", {
+          type: CategoryType.INVESTMENT,
+        });
+        await prisma.transaction.create({
+          data: {
+            date: new Date(Date.UTC(year, 0, 1)),
+            businessName: "הפקדה",
+            amount: depositsTotal,
+            categoryId: depositCatId,
+            kind: TxKind.VARIABLE,
+            year,
+            month: 1,
+            portfolioId: portfolio.id,
+            householdId: HH,
+          },
+        });
+      }
       yearCount++;
     }
   }
