@@ -7,6 +7,7 @@ import { useI18n } from "@/lib/i18n/context";
 import { deleteGoal } from "@/app/actions/goals";
 import { PageHeader } from "@/components/shared/page-header";
 import { EmptyState } from "@/components/shared/empty-state";
+import { PlanNextYearBanner } from "@/components/shared/plan-next-year-banner";
 import { YearSelect } from "@/components/shared/year-select";
 import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 import { Button } from "@/components/ui/button";
@@ -17,11 +18,13 @@ import type { Goal, GoalCategory } from "./types";
 export function GoalsView({
   year,
   years,
+  planningYear,
   goals,
   categories,
 }: {
   year: number;
   years: number[];
+  planningYear: number | null;
   goals: Goal[];
   categories: GoalCategory[];
 }) {
@@ -58,6 +61,13 @@ export function GoalsView({
           </div>
         }
       />
+
+      {planningYear !== null && year < planningYear && (
+        <PlanNextYearBanner
+          planningYear={planningYear}
+          text={t.goals.planNextYear.replace("{year}", String(planningYear))}
+        />
+      )}
 
       {goals.length === 0 ? (
         <EmptyState icon={<Target />} title={t.goals.empty} />

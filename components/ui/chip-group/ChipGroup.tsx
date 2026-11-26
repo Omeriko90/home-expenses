@@ -14,7 +14,7 @@ export function ChipGroup({
   items,
   onRemove,
   removeLabel,
-  max,
+  max = 2,
   className,
 }: {
   items: ChipGroupItem[];
@@ -23,8 +23,8 @@ export function ChipGroup({
   max?: number;
   className?: string;
 }) {
-  const visible = max ? items.slice(0, max) : items;
-  const overflow = max ? items.slice(max) : [];
+  const visible = items.slice(0, max);
+  const overflow = items.slice(max);
 
   return (
     <span className={cn("flex min-w-0 items-center gap-1", className)}>

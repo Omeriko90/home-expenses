@@ -82,6 +82,7 @@ const he = {
       yearlyShort: "שנתי",
       empty: "לא הוגדר תקציב לשנה זו",
       copyPrev: "העתקה משנה קודמת",
+      planNextYear: "אפשר כבר להגדיר את התקציב ל־{year}",
       spent: "הוצא בפועל",
       spentLabel: "הוצאות",
       totalBudget: "סה״כ תקציב חודשי",
@@ -225,6 +226,7 @@ const he = {
       linkInvestment: "סך השקעות",
       deleteConfirm: "למחוק את היעד?",
       empty: "עדיין לא הוגדרו יעדים לשנה זו",
+      planNextYear: "אפשר כבר להגדיר את היעדים ל־{year}",
       completed: "הושלם",
     },
     planning: {
@@ -516,6 +518,7 @@ const en: Dictionary = {
       yearlyShort: "Yearly",
       empty: "No budget set for this year",
       copyPrev: "Copy from previous year",
+      planNextYear: "You can now plan your budget for {year}",
       spent: "Spent",
       spentLabel: "Spent",
       totalBudget: "Total monthly budget",
@@ -659,6 +662,7 @@ const en: Dictionary = {
       linkInvestment: "Total investments",
       deleteConfirm: "Delete this goal?",
       empty: "No goals set for this year yet",
+      planNextYear: "You can now set your goals for {year}",
       completed: "Completed",
     },
     planning: {

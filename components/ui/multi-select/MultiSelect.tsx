@@ -3,14 +3,13 @@
 import * as React from "react";
 import { Check, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 import { ChipGroup } from "@/components/ui/chip-group/ChipGroup";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-
-const MAX_VISIBLE_CHIPS = 2;
 
 export type MultiSelectOption = {
   value: string;
@@ -60,7 +59,6 @@ export function MultiSelect({
               items={selected}
               onRemove={toggleValue}
               removeLabel={removeLabel}
-              max={MAX_VISIBLE_CHIPS}
             />
           )}
           <ChevronDown className="size-4 shrink-0 opacity-60" />
@@ -73,22 +71,20 @@ export function MultiSelect({
         {options.map((option) => {
           const checked = values.includes(option.value);
           return (
-            <button
+            <Button
               key={option.value}
               type="button"
+              variant="ghost"
               onClick={() => toggleValue(option.value)}
-              className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-start text-sm hover:bg-surface-muted"
+              className="h-auto w-full justify-start gap-2 rounded-md px-2 py-1.5 text-start text-sm font-normal"
             >
-              <span
-                className={cn(
-                  "flex size-4 shrink-0 items-center justify-center",
-                  !checked && "opacity-0",
+              <span className="flex size-4 shrink-0 items-center justify-center">
+                {checked && (
+                  <Check className="size-4 text-primary" strokeWidth={3} />
                 )}
-              >
-                <Check className="size-4 text-primary" strokeWidth={3} />
               </span>
               <span className="min-w-0 flex-1 truncate">{option.label}</span>
-            </button>
+            </Button>
           );
         })}
       </PopoverContent>
