@@ -110,6 +110,48 @@ async function resolveBaseGross(
   return governing?.grossAmount ?? 0;
 }
 
+async function recomputeLinkedBonuses(householdId: string, sourceId: string) {
+  const context = await getSourceTaxContext(sourceId, householdId);
+  if (context.amountType !== AmountTypes.Gross) return;
+  const now = new Date();
+  const nowKey = monthKey(now.getFullYear(), now.getMonth() + 1);
+  const { sources, entries } = await fetchIncomeData(householdId);
+  const linkedBonuses = entries.filter(
+    (entry) =>
+      entry.kind === "ONE_TIME" &&
+      entry.linkedSourceId === sourceId &&
+      entry.grossAmount != null &&
+      monthKey(entry.year, entry.month) >= nowKey,
+  );
+  for (const bonus of linkedBonuses) {
+    const resolved = resolveMonthIncome(
+      sources,
+      entries,
+      bonus.year,
+      bonus.month,
+    );
+    const line = resolved.sources.find(
+      (resolvedSource) => resolvedSource.sourceId === sourceId,
+    );
+    const base = line
+      ? entries.find((candidate) => candidate.id === line.entryId)
+      : null;
+    const breakdown = calcBonusNet(
+      base?.grossAmount ?? 0,
+      bonus.grossAmount ?? 0,
+      context.params,
+      bonus.year,
+    );
+    await prisma.incomeEntry.update({
+      where: { id: bonus.id },
+      data: {
+        amount: breakdown.net,
+        taxBreakdown: breakdown as unknown as Prisma.InputJsonValue,
+      },
+    });
+  }
+}
+
 async function toOneTimeAmounts(
   data: OneTimeInput,
   householdId: string,
@@ -257,6 +299,7 @@ export async function addRaise(sourceId: string, input: RaiseInput) {
     },
     update: { ...entryAmounts, note: data.note ?? null },
   });
+  await recomputeLinkedBonuses(householdId, sourceId);
   revalidateIncome();
   return { ok: true as const };
 }
@@ -288,6 +331,7 @@ export async function setMonthOverride(sourceId: string, input: OverrideInput) {
     },
     update: { ...entryAmounts, note: data.note ?? null },
   });
+  await recomputeLinkedBonuses(householdId, sourceId);
   revalidateIncome();
   return { ok: true as const };
 }
@@ -302,6 +346,7 @@ export async function clearMonthOverride(
   await prisma.incomeEntry.deleteMany({
     where: { sourceId, year, month, kind: "OVERRIDE", householdId },
   });
+  await recomputeLinkedBonuses(householdId, sourceId);
   revalidateIncome();
   return { ok: true as const };
 }
@@ -471,6 +516,7 @@ export async function updateIncomeSourceTaxParams(
       });
     }
   });
+  await recomputeLinkedBonuses(householdId, id);
   revalidateIncome();
   return { ok: true as const };
 }
