@@ -4,26 +4,37 @@ import * as React from "react";
 import { Plus } from "lucide-react";
 import { toast } from "sonner";
 import { useI18n } from "@/lib/i18n/context";
+import { formatMoney } from "@/lib/utils";
 import type { PortfolioSummary } from "@/lib/summary";
-import { deleteHolding } from "@/app/actions/investments";
+import { deleteHolding, deleteDeposit } from "@/app/actions/investments";
 import type { AutocompleteOption } from "@/components/shared/autocomplete";
 import { ConfirmDialog } from "@/components/shared/confirm-dialog";
+import { EditDeleteActions } from "@/components/shared/edit-delete-actions";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Table, type TableColumn } from "@/components/ui/table/Table";
+import {
+  TransactionForm,
+  type TxRow,
+  type TxCategory,
+} from "@/components/features/transactions/transaction-form";
 import { HoldingForm, type Holding } from "./holding-form";
 import { HoldingsAccordion } from "./holdings-accordion";
-import { DepositsForm } from "./deposits-form";
 
 export function PortfolioSection({
   portfolio: p,
   year,
   typeFilter,
   typeOptions,
+  investmentCategories,
+  deposits,
 }: {
   portfolio: PortfolioSummary;
   year: number;
   typeFilter: string | null;
   typeOptions: AutocompleteOption[];
+  investmentCategories: TxCategory[];
+  deposits: TxRow[];
 }) {
   const { t } = useI18n();
 
@@ -35,7 +46,13 @@ export function PortfolioSection({
     editing: Holding | null;
   }>({ open: false, editing: null });
   const [toDelete, setToDelete] = React.useState<Holding | null>(null);
-  const [depositsOpen, setDepositsOpen] = React.useState(false);
+  const [depositForm, setDepositForm] = React.useState<{
+    open: boolean;
+    editing: TxRow | null;
+  }>({ open: false, editing: null });
+  const [depositToDelete, setDepositToDelete] = React.useState<TxRow | null>(
+    null,
+  );
   const [pending, startTransition] = React.useTransition();
 
   function handleDelete() {
@@ -47,6 +64,39 @@ export function PortfolioSection({
     });
   }
 
+  function handleDeleteDeposit() {
+    if (!depositToDelete) return;
+    startTransition(async () => {
+      await deleteDeposit(depositToDelete.id);
+      toast.success(t.common.delete);
+      setDepositToDelete(null);
+    });
+  }
+
+  const depositColumns: TableColumn<TxRow>[] = [
+    {
+      headClassName: "w-28",
+      cellClassName: "tnum text-muted-foreground",
+      cell: (r) => formatDate(r.date),
+    },
+    { cellClassName: "font-medium", cell: (r) => r.businessName },
+    { cell: (r) => r.categoryName },
+    {
+      headClassName: "w-32 text-end",
+      cellClassName: "text-end tnum font-medium",
+      cell: (r) => formatMoney(r.amount, { decimals: true }),
+    },
+    {
+      headClassName: "w-20",
+      cell: (r) => (
+        <EditDeleteActions
+          onEdit={() => setDepositForm({ open: true, editing: r })}
+          onDelete={() => setDepositToDelete(r)}
+        />
+      ),
+    },
+  ];
+
   return (
     <div className="flex flex-col gap-3">
       <div className="flex items-center justify-between">
@@ -56,9 +106,9 @@ export function PortfolioSection({
             variant="outline"
             size="sm"
             className="bg-surface"
-            onClick={() => setDepositsOpen(true)}
+            onClick={() => setDepositForm({ open: true, editing: null })}
           >
-            {t.investments.setDeposits}
+            <Plus /> {t.investments.addDeposit}
           </Button>
           <Button
             size="sm"
@@ -85,6 +135,14 @@ export function PortfolioSection({
         />
       )}
 
+      {deposits.length > 0 && (
+        <Table
+          columns={depositColumns}
+          data={deposits}
+          rowKey={(r) => r.id}
+        />
+      )}
+
       {holdingForm.open && (
         <HoldingForm
           open
@@ -95,13 +153,16 @@ export function PortfolioSection({
           typeOptions={typeOptions}
         />
       )}
-      {depositsOpen && (
-        <DepositsForm
+      {depositForm.open && (
+        <TransactionForm
           open
-          onClose={() => setDepositsOpen(false)}
+          mode="deposit"
           portfolioId={p.id}
+          onClose={() => setDepositForm((s) => ({ ...s, open: false }))}
+          editing={depositForm.editing}
+          categories={investmentCategories}
           year={year}
-          current={p.deposits}
+          month={depositForm.editing?.month ?? 1}
         />
       )}
       {toDelete && (
@@ -114,6 +175,23 @@ export function PortfolioSection({
           loading={pending}
         />
       )}
+      {depositToDelete && (
+        <ConfirmDialog
+          open
+          onClose={() => setDepositToDelete(null)}
+          title={t.investments.deleteDepositConfirm}
+          description={depositToDelete.businessName}
+          onConfirm={handleDeleteDeposit}
+          loading={pending}
+        />
+      )}
     </div>
   );
+}
+
+function formatDate(iso: string): string {
+  const d = new Date(iso);
+  const dd = String(d.getUTCDate()).padStart(2, "0");
+  const mm = String(d.getUTCMonth() + 1).padStart(2, "0");
+  return `${dd}/${mm}/${d.getUTCFullYear()}`;
 }

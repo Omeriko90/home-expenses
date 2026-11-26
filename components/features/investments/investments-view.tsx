@@ -7,6 +7,10 @@ import type { PortfolioSummary, YearlyInvestmentTotal } from "@/lib/summary";
 import { EmptyState } from "@/components/shared/empty-state";
 import { type AutocompleteOption } from "@/components/shared/autocomplete";
 import { INVESTMENT_TYPE_PRESETS } from "@/lib/investment-types";
+import type {
+  TxRow,
+  TxCategory,
+} from "@/components/features/transactions/transaction-form";
 import { Select } from "@/components/ui/select/Select";
 import { InvestmentCharts } from "./investment-charts";
 import { GroupSummaryCards } from "./group-summary-cards";
@@ -24,11 +28,15 @@ export function InvestmentsView({
   years,
   portfolios,
   yearlyTotals,
+  investmentCategories,
+  depositsByPortfolio,
 }: {
   year: number;
   years: number[];
   portfolios: PortfolioSummary[];
   yearlyTotals: YearlyInvestmentTotal[];
+  investmentCategories: TxCategory[];
+  depositsByPortfolio: Record<string, TxRow[]>;
 }) {
   const { t } = useI18n();
   const [tab, setTab] = React.useState<"MAIN" | "KIDS">("MAIN");
@@ -103,6 +111,8 @@ export function InvestmentsView({
                     year={year}
                     typeFilter={typeFilter}
                     typeOptions={typeOptions}
+                    investmentCategories={investmentCategories}
+                    deposits={depositsByPortfolio[p.id] ?? []}
                   />
                 ))}
               </>
