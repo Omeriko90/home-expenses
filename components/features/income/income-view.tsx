@@ -27,7 +27,9 @@ import { OverrideDialog } from "./override-dialog";
 import { EndSourceDialog } from "./end-source-dialog";
 import { ViewToggle } from "./view-toggle";
 import {
+  effectiveAmountInputFor,
   overrideFor,
+  sumGrossIncome,
   View,
   type IncomeEntryData,
   type IncomeSourceData,
@@ -86,9 +88,14 @@ export function IncomeView({
   const income = view === View.Month ? monthIncome : yearIncome;
   const expenses = view === View.Month ? monthExpenses : yearExpenses;
 
-  const overrideMonthResolved =
-    overrideTarget &&
-    resolveMonthIncome(sources, entries, year, overrideTarget.month);
+  const entryById = useMemo(
+    () => new Map(entries.map((entry) => [entry.id, entry])),
+    [entries],
+  );
+  const grossIncome = useMemo(
+    () => sumGrossIncome(view === View.Month ? [resolved] : grid, entryById),
+    [view, resolved, grid, entryById],
+  );
 
   const sourceById = (id: string) => sources.find((s) => s.id === id) ?? null;
 
@@ -154,6 +161,16 @@ export function IncomeView({
           label={t.income.income}
           value={formatMoney(income)}
           accent="income"
+          sub={
+            grossIncome.hasGross ? (
+              <span className="text-muted-foreground tnum">
+                {t.income.grossSub.replace(
+                  "{amount}",
+                  formatMoney(grossIncome.total),
+                )}
+              </span>
+            ) : undefined
+          }
         />
         <StatCard
           label={t.income.expenses}
@@ -176,6 +193,7 @@ export function IncomeView({
         <>
           <MonthIncomeList
             resolved={resolved}
+            entries={entries}
             onAdd={() => setAddOpen(true)}
             onEditSource={handleEditSource}
             onEnd={(id) => setEndFor(sourceById(id))}
@@ -224,6 +242,8 @@ export function IncomeView({
           onClose={() => setAddOpen(false)}
           defaultYear={year}
           defaultMonth={month}
+          sources={sources}
+          entries={entries}
         />
       )}
       {editingOneTime && (
@@ -232,15 +252,20 @@ export function IncomeView({
           defaultYear={year}
           defaultMonth={month}
           editingOneTime={editingOneTime}
+          sources={sources}
+          entries={entries}
         />
       )}
       {editFor && (
         <EditSourceDialog
           source={editFor}
-          currentAmount={
-            resolved.sources.find((s) => s.sourceId === editFor.id)?.amount ??
-            null
-          }
+          currentAmount={effectiveAmountInputFor(
+            sources,
+            entries,
+            editFor.id,
+            year,
+            month,
+          )}
           year={year}
           month={month}
           onClose={() => setEditFor(null)}
@@ -251,11 +276,13 @@ export function IncomeView({
           source={overrideTarget.source}
           year={year}
           month={overrideTarget.month}
-          currentAmount={
-            overrideMonthResolved?.sources.find(
-              (s) => s.sourceId === overrideTarget.source.id,
-            )?.amount ?? null
-          }
+          currentAmount={effectiveAmountInputFor(
+            sources,
+            entries,
+            overrideTarget.source.id,
+            year,
+            overrideTarget.month,
+          )}
           existingOverride={overrideFor(
             entries,
             overrideTarget.source.id,

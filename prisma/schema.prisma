@@ -329,13 +329,27 @@ model IncomeSource {
   endYear  Int?
   endMonth Int?
 
+  // GROSS sources: entry amounts are entered as gross; the net snapshot is
+  // computed with these params and stored on the entry. Rates are fractions.
+  amountType       IncomeAmountType @default(NET)
+  creditPoints     Decimal          @default(2.25) @db.Decimal(5, 2)
+  pensionRate      Decimal?         @db.Decimal(5, 4)
+  hishtalmutRate   Decimal?         @db.Decimal(5, 4)
+  hishtalmutCapped Boolean          @default(true)
+
   householdId String
   household   Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
 
-  entries   IncomeEntry[]
-  createdAt DateTime      @default(now())
+  entries        IncomeEntry[]
+  linkedOneTimes IncomeEntry[] @relation("BonusLink")
+  createdAt      DateTime      @default(now())
 
   @@unique([householdId, name])
+}
+
+enum IncomeAmountType {
+  NET
+  GROSS
 }
 
 model IncomeEntry {
@@ -344,12 +358,20 @@ model IncomeEntry {
   name   String? // ONE_TIME only ("Tax refund"); null for source entries
   year   Int
   month  Int // 1-12
-  amount Decimal         @db.Decimal(12, 2)
-  note   String?
+  // Always the net figure counted by resolution; gross entries also snapshot
+  // the entered gross and the computed deduction breakdown at save time.
+  amount       Decimal  @db.Decimal(12, 2)
+  grossAmount  Decimal? @db.Decimal(12, 2)
+  taxBreakdown Json?
+  note         String?
 
   // Set for FIXED/OVERRIDE, null for ONE_TIME.
   sourceId String?
   source   IncomeSource? @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+
+  // ONE_TIME bonus linked to a salary for marginal-rate calculation.
+  linkedSourceId String?
+  linkedSource   IncomeSource? @relation("BonusLink", fields: [linkedSourceId], references: [id], onDelete: SetNull)
 
   householdId String
   household   Household @relation(fields: [householdId], references: [id], onDelete: Cascade)

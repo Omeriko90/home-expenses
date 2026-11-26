@@ -1,7 +1,9 @@
 import {
   monthKey,
+  resolveMonthIncome,
   type IncomeEntryData,
   type IncomeSourceData,
+  type ResolvedMonthIncome,
 } from "@/lib/income-resolve";
 
 export type { IncomeEntryData, IncomeSourceData };
@@ -12,7 +14,67 @@ export const View = {
 } as const;
 export type ViewMode = (typeof View)[keyof typeof View];
 
-export { IncomeTypes as IncomeType, type IncomeTypeValue } from "@/lib/schemas/income";
+export {
+  IncomeTypes as IncomeType,
+  AmountTypes,
+  type IncomeTypeValue,
+  type AmountTypeValue,
+} from "@/lib/schemas/income";
+
+export function effectiveEntryFor(
+  sources: IncomeSourceData[],
+  entries: IncomeEntryData[],
+  sourceId: string,
+  year: number,
+  month: number,
+): IncomeEntryData | null {
+  const resolved = resolveMonthIncome(sources, entries, year, month);
+  const line = resolved.sources.find(
+    (resolvedSource) => resolvedSource.sourceId === sourceId,
+  );
+  if (!line) return null;
+  return entries.find((candidate) => candidate.id === line.entryId) ?? null;
+}
+
+export function effectiveAmountInputFor(
+  sources: IncomeSourceData[],
+  entries: IncomeEntryData[],
+  sourceId: string,
+  year: number,
+  month: number,
+): number | null {
+  const effective = effectiveEntryFor(sources, entries, sourceId, year, month);
+  if (!effective) return null;
+  return effective.grossAmount ?? effective.amount;
+}
+
+export function sumGrossIncome(
+  months: ResolvedMonthIncome[],
+  entryById: Map<string, IncomeEntryData>,
+): { total: number; hasGross: boolean } {
+  let total = 0;
+  let hasGross = false;
+  for (const resolvedMonth of months) {
+    for (const line of resolvedMonth.sources) {
+      const effective = entryById.get(line.entryId);
+      if (effective?.grossAmount != null) {
+        hasGross = true;
+        total += effective.grossAmount;
+      } else {
+        total += line.amount;
+      }
+    }
+    for (const oneTime of resolvedMonth.oneTimes) {
+      if (oneTime.grossAmount != null) {
+        hasGross = true;
+        total += oneTime.grossAmount;
+      } else {
+        total += oneTime.amount;
+      }
+    }
+  }
+  return { total, hasGross };
+}
 
 export type SourceStatus =
   | { kind: "active" }

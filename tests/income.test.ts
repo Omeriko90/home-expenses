@@ -14,6 +14,9 @@ function entry(partial: Partial<IncomeEntryData>): IncomeEntryData {
     year: 2026,
     month: 1,
     amount: 0,
+    grossAmount: null,
+    taxBreakdown: null,
+    linkedSourceId: null,
     note: null,
     sourceId: null,
     ...partial,
@@ -26,6 +29,11 @@ function source(partial: Partial<IncomeSourceData>): IncomeSourceData {
     name: "Salary",
     endYear: null,
     endMonth: null,
+    amountType: "NET",
+    creditPoints: 2.25,
+    pensionRate: null,
+    hishtalmutRate: null,
+    hishtalmutCapped: true,
     ...partial,
   };
 }
