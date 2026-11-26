@@ -9,6 +9,8 @@ These follow the `baseXxxComponents.tsx` + `Xxx.tsx` structure: the base file ho
 | Component | Wrapper import | Base primitives import | Radix dependency |
 | --- | --- | --- | --- |
 | Select | `@/components/ui/select/Select` | `@/components/ui/select/baseSelectComponents` | `@radix-ui/react-select` |
+| MultiSelect | `@/components/ui/multi-select/MultiSelect` | — (composes Popover + ChipGroup) | `@radix-ui/react-popover` |
+| ChipGroup | `@/components/ui/chip-group/ChipGroup` | `@/components/ui/chip-group/Chip` | — |
 | Accordion | `@/components/ui/accordion/Accordion` | `@/components/ui/accordion/baseAccordionComponents` | `@radix-ui/react-accordion` |
 | DropdownMenu | `@/components/ui/dropdown-menu/DropdownMenu` | `@/components/ui/dropdown-menu/baseDropdownMenuComponents` | `@radix-ui/react-dropdown-menu` |
 | Dialog | `@/components/ui/dialog/Dialog` | `@/components/ui/dialog/baseDialogComponents` | `@radix-ui/react-dialog` |
@@ -26,6 +28,39 @@ import { Select } from "@/components/ui/select/Select";
     { value: "VARIABLE", label: "Variable" },
     { value: "FIXED", label: "Fixed" },
   ]}
+/>
+```
+
+```tsx
+import { MultiSelect } from "@/components/ui/multi-select/MultiSelect";
+
+<MultiSelect
+  values={selectedIds}            // empty array = no filter
+  onValuesChange={setSelectedIds}
+  placeholder="All categories"    // shown when nothing is selected
+  removeLabel="Remove"            // aria-label for the chip X buttons
+  className="w-44"
+  options={[{ value: "id1", label: "Groceries" }]}
+/>
+```
+
+```tsx
+import { ChipGroup } from "@/components/ui/chip-group/ChipGroup";
+
+<ChipGroup
+  items={[{ value: "id1", label: "Groceries" }]}
+  onRemove={(value) => remove(value)}  // omit for read-only chips
+  max={2}                              // defaults to 2; extra items collapse into a "+N" chip
+/>
+```
+
+```tsx
+import { Chip } from "@/components/ui/chip-group/Chip";
+
+<Chip
+  label="Groceries"
+  variant="success"                    // default | success | danger | warning | info
+  onRemove={() => remove()}            // omit for read-only chips
 />
 ```
 

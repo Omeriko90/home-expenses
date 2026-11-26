@@ -48,7 +48,7 @@ export function TransactionsView({
   rows: TxRow[];
 }) {
   const { t } = useI18n();
-  const [cat, setCat] = React.useState<string>("all");
+  const [categoryIds, setCategoryIds] = React.useState<string[]>([]);
   const [kind, setKind] = React.useState<TxKind>("all");
   const [amountMin, setAmountMin] = React.useState<number | "">("");
   const [amountMax, setAmountMax] = React.useState<number | "">("");
@@ -65,7 +65,7 @@ export function TransactionsView({
   const { filtered, total } = React.useMemo(() => {
     const needle = deferredQ.toLowerCase();
     const filtered = rows.filter((r) => {
-      if (cat !== "all" && r.categoryId !== cat) return false;
+      if (categoryIds.length > 0 && !categoryIds.includes(r.categoryId)) return false;
       if (kind !== "all" && r.kind !== kind) return false;
       if (deferredMin !== "" && r.amount < deferredMin) return false;
       if (deferredMax !== "" && r.amount > deferredMax) return false;
@@ -74,18 +74,18 @@ export function TransactionsView({
     });
     const total = filtered.reduce((s, r) => s + r.amount, 0);
     return { filtered, total };
-  }, [rows, cat, kind, deferredMin, deferredMax, deferredQ]);
+  }, [rows, categoryIds, kind, deferredMin, deferredMax, deferredQ]);
 
   const activeFilters =
-    Number(cat !== "all") +
+    Number(categoryIds.length > 0) +
     Number(kind !== "all") +
     Number(amountMin !== "") +
     Number(amountMax !== "");
 
   const filterProps = {
     categories,
-    cat,
-    onCatChange: setCat,
+    categoryIds,
+    onCategoryIdsChange: setCategoryIds,
     kind,
     onKindChange: setKind,
     amountMin,
@@ -94,6 +94,12 @@ export function TransactionsView({
     onAmountMaxChange: setAmountMax,
   };
 
+  function clearFilters() {
+    setCategoryIds([]);
+    setKind("all");
+    setAmountMin("");
+    setAmountMax("");
+  }
   function openAdd() {
     setEditing(null);
     setFormOpen(true);
@@ -183,6 +189,11 @@ export function TransactionsView({
             </PopoverTrigger>
             <PopoverContent align="end" className="flex flex-col gap-3 p-4">
               <TransactionFilters layout="xs" {...filterProps} />
+              {activeFilters > 0 && (
+                <Button variant="ghost" onClick={clearFilters}>
+                  {t.common.clearFilters}
+                </Button>
+              )}
             </PopoverContent>
           </Popover>
           <DropdownMenu
@@ -213,8 +224,8 @@ export function TransactionsView({
         </div>
       </div>
 
-      <div className="flex items-center gap-3">
-        <div className="relative flex-1">
+      <div className="flex flex-col gap-3">
+        <div className="relative sm:max-w-xs">
           <Search className="pointer-events-none absolute inset-y-0 start-3 my-auto size-4 text-muted-foreground" />
           <Input
             value={q}
@@ -223,8 +234,13 @@ export function TransactionsView({
             className="ps-9"
           />
         </div>
-        <div className="hidden items-center gap-3 sm:flex">
+        <div className="hidden flex-wrap items-center gap-3 sm:flex">
           <TransactionFilters layout="sm" {...filterProps} />
+          {activeFilters > 0 && (
+            <Button variant="ghost" onClick={clearFilters}>
+              {t.common.clearFilters}
+            </Button>
+          )}
         </div>
       </div>
 
