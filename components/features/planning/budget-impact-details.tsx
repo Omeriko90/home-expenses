@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { TriangleAlert } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { useI18n } from "@/lib/i18n/context";
 import { MonthImpactRow } from "./month-impact-row";
 import { formatMonthKey, type ForecastItem } from "./types";
@@ -83,18 +84,20 @@ export function BudgetImpactDetails({ item }: { item: ForecastItem }) {
         </div>
       )}
 
-      <button
+      <Button
         type="button"
+        variant="link"
+        size="sm"
         onClick={(event) => {
           event.stopPropagation();
           setShowAll((wasShowingAll) => !wasShowingAll);
         }}
-        className="self-start text-xs font-medium text-primary hover:underline"
+        className="h-auto self-start px-0 text-xs"
       >
         {showAll
           ? t.common.showLess
           : t.common.showAll.replace("{n}", String(months.length))}
-      </button>
+      </Button>
     </div>
   );
 }
