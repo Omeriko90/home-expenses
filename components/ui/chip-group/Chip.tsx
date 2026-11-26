@@ -1,24 +1,39 @@
 "use client";
 
 import * as React from "react";
+import { cva, type VariantProps } from "class-variance-authority";
 import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
+const chipVariants = cva(
+  "inline-flex min-w-0 items-center gap-1 rounded-full px-2 py-0.5 text-xs",
+  {
+    variants: {
+      variant: {
+        default: "bg-surface-subtle text-foreground",
+        success: "bg-success-subtle text-success",
+        danger: "bg-danger-subtle text-danger",
+        warning: "bg-warning-subtle text-warning",
+        info: "bg-info-subtle text-info",
+      },
+    },
+    defaultVariants: { variant: "default" },
+  },
+);
+
 export const Chip = React.forwardRef<
   HTMLSpanElement,
-  React.HTMLAttributes<HTMLSpanElement> & {
-    label: React.ReactNode;
-    onRemove?: () => void;
-    removeLabel?: string;
-  }
->(({ label, onRemove, removeLabel, className, ...props }, ref) => {
+  React.HTMLAttributes<HTMLSpanElement> &
+    VariantProps<typeof chipVariants> & {
+      label: React.ReactNode;
+      onRemove?: () => void;
+      removeLabel?: string;
+    }
+>(({ label, onRemove, removeLabel, variant, className, ...props }, ref) => {
   return (
     <span
       ref={ref}
-      className={cn(
-        "inline-flex min-w-0 items-center gap-1 rounded-full bg-surface-subtle px-2 py-0.5 text-xs",
-        className,
-      )}
+      className={cn(chipVariants({ variant }), className)}
       {...props}
     >
       <span className="truncate">{label}</span>

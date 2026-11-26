@@ -50,7 +50,17 @@ import { ChipGroup } from "@/components/ui/chip-group/ChipGroup";
 <ChipGroup
   items={[{ value: "id1", label: "Groceries" }]}
   onRemove={(value) => remove(value)}  // omit for read-only chips
-  max={2}                              // extra items collapse into a "+N" chip
+  max={2}                              // defaults to 2; extra items collapse into a "+N" chip
+/>
+```
+
+```tsx
+import { Chip } from "@/components/ui/chip-group/Chip";
+
+<Chip
+  label="Groceries"
+  variant="success"                    // default | success | danger | warning | info
+  onRemove={() => remove()}            // omit for read-only chips
 />
 ```
 

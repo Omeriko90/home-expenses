@@ -9,8 +9,8 @@ export type TxKind = "all" | "FIXED" | "VARIABLE";
 export function TransactionFilters({
   layout,
   categories,
-  cats,
-  onCatsChange,
+  categoryIds,
+  onCategoryIdsChange,
   kind,
   onKindChange,
   amountMin,
@@ -20,8 +20,8 @@ export function TransactionFilters({
 }: {
   layout: "xs" | "sm";
   categories: TxCategory[];
-  cats: string[];
-  onCatsChange: (v: string[]) => void;
+  categoryIds: string[];
+  onCategoryIdsChange: (v: string[]) => void;
   kind: TxKind;
   onKindChange: (v: TxKind) => void;
   amountMin: number | "";
@@ -33,17 +33,17 @@ export function TransactionFilters({
   return (
     <>
       <MultiSelect
-        values={cats}
-        onValuesChange={onCatsChange}
+        values={categoryIds}
+        onValuesChange={onCategoryIdsChange}
         placeholder={t.transactions.allCategories}
         removeLabel={t.common.delete}
         className={layout === "sm" ? "w-56" : "w-full"}
-        options={categories.map((c) => ({
-          value: c.id,
+        options={categories.map((category) => ({
+          value: category.id,
           label: (
             <span className="flex items-center gap-1">
-              {c.name}
-              {c.archived && (
+              {category.name}
+              {category.archived && (
                 <span className="text-xs text-muted-foreground">
                   ({t.common.archived})
                 </span>
