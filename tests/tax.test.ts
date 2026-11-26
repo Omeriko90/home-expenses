@@ -158,6 +158,34 @@ describe("calcBonusNet", () => {
   });
 });
 
+describe("calcNetSalary robustness", () => {
+  it("returns a zero-deduction breakdown for non-positive gross", () => {
+    const result = calcNetSalary(0, standard, 2026);
+    expect(result.net).toBe(0);
+    expect(result.incomeTax).toBe(0);
+    expect(result.bituachLeumi).toBe(0);
+    expect(result.healthTax).toBe(0);
+    expect(result.pension).toBe(0);
+  });
+
+  it("does not fabricate negative deductions for negative gross", () => {
+    const result = calcNetSalary(-1000, standard, 2026);
+    expect(result.net).toBe(-1000);
+    expect(result.incomeTax).toBe(0);
+    expect(result.bituachLeumi).toBe(0);
+  });
+
+  it("treats missing credit points as zero instead of NaN", () => {
+    const result = calcNetSalary(
+      10000,
+      { ...standard, creditPoints: undefined as unknown as number },
+      2026,
+    );
+    expect(Number.isNaN(result.net)).toBe(false);
+    expect(result.creditValue).toBe(0);
+  });
+});
+
 function roundTwo(value: number): number {
   return Math.round(value * 100) / 100;
 }

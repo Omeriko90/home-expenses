@@ -27,14 +27,14 @@ import { OverrideDialog } from "./override-dialog";
 import { EndSourceDialog } from "./end-source-dialog";
 import { ViewToggle } from "./view-toggle";
 import {
-  governingAmountInputFor,
+  effectiveAmountInputFor,
   overrideFor,
+  sumGrossIncome,
   View,
   type IncomeEntryData,
   type IncomeSourceData,
   type ViewMode,
 } from "./types";
-import type { ResolvedMonthIncome } from "@/lib/income-resolve";
 
 export function IncomeView({
   year,
@@ -92,38 +92,10 @@ export function IncomeView({
     () => new Map(entries.map((entry) => [entry.id, entry])),
     [entries],
   );
-  const grossIncome = useMemo(() => {
-    const sumMonth = (resolvedMonth: ResolvedMonthIncome) => {
-      let total = 0;
-      let hasGross = false;
-      for (const line of resolvedMonth.sources) {
-        const governing = entryById.get(line.entryId);
-        if (governing?.grossAmount != null) {
-          hasGross = true;
-          total += governing.grossAmount;
-        } else {
-          total += line.amount;
-        }
-      }
-      for (const oneTime of resolvedMonth.oneTimes) {
-        if (oneTime.grossAmount != null) {
-          hasGross = true;
-          total += oneTime.grossAmount;
-        } else {
-          total += oneTime.amount;
-        }
-      }
-      return { total, hasGross };
-    };
-    const monthsToSum = view === View.Month ? [resolved] : grid;
-    return monthsToSum.reduce(
-      (acc, resolvedMonth) => {
-        const { total, hasGross } = sumMonth(resolvedMonth);
-        return { total: acc.total + total, hasGross: acc.hasGross || hasGross };
-      },
-      { total: 0, hasGross: false },
-    );
-  }, [view, resolved, grid, entryById]);
+  const grossIncome = useMemo(
+    () => sumGrossIncome(view === View.Month ? [resolved] : grid, entryById),
+    [view, resolved, grid, entryById],
+  );
 
   const sourceById = (id: string) => sources.find((s) => s.id === id) ?? null;
 
@@ -287,7 +259,7 @@ export function IncomeView({
       {editFor && (
         <EditSourceDialog
           source={editFor}
-          currentAmount={governingAmountInputFor(
+          currentAmount={effectiveAmountInputFor(
             sources,
             entries,
             editFor.id,
@@ -304,7 +276,7 @@ export function IncomeView({
           source={overrideTarget.source}
           year={year}
           month={overrideTarget.month}
-          currentAmount={governingAmountInputFor(
+          currentAmount={effectiveAmountInputFor(
             sources,
             entries,
             overrideTarget.source.id,

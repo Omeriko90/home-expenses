@@ -23,6 +23,24 @@ export function calcNetSalary(
   year: number,
 ): TaxBreakdown {
   const constants = getTaxConstants(year);
+  const creditPoints = params.creditPoints ?? 0;
+
+  if (gross <= 0) {
+    return {
+      gross,
+      net: gross,
+      incomeTax: 0,
+      surtax: 0,
+      bituachLeumi: 0,
+      healthTax: 0,
+      pension: 0,
+      hishtalmut: 0,
+      creditPoints,
+      creditValue: 0,
+      pensionCredit: 0,
+      taxYear: constants.year,
+    };
+  }
 
   const pension = roundAgorot(gross * (params.pensionRate ?? 0));
   const hishtalmutBase =
@@ -33,7 +51,7 @@ export function calcNetSalary(
 
   const rawTax = bracketTax(gross, constants.brackets);
   const creditValue = roundAgorot(
-    Math.min(rawTax, params.creditPoints * constants.creditPointValue),
+    Math.min(rawTax, creditPoints * constants.creditPointValue),
   );
   const afterPointsCredit = rawTax - creditValue;
 
@@ -78,7 +96,7 @@ export function calcNetSalary(
     healthTax,
     pension,
     hishtalmut,
-    creditPoints: params.creditPoints,
+    creditPoints,
     creditValue,
     pensionCredit,
     taxYear: constants.year,

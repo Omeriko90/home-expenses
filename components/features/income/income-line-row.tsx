@@ -44,7 +44,7 @@ export function IncomeLineRow({
               <ChevronDown
                 className={cn(
                   "size-4 shrink-0 text-muted-foreground transition-transform",
-                  expanded && "rotate-180",
+                  { "rotate-180": expanded },
                 )}
               />
             )}
@@ -80,8 +80,8 @@ export function IncomeLineRow({
       {breakdown && (
         <div
           className={cn(
-            "grid transition-[grid-template-rows] duration-300 ease-in-out",
-            expanded ? "grid-rows-[1fr]" : "grid-rows-[0fr]",
+            "grid grid-rows-[0fr] transition-[grid-template-rows] duration-300 ease-in-out",
+            { "grid-rows-[1fr]": expanded },
           )}
         >
           <div className="overflow-hidden">

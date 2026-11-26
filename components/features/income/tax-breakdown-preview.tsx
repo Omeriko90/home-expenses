@@ -7,9 +7,8 @@ import { calcBonusNet, calcNetSalary } from "@/lib/tax/calc";
 import type { TaxParams } from "@/lib/tax/types";
 import { TaxBreakdownLines } from "./tax-breakdown-lines";
 import {
-  AmountTypes,
   IncomeType,
-  governingAmountInputFor,
+  effectiveAmountInputFor,
   type IncomeEntryData,
   type IncomeSourceData,
 } from "./types";
@@ -17,6 +16,65 @@ import {
 function percentToFraction(percent: number | undefined): number | null {
   if (!percent || percent <= 0) return null;
   return percent / 100;
+}
+
+function computePreviewBreakdown({
+  type,
+  amount,
+  year,
+  month,
+  creditPoints,
+  pensionPercent,
+  hishtalmutPercent,
+  hishtalmutCapped,
+  linkedSourceId,
+  sources,
+  entries,
+}: {
+  type: string;
+  amount: number;
+  year: number;
+  month: number;
+  creditPoints: number | undefined;
+  pensionPercent: number | undefined;
+  hishtalmutPercent: number | undefined;
+  hishtalmutCapped: boolean | undefined;
+  linkedSourceId: string | undefined;
+  sources: IncomeSourceData[];
+  entries: IncomeEntryData[];
+}) {
+  if (type !== IncomeType.OneTime) {
+    return calcNetSalary(
+      amount,
+      {
+        creditPoints: typeof creditPoints === "number" ? creditPoints : 2.25,
+        pensionRate: percentToFraction(pensionPercent),
+        hishtalmutRate: percentToFraction(hishtalmutPercent),
+        hishtalmutCapped: hishtalmutCapped !== false,
+      },
+      year,
+    );
+  }
+  const linked = linkedSourceId
+    ? (sources.find((source) => source.id === linkedSourceId) ?? null)
+    : null;
+  const params: TaxParams = linked
+    ? {
+        creditPoints: linked.creditPoints,
+        pensionRate: linked.pensionRate,
+        hishtalmutRate: linked.hishtalmutRate,
+        hishtalmutCapped: linked.hishtalmutCapped,
+      }
+    : {
+        creditPoints: 0,
+        pensionRate: null,
+        hishtalmutRate: null,
+        hishtalmutCapped: true,
+      };
+  const baseGross = linked
+    ? (effectiveAmountInputFor(sources, entries, linked.id, year, month) ?? 0)
+    : 0;
+  return calcBonusNet(baseGross, amount, params, year);
 }
 
 export function TaxBreakdownPreview({
@@ -29,7 +87,6 @@ export function TaxBreakdownPreview({
   const { t } = useI18n();
   const { control } = useFormContext();
   const type = useWatch({ control, name: "type" });
-  const amountType = useWatch({ control, name: "amountType" });
   const amount = useWatch({ control, name: "amount" });
   const start = useWatch({ control, name: "start" });
   const creditPoints = useWatch({ control, name: "creditPoints" });
@@ -38,46 +95,22 @@ export function TaxBreakdownPreview({
   const hishtalmutCapped = useWatch({ control, name: "hishtalmutCapped" });
   const linkedSourceId = useWatch({ control, name: "linkedSourceId" });
 
-  if (amountType !== AmountTypes.Gross) return null;
-  if (typeof amount !== "number" || amount <= 0) return null;
-
   const year: number = start?.year ?? new Date().getFullYear();
   const month: number = start?.month ?? new Date().getMonth() + 1;
 
-  let breakdown;
-  if (type === IncomeType.OneTime) {
-    const linked = linkedSourceId
-      ? (sources.find((source) => source.id === linkedSourceId) ?? null)
-      : null;
-    const params: TaxParams = linked
-      ? {
-          creditPoints: linked.creditPoints,
-          pensionRate: linked.pensionRate,
-          hishtalmutRate: linked.hishtalmutRate,
-          hishtalmutCapped: linked.hishtalmutCapped,
-        }
-      : {
-          creditPoints: 0,
-          pensionRate: null,
-          hishtalmutRate: null,
-          hishtalmutCapped: true,
-        };
-    const baseGross = linked
-      ? (governingAmountInputFor(sources, entries, linked.id, year, month) ?? 0)
-      : 0;
-    breakdown = calcBonusNet(baseGross, amount, params, year);
-  } else {
-    breakdown = calcNetSalary(
-      amount,
-      {
-        creditPoints: typeof creditPoints === "number" ? creditPoints : 2.25,
-        pensionRate: percentToFraction(pensionPercent),
-        hishtalmutRate: percentToFraction(hishtalmutPercent),
-        hishtalmutCapped: hishtalmutCapped !== false,
-      },
-      year,
-    );
-  }
+  const breakdown = computePreviewBreakdown({
+    type,
+    amount,
+    year,
+    month,
+    creditPoints,
+    pensionPercent,
+    hishtalmutPercent,
+    hishtalmutCapped,
+    linkedSourceId,
+    sources,
+    entries,
+  });
 
   return (
     <div className="flex flex-col gap-2 rounded-lg bg-surface-muted/40 p-3">

@@ -33,6 +33,7 @@ export function IncomeFormFields({
   const type = useWatch({ control, name: "type" });
   const hasEnd = useWatch({ control, name: "hasEnd" });
   const amountType = useWatch({ control, name: "amountType" });
+  const amount = useWatch({ control, name: "amount" });
   const hishtalmutPercent = useWatch({ control, name: "hishtalmutPercent" });
   const grossSources = sources.filter(
     (source) => source.amountType === AmountTypes.Gross,
@@ -134,9 +135,11 @@ export function IncomeFormFields({
         />
       )}
 
-      {amountType === AmountTypes.Gross && (
-        <TaxBreakdownPreview sources={sources} entries={entries} />
-      )}
+      {amountType === AmountTypes.Gross &&
+        typeof amount === "number" &&
+        amount > 0 && (
+          <TaxBreakdownPreview sources={sources} entries={entries} />
+        )}
 
       {type === IncomeType.Fixed && !isEditing && (
         <>
